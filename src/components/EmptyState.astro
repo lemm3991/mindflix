@@ -1,0 +1,72 @@
+---
+// EmptyState.astro
+interface Props {
+  title: string;
+  description: string;
+  actionText?: string;
+  actionHref?: string;
+}
+
+const { title, description, actionText, actionHref } = Astro.props;
+---
+
+<div class="empty-state-wrapper">
+  <div class="empty-state-icon">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="8" y1="12" x2="16" y2="12"></line>
+    </svg>
+  </div>
+  <h3 class="empty-state-title">{title}</h3>
+  <p class="empty-state-desc">{description}</p>
+  {actionText && actionHref && (
+    <a href={actionHref} class="btn btn-primary btn-empty-action">
+      {actionText}
+    </a>
+  )}
+</div>
+
+<style>
+  .empty-state-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border: 1px dashed var(--border-subtle);
+    border-radius: var(--radius-lg);
+    margin: 2rem 0;
+  }
+
+  .empty-state-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+  }
+
+  .empty-state-title {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state-desc {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    max-width: 420px;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .btn-empty-action {
+    padding: 0.65rem 1.5rem;
+  }
+</style>

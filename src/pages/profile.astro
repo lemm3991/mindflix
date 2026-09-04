@@ -1,0 +1,374 @@
+---
+// profile.astro - Perfil do Usuário e Estatísticas
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Meu Perfil — Mindflix">
+  <div class="container profile-page">
+    <div class="profile-header-card">
+      <div class="profile-identity">
+        <div class="profile-avatar-large">
+          <span id="profile-avatar-initials">ED</span>
+        </div>
+        <div class="profile-info">
+          <h1 class="profile-name" id="profile-name">Eduardo</h1>
+          <p class="profile-email" id="profile-email">usuario@mindflix.local</p>
+          <span class="badge badge-cyan">Membro Mindflix</span>
+        </div>
+      </div>
+
+      <div class="profile-quick-actions">
+        <a href="/settings" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Preferências</span>
+        </a>
+        <button type="button" class="btn btn-ghost" id="btn-logout">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sair</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="stats-section">
+      <h2 class="section-title">Estatísticas de Aprendizado</h2>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <span class="stat-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </span>
+          <div class="stat-meta">
+            <span class="stat-desc">Cursos Iniciados</span>
+            <strong class="stat-number" id="stat-courses-started">0</strong>
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <span class="stat-icon-wrapper accent-emerald">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </span>
+          <div class="stat-meta">
+            <span class="stat-desc">Aulas Concluídas</span>
+            <strong class="stat-number" id="stat-lessons-completed">0</strong>
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <span class="stat-icon-wrapper accent-purple">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </span>
+          <div class="stat-meta">
+            <span class="stat-desc">Tempo Estimado Estudado</span>
+            <strong class="stat-number" id="stat-time-studied">0h 00m</strong>
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <span class="stat-icon-wrapper accent-rose">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </span>
+          <div class="stat-meta">
+            <span class="stat-desc">Cursos Favoritados</span>
+            <strong class="stat-number" id="stat-favorites-count">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Study Activity Chart (Section 62) -->
+      <div class="activity-chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Atividade nos Últimos 7 Dias</h3>
+          <span class="chart-subtitle">Frequência e tempo dedicado aos estudos</span>
+        </div>
+        <div class="weekly-bars-container" id="weekly-bars-container">
+          <div class="day-col">
+            <div class="bar-fill" style="height: 35%;"></div>
+            <span class="day-label">Seg</span>
+          </div>
+          <div class="day-col">
+            <div class="bar-fill" style="height: 60%;"></div>
+            <span class="day-label">Ter</span>
+          </div>
+          <div class="day-col">
+            <div class="bar-fill" style="height: 45%;"></div>
+            <span class="day-label">Qua</span>
+          </div>
+          <div class="day-col">
+            <div class="bar-fill" style="height: 80%;"></div>
+            <span class="day-label">Qui</span>
+          </div>
+          <div class="day-col active-today">
+            <div class="bar-fill" style="height: 95%;"></div>
+            <span class="day-label">Sex</span>
+          </div>
+          <div class="day-col">
+            <div class="bar-fill" style="height: 30%;"></div>
+            <span class="day-label">Sáb</span>
+          </div>
+          <div class="day-col">
+            <div class="bar-fill" style="height: 20%;"></div>
+            <span class="day-label">Dom</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { getAllLocalProgress, getFavoriteCourseIds, getRecentCourseIds } from '../lib/progress';
+  import { getLocalUser, setLocalUser } from '../lib/supabase';
+
+  // Load user
+  const user = getLocalUser();
+  if (!user) {
+    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+  } else {
+    const nameEl = document.getElementById('profile-name');
+    const emailEl = document.getElementById('profile-email');
+    const avatarInitials = document.getElementById('profile-avatar-initials');
+
+    const displayName = user.full_name || user.email.split('@')[0];
+    if (nameEl) nameEl.textContent = displayName;
+    if (emailEl) emailEl.textContent = user.email;
+    if (avatarInitials) avatarInitials.textContent = displayName.substring(0, 2).toUpperCase();
+  }
+
+  // Load stats
+  const allProgress = getAllLocalProgress();
+  const recentIds = getRecentCourseIds();
+  const favIds = getFavoriteCourseIds();
+
+  const lessons = Object.values(allProgress);
+  const completedLessons = lessons.filter(l => l.completed);
+  const totalSeconds = lessons.reduce((acc, curr) => acc + (curr.position_seconds || 0), 0);
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  const elStarted = document.getElementById('stat-courses-started');
+  const elCompleted = document.getElementById('stat-lessons-completed');
+  const elTime = document.getElementById('stat-time-studied');
+  const elFavs = document.getElementById('stat-favorites-count');
+
+  if (elStarted) elStarted.textContent = recentIds.length.toString();
+  if (elCompleted) elCompleted.textContent = completedLessons.length.toString();
+  if (elTime) elTime.textContent = `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  if (elFavs) elFavs.textContent = favIds.length.toString();
+
+  // Logout button
+  document.getElementById('btn-logout')?.addEventListener('click', () => {
+    setLocalUser(null);
+    window.location.href = '/login';
+  });
+</script>
+
+<style>
+  .profile-page {
+    padding-top: 110px;
+    padding-bottom: 5rem;
+    max-width: 1000px;
+  }
+
+  .profile-header-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .profile-identity {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ffffff;
+    box-shadow: 0 0 24px rgba(99, 102, 241, 0.4);
+  }
+
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .profile-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  .profile-email {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+  }
+
+  .profile-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .stat-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--accent-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-icon-wrapper.accent-emerald {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--accent-emerald);
+  }
+
+  .stat-icon-wrapper.accent-purple {
+    background: rgba(168, 85, 247, 0.1);
+    color: var(--accent-purple);
+  }
+
+  .stat-icon-wrapper.accent-rose {
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--accent-rose);
+  }
+
+  .stat-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .stat-desc {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+
+  .activity-chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .chart-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .chart-subtitle {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .weekly-bars-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 140px;
+    gap: 1rem;
+    padding-top: 1rem;
+  }
+
+  .day-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .bar-fill {
+    width: 100%;
+    max-width: 32px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xs);
+    transition: height var(--motion-slow) var(--ease-out), background var(--motion-fast) ease;
+  }
+
+  .day-col:hover .bar-fill,
+  .day-col.active-today .bar-fill {
+    background: var(--grad-primary);
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.35);
+  }
+
+  .day-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .active-today .day-label {
+    color: var(--accent-cyan);
+  }
+</style>

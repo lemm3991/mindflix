@@ -1,0 +1,312 @@
+---
+// login.astro - Tela de Login
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Entrar — Mindflix" hideNavbar={true}>
+  <div class="auth-page-container">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <a href="/" class="brand-logo">
+          <span class="logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </span>
+          <span class="logo-text">MIND<span>FLIX</span></span>
+        </a>
+      </div>
+
+      <h1 class="auth-title">Acessar sua biblioteca</h1>
+      <p class="auth-subtitle">Entre para acompanhar seu progresso e cursos favoritos.</p>
+
+      <form id="login-form" class="auth-form">
+        <div class="form-group">
+          <label for="email" class="form-label">E-mail</label>
+          <input
+            type="email"
+            id="email"
+            class="form-input"
+            placeholder="exemplo@email.com"
+            value="usuario@mindflix.local"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label for="password" class="form-label">Senha</label>
+            <a href="#" class="forgot-link" id="forgot-password-link">Esqueceu a senha?</a>
+          </div>
+          <input
+            type="password"
+            id="password"
+            class="form-input"
+            placeholder="••••••••"
+            value="mindflix123"
+            required
+          />
+        </div>
+
+        <div class="auth-error-msg" id="login-error-box" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-submit" id="login-submit-btn">
+          <span>Entrar na Plataforma</span>
+        </button>
+
+        <div class="divider">
+          <span>ou</span>
+        </div>
+
+        <!-- Google Auth button (ready for Supabase Google OAuth) -->
+        <button type="button" class="btn btn-secondary btn-google" id="google-auth-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"/>
+            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5.1 3.7-8.8z"/>
+            <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.2s.7 5.5 1.9 7.9l3.7-2.9z"/>
+            <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 16.5C3.7 20.4 7.5 23.5 12 23.5z"/>
+          </svg>
+          <span>Continuar com Google</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Ainda não tem cadastro? <a href="/register">Cadastre-se gratuitamente</a></p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { supabase, isSupabaseConfigured, setLocalUser } from '../lib/supabase';
+
+  const form = document.getElementById('login-form');
+  const emailInput = document.getElementById('email') as HTMLInputElement | null;
+  const passInput = document.getElementById('password') as HTMLInputElement | null;
+  const errorBox = document.getElementById('login-error-box');
+  const googleBtn = document.getElementById('google-auth-btn');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = emailInput?.value.trim();
+    const password = passInput?.value.trim();
+
+    if (!email || !password) return;
+
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        if (errorBox) {
+          errorBox.textContent = error.message;
+          errorBox.style.display = 'block';
+        }
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const redirectTarget = params.get('redirect') || '/';
+
+      if (data.user) {
+        setLocalUser({
+          id: data.user.id,
+          email: data.user.email || email,
+          full_name: data.user.user_metadata?.full_name
+        });
+        window.location.href = redirectTarget;
+      }
+    } else {
+      // Local fallback mode
+      const params = new URLSearchParams(window.location.search);
+      const redirectTarget = params.get('redirect') || '/';
+
+      setLocalUser({
+        id: 'local-user-id-01',
+        email,
+        full_name: email.split('@')[0]
+      });
+      window.location.href = redirectTarget;
+    }
+  });
+
+  googleBtn?.addEventListener('click', async () => {
+    if (isSupabaseConfigured && supabase) {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin }
+      });
+    } else {
+      alert('Google OAuth requer credenciais do Supabase configuradas em .env (PUBLIC_SUPABASE_URL).');
+    }
+  });
+</script>
+
+<style>
+  .auth-page-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  }
+
+  .auth-brand {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--grad-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0b0d13;
+  }
+
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+  }
+
+  .logo-text span {
+    background: var(--grad-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 0.35rem;
+  }
+
+  .auth-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .forgot-link {
+    font-size: 0.75rem;
+    color: var(--accent-cyan);
+  }
+
+  .form-input {
+    height: 44px;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0 1rem;
+    font-size: 0.9375rem;
+    outline: none;
+    transition: border-color var(--transition-fast);
+  }
+
+  .form-input:focus {
+    border-color: var(--accent-cyan);
+  }
+
+  .auth-error-msg {
+    background: rgba(244, 63, 94, 0.15);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    color: #fda4af;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+  }
+
+  .btn-submit {
+    height: 46px;
+    margin-top: 0.5rem;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 0.5rem 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .divider span {
+    padding: 0 0.75rem;
+  }
+
+  .btn-google {
+    height: 44px;
+    gap: 0.75rem;
+  }
+
+  .auth-footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .auth-footer a {
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+</style>

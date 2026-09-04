@@ -1,0 +1,639 @@
+---
+// VideoPlayer.astro - Advanced Video Player with Theater/Focus modes, Keyboard Shortcuts, Speed Popover, and Next Lesson Countdown
+import type { Lesson } from '../types/catalog';
+
+interface Props {
+  courseId: string;
+  lesson: Lesson;
+  nextLessonHref?: string;
+  nextLessonTitle?: string;
+  prevLessonHref?: string;
+}
+
+const { courseId, lesson, nextLessonHref, nextLessonTitle = 'Próxima Aula', prevLessonHref } = Astro.props;
+const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_path)}`;
+---
+
+<div
+  class="video-player-component"
+  id="player-wrapper"
+  data-course-id={courseId}
+  data-lesson-id={lesson.id}
+  data-next-href={nextLessonHref || ''}
+  data-next-title={nextLessonTitle}
+>
+  <!-- Next Lesson Countdown Overlay (Shown on Video End) -->
+  <div class="next-lesson-overlay" id="next-lesson-overlay" style="display: none;">
+    <div class="next-overlay-card">
+      <span class="next-badge">Próxima Aula</span>
+      <h3 class="next-title" id="next-overlay-title">{nextLessonTitle}</h3>
+      <p class="next-countdown-text" id="next-countdown-text">Iniciando em <span id="countdown-secs">8</span>s...</p>
+      
+      <div class="next-overlay-actions">
+        {nextLessonHref && (
+          <a href={nextLessonHref} class="btn btn-primary btn-sm" id="btn-play-next-now">
+            <span>Assistir Agora</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </a>
+        )}
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-cancel-next">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Discreet Save Indicator (✓ Salvo) -->
+  <div class="save-status-pill" id="save-status-pill" style="display: none;">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span>Progresso salvo</span>
+  </div>
+
+  <!-- Main HTML5 Video Viewport -->
+  <div class="video-viewport" id="video-viewport">
+    <video
+      id="main-video-player"
+      class="html5-video"
+      src={videoStreamUrl}
+      controls
+      playsinline
+      preload="metadata"
+    >
+      Seu navegador não suporta este vídeo.
+    </video>
+
+    <!-- Graceful Media Error State -->
+    <div id="video-error-overlay" class="video-error-overlay" style="display: none;">
+      <div class="video-error-card">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="error-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <h3 class="video-error-title">Vídeo Indisponível</h3>
+        <p class="video-error-desc">O arquivo de mídia não pôde ser carregado ou o formato não é suportado pelo navegador.</p>
+        <div class="video-error-actions">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-video">Tentar Novamente</button>
+          <a href="/courses" class="btn btn-primary btn-sm">Voltar aos Cursos</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refined Bottom Control Bar -->
+  <div class="player-controls-bar">
+    <div class="controls-left">
+      {prevLessonHref ? (
+        <a href={prevLessonHref} class="btn btn-secondary btn-sm" title="Aula Anterior (Shift + P)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span class="btn-label-desktop">Anterior</span>
+        </a>
+      ) : (
+        <button class="btn btn-secondary btn-sm disabled" disabled>
+          <span class="btn-label-desktop">Anterior</span>
+        </button>
+      )}
+
+      {nextLessonHref ? (
+        <a href={nextLessonHref} class="btn btn-secondary btn-sm" id="manual-next-link" title="Próxima Aula (Shift + N)">
+          <span class="btn-label-desktop">Próxima</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      ) : (
+        <button class="btn btn-secondary btn-sm disabled" disabled>
+          <span class="btn-label-desktop">Próxima</span>
+        </button>
+      )}
+    </div>
+
+    <div class="controls-center">
+      <!-- Mode Toggles: Theater & Focus -->
+      <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-theater-mode" title="Modo Teatro (T)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+          <line x1="2" y1="16" x2="22" y2="16"></line>
+        </svg>
+        <span class="btn-label-desktop">Teatro</span>
+      </button>
+
+      <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"></path>
+        </svg>
+        <span class="btn-label-desktop">Foco</span>
+      </button>
+
+      <!-- PiP Toggle -->
+      <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-pip-mode" title="Picture-in-Picture (P)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+          <rect x="13" y="11" width="7" height="6" rx="1"></rect>
+        </svg>
+      </button>
+    </div>
+
+    <div class="controls-right">
+      <!-- Speed Popover Trigger -->
+      <div class="speed-popover-container" id="speed-popover-box">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-speed-popover" aria-haspopup="true">
+          <span id="current-speed-label">1.0x</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div class="speed-menu" id="speed-menu" style="display: none;">
+          {[0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5].map(s => (
+            <button type="button" class="speed-option" data-speed={s}>
+              {s.toFixed(2).replace(/\.00$/, '')}x
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <!-- Mark as completed toggle button -->
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-complete">
+        <svg class="check-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="complete-btn-text">Concluir</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import {
+    getLessonProgress,
+    saveLessonProgress,
+    getUserPreferences,
+    saveUserPreferences,
+    getCoursePlaybackSpeed,
+    saveCoursePlaybackSpeed
+  } from '../lib/progress';
+  import { showToast } from '../lib/toast';
+
+  const wrapper = document.getElementById('player-wrapper');
+  const video = document.getElementById('main-video-player') as HTMLVideoElement | null;
+  const overlay = document.getElementById('next-lesson-overlay');
+  const countdownSecs = document.getElementById('countdown-secs');
+  const countdownText = document.getElementById('next-countdown-text');
+  const btnCancelNext = document.getElementById('btn-cancel-next');
+  const savePill = document.getElementById('save-status-pill');
+  const speedBtn = document.getElementById('btn-speed-popover');
+  const speedMenu = document.getElementById('speed-menu');
+  const speedLabel = document.getElementById('current-speed-label');
+  const btnComplete = document.getElementById('btn-toggle-complete');
+  const completeText = document.getElementById('complete-btn-text');
+  const btnTheater = document.getElementById('btn-theater-mode');
+  const btnFocus = document.getElementById('btn-focus-mode');
+  const btnPip = document.getElementById('btn-pip-mode');
+  const errorOverlay = document.getElementById('video-error-overlay');
+  const retryBtn = document.getElementById('btn-retry-video');
+
+  const courseId = wrapper?.getAttribute('data-course-id') || '';
+  const lessonId = wrapper?.getAttribute('data-lesson-id') || '';
+  const nextHref = wrapper?.getAttribute('data-next-href') || '';
+
+  if (video && courseId && lessonId) {
+    const prefs = getUserPreferences();
+
+    // Set initial speed (per-course or global preference)
+    const initialSpeed = getCoursePlaybackSpeed(courseId);
+    video.playbackRate = initialSpeed;
+    if (speedLabel) speedLabel.textContent = `${initialSpeed}x`;
+
+    // Speed popover toggle
+    speedBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (speedMenu) {
+        speedMenu.style.display = speedMenu.style.display === 'block' ? 'none' : 'block';
+      }
+    });
+
+    document.addEventListener('click', () => {
+      if (speedMenu) speedMenu.style.display = 'none';
+    });
+
+    speedMenu?.querySelectorAll<HTMLButtonElement>('.speed-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const rate = parseFloat(opt.getAttribute('data-speed') || '1.0');
+        video.playbackRate = rate;
+        if (speedLabel) speedLabel.textContent = `${rate}x`;
+        saveCoursePlaybackSpeed(courseId, rate);
+        saveUserPreferences({ playback_speed: rate });
+        showToast(`Velocidade: ${rate}x`, 'info', 1500);
+      });
+    });
+
+    // Handle video load error gracefully
+    video.addEventListener('error', () => {
+      if (errorOverlay) errorOverlay.style.display = 'flex';
+    });
+
+    retryBtn?.addEventListener('click', () => {
+      if (errorOverlay) errorOverlay.style.display = 'none';
+      video.load();
+      video.play().catch(() => {});
+    });
+
+    // Resume position check
+    const saved = getLessonProgress(lessonId);
+    if (saved && saved.position_seconds > 5 && !saved.completed) {
+      video.currentTime = saved.position_seconds;
+      const mins = Math.floor(saved.position_seconds / 60);
+      const secs = Math.floor(saved.position_seconds % 60);
+      showToast(`Continuando de ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 3000);
+    }
+
+    // Mark completed toggle
+    const updateCompleteUI = (isComplete: boolean) => {
+      if (!btnComplete || !completeText) return;
+      if (isComplete) {
+        btnComplete.classList.add('btn-completed');
+        completeText.textContent = 'Concluída ✓';
+      } else {
+        btnComplete.classList.remove('btn-completed');
+        completeText.textContent = 'Concluir';
+      }
+    };
+
+    if (saved?.completed) updateCompleteUI(true);
+
+    btnComplete?.addEventListener('click', async () => {
+      const isComplete = !btnComplete.classList.contains('btn-completed');
+      await saveLessonProgress(courseId, lessonId, video.currentTime, video.duration || 600, isComplete);
+      updateCompleteUI(isComplete);
+      showToast(isComplete ? 'Aula concluída!' : 'Aula reaberta', 'success');
+    });
+
+    // Throttled progress saving with discreet save pill
+    let lastSave = 0;
+    const triggerSave = (manual = false) => {
+      if (!video.duration || isNaN(video.duration)) return;
+      saveLessonProgress(courseId, lessonId, video.currentTime, video.duration, manual);
+      lastSave = Date.now();
+
+      // Show save pill
+      if (savePill) {
+        savePill.style.display = 'flex';
+        setTimeout(() => { savePill.style.display = 'none'; }, 1500);
+      }
+    };
+
+    video.addEventListener('seeked', () => triggerSave());
+
+    // Unload safety: save exact position on page exit/navigate
+    const handleUnload = () => {
+      if (video && !isNaN(video.currentTime) && video.duration) {
+        saveLessonProgress(courseId, lessonId, video.currentTime, video.duration, video.currentTime / video.duration >= 0.9);
+      }
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('pagehide', handleUnload);
+
+    video.addEventListener('timeupdate', () => {
+      const now = Date.now();
+      if (now - lastSave > 8000) triggerSave();
+
+      if (video.duration && video.currentTime / video.duration >= 0.9) {
+        if (!btnComplete?.classList.contains('btn-completed')) {
+          triggerSave(true);
+          updateCompleteUI(true);
+        }
+      }
+    });
+
+    video.addEventListener('pause', () => triggerSave());
+
+    // Next lesson countdown logic
+    let countdownInterval: any;
+    video.addEventListener('ended', () => {
+      triggerSave(true);
+      updateCompleteUI(true);
+
+      if (nextHref && overlay) {
+        overlay.style.display = 'flex';
+
+        if (prefs.autoplay_next) {
+          let secondsLeft = 8;
+          if (countdownSecs) countdownSecs.textContent = '8';
+
+          countdownInterval = setInterval(() => {
+            secondsLeft--;
+            if (countdownSecs) countdownSecs.textContent = secondsLeft.toString();
+
+            if (secondsLeft <= 0) {
+              clearInterval(countdownInterval);
+              window.location.href = nextHref;
+            }
+          }, 1000);
+        } else {
+          if (countdownText) countdownText.style.display = 'none';
+        }
+      }
+    });
+
+    btnCancelNext?.addEventListener('click', () => {
+      clearInterval(countdownInterval);
+      if (overlay) overlay.style.display = 'none';
+    });
+
+    // Theater Mode
+    btnTheater?.addEventListener('click', () => {
+      const watchLayout = document.querySelector('.watch-layout');
+      watchLayout?.classList.toggle('theater-mode');
+      btnTheater.classList.toggle('active');
+    });
+
+    // Focus Mode
+    btnFocus?.addEventListener('click', () => {
+      document.body.classList.toggle('focus-mode-active');
+      btnFocus.classList.toggle('active');
+      showToast('Modo Foco ativado. Pressione C ou ESC para sair.', 'info', 3000);
+    });
+
+    // PiP Mode
+    btnPip?.addEventListener('click', async () => {
+      try {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture();
+        } else {
+          await video.requestPictureInPicture();
+        }
+      } catch (err) {
+        console.warn('PiP not available', err);
+      }
+    });
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      // Don't trigger if user is in input, textarea, select, contenteditable, or if search palette is open
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable) return;
+      if (document.getElementById('cmd-palette-backdrop')?.style.display === 'flex') return;
+
+      if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        video.paused ? video.play() : video.pause();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        video.currentTime = Math.max(0, video.currentTime - 5);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        video.currentTime = Math.min(video.duration, video.currentTime + 5);
+      } else if (e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        video.currentTime = Math.max(0, video.currentTime - 10);
+      } else if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        video.muted = !video.muted;
+        showToast(video.muted ? 'Áudio mutado' : 'Áudio ativado', 'info', 1500);
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          video.requestFullscreen().catch(() => {});
+        }
+      } else if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        btnTheater?.click();
+      } else if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        btnFocus?.click();
+      }
+    });
+  }
+</script>
+
+<style>
+  .video-player-component {
+    position: relative;
+    width: 100%;
+    background: #000000;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.65);
+  }
+
+  .video-viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000000;
+  }
+
+  .video-error-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 13, 20, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    z-index: 10;
+  }
+
+  .video-error-card {
+    max-width: 440px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .video-error-card .error-icon {
+    color: #ef4444;
+  }
+
+  .video-error-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .video-error-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .video-error-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .html5-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    outline: none;
+    display: block;
+  }
+
+  /* Next Lesson Countdown Overlay */
+  .next-lesson-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    background: rgba(7, 9, 14, 0.88);
+    backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.25s var(--ease-out);
+  }
+
+  .next-overlay-card {
+    text-align: center;
+    max-width: 420px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .next-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    letter-spacing: 0.05em;
+  }
+
+  .next-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .next-countdown-text {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+  }
+
+  .next-countdown-text span {
+    color: var(--accent-cyan);
+    font-weight: 700;
+  }
+
+  .next-overlay-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  /* Discreet Save Indicator */
+  .save-status-pill {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 10;
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    backdrop-filter: blur(10px);
+    color: var(--accent-emerald);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    animation: fadeIn 0.2s ease;
+  }
+
+  /* Bottom Controls Bar */
+  .player-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.85rem 1.25rem;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .controls-left, .controls-center, .controls-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .btn-mode.active {
+    color: var(--accent-cyan);
+    background: rgba(0, 242, 254, 0.12);
+  }
+
+  /* Speed Popover */
+  .speed-popover-container {
+    position: relative;
+  }
+
+  .speed-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    z-index: 25;
+    background: rgba(18, 22, 32, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 90px;
+  }
+
+  .speed-option {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border-radius: var(--radius-xs);
+    transition: all var(--motion-fast) var(--ease-out);
+  }
+
+  .speed-option:hover {
+    background: rgba(0, 242, 254, 0.12);
+    color: #ffffff;
+  }
+
+  .btn-completed {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    color: var(--accent-emerald) !important;
+  }
+
+  .disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 768px) {
+    .btn-label-desktop {
+      display: none;
+    }
+  }
+</style>

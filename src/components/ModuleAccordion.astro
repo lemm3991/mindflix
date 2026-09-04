@@ -1,0 +1,225 @@
+---
+// ModuleAccordion.astro - Collapsible module with progress tracking and lesson list
+import type { Module } from '../types/catalog';
+import LessonItem from './LessonItem.astro';
+
+interface Props {
+  courseId: string;
+  module: Module;
+  defaultOpen?: boolean;
+  currentLessonId?: string;
+}
+
+const { courseId, module, defaultOpen = false, currentLessonId } = Astro.props;
+const hasCurrentLesson = currentLessonId ? module.lessons.some(l => l.id === currentLessonId) : false;
+const isOpen = defaultOpen || hasCurrentLesson;
+
+// Total estimated duration in minutes
+const totalDurationSecs = module.lessons.reduce((acc, l) => acc + l.duration_seconds, 0);
+const totalMinutes = Math.round(totalDurationSecs / 60);
+---
+
+<div
+  class={`module-accordion-item ${isOpen ? 'open' : ''}`}
+  data-module-id={module.id}
+  data-total-lessons={module.lessons.length}
+>
+  <button type="button" class="module-header-btn" aria-expanded={isOpen ? 'true' : 'false'}>
+    <div class="header-left">
+      <div class="expand-chevron">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="module-title-group">
+        <span class="module-index">Módulo {String(module.order_index).padStart(2, '0')}</span>
+        <h4 class="module-title">{module.display_title}</h4>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="module-progress-wrapper">
+        <div class="module-progress-mini-track">
+          <div class="module-progress-mini-fill" style="width: 0%;"></div>
+        </div>
+        <span class="module-stats">
+          <span class="module-completed-count">0</span>/{module.lessons.length} aulas • {totalMinutes} min
+        </span>
+      </div>
+    </div>
+  </button>
+
+  <div class="module-content" style={isOpen ? 'display: block;' : 'display: none;'}>
+    <div class="lessons-list">
+      {module.lessons.map(lesson => (
+        <LessonItem
+          courseId={courseId}
+          lesson={lesson}
+          isCurrent={currentLessonId === lesson.id}
+        />
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  import { getAllLocalProgress } from '../lib/progress';
+
+  document.querySelectorAll<HTMLElement>('.module-accordion-item').forEach(item => {
+    const btn = item.querySelector<HTMLButtonElement>('.module-header-btn');
+    const content = item.querySelector<HTMLElement>('.module-content');
+    const totalLessons = parseInt(item.getAttribute('data-total-lessons') || '0', 10);
+    const countEl = item.querySelector('.module-completed-count');
+    const fillEl = item.querySelector<HTMLElement>('.module-progress-mini-fill');
+
+    // Calculate completed lessons in this module
+    const allProgress = getAllLocalProgress();
+    const lessonItems = item.querySelectorAll('.lesson-item');
+    let completedInModule = 0;
+
+    lessonItems.forEach(l => {
+      const lId = l.getAttribute('data-lesson-id');
+      if (lId && allProgress[lId]?.completed) {
+        completedInModule++;
+      }
+    });
+
+    if (countEl) countEl.textContent = completedInModule.toString();
+    if (fillEl && totalLessons > 0) {
+      const pct = Math.round((completedInModule / totalLessons) * 100);
+      fillEl.style.width = `${pct}%`;
+    }
+
+    // Toggle collapse
+    btn?.addEventListener('click', () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      if (isExpanded) {
+        btn.setAttribute('aria-expanded', 'false');
+        item.classList.remove('open');
+        if (content) content.style.display = 'none';
+      } else {
+        btn.setAttribute('aria-expanded', 'true');
+        item.classList.add('open');
+        if (content) content.style.display = 'block';
+      }
+    });
+  });
+</script>
+
+<style>
+  .module-accordion-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    transition: border-color var(--motion-normal) var(--ease-out), background-color var(--motion-normal) var(--ease-out);
+  }
+
+  .module-accordion-item.open {
+    border-color: var(--border-highlight);
+    background: rgba(18, 22, 32, 0.9);
+  }
+
+  .module-header-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text-primary);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .expand-chevron {
+    color: var(--text-muted);
+    transition: transform var(--motion-normal) var(--ease-spring), color var(--motion-fast) var(--ease-out);
+    flex-shrink: 0;
+  }
+
+  .module-accordion-item.open .expand-chevron {
+    transform: rotate(180deg);
+    color: var(--accent-cyan);
+  }
+
+  .module-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .module-index {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .module-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+    margin-left: 1rem;
+  }
+
+  .module-progress-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3rem;
+  }
+
+  .module-progress-mini-track {
+    width: 60px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .module-progress-mini-fill {
+    height: 100%;
+    background: var(--grad-primary);
+    border-radius: var(--radius-full);
+    transition: width var(--motion-normal) var(--ease-out);
+  }
+
+  .module-stats {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .module-content {
+    background: rgba(11, 13, 19, 0.45);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .lessons-list {
+    display: flex;
+    flex-direction: column;
+  }
+</style>

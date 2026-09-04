@@ -1,0 +1,172 @@
+---
+// CourseSidebar.astro
+import type { Course } from '../types/catalog';
+import ModuleAccordion from './ModuleAccordion.astro';
+
+interface Props {
+  course: Course;
+  currentLessonId: string;
+}
+
+const { course, currentLessonId } = Astro.props;
+---
+
+<aside
+  class="course-study-sidebar"
+  id="course-study-sidebar"
+  data-course-id={course.id}
+  data-total-lessons={course.lessons_count}
+>
+  <div class="sidebar-header">
+    <div class="sidebar-top-nav">
+      <a href="/courses" class="back-to-course-link" title="Voltar ao catálogo de cursos">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        <span>Voltar aos Cursos</span>
+      </a>
+      <span class="provider-pill">{course.provider}</span>
+    </div>
+
+    <h2 class="sidebar-course-title">{course.display_title}</h2>
+    
+    <div class="sidebar-progress-box">
+      <div class="progress-meta">
+        <span>Progresso Geral</span>
+        <span id="sidebar-progress-num">0%</span>
+      </div>
+      <div class="sidebar-progress-bar">
+        <div class="sidebar-progress-fill" id="sidebar-progress-bar-fill" style="width: 0%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-modules-scroll">
+    {course.modules.map(mod => (
+      <ModuleAccordion
+        courseId={course.id}
+        module={mod}
+        currentLessonId={currentLessonId}
+      />
+    ))}
+  </div>
+</aside>
+
+<script>
+  import { getCourseCompletionStats } from '../lib/progress';
+
+  const sidebar = document.getElementById('course-study-sidebar');
+  const courseId = sidebar?.getAttribute('data-course-id') || '';
+  const totalLessons = parseInt(sidebar?.getAttribute('data-total-lessons') || '0', 10);
+
+  if (sidebar && courseId) {
+    const stats = getCourseCompletionStats(courseId, totalLessons);
+    const numEl = document.getElementById('sidebar-progress-num');
+    const fillEl = document.getElementById('sidebar-progress-bar-fill');
+    if (numEl) numEl.textContent = `${stats.percentage}%`;
+    if (fillEl) fillEl.style.width = `${stats.percentage}%`;
+  }
+</script>
+
+<style>
+  .course-study-sidebar {
+    width: 380px;
+    height: calc(100vh - 72px);
+    background: var(--bg-card);
+    border-left: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 72px;
+  }
+
+  .sidebar-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(18, 22, 32, 0.95);
+  }
+
+  .sidebar-top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .back-to-course-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8125rem;
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+
+  .back-to-course-link:hover {
+    color: #38bdf8;
+  }
+
+  .provider-pill {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+  }
+
+  .sidebar-course-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .sidebar-progress-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .sidebar-progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .sidebar-progress-fill {
+    height: 100%;
+    background: var(--grad-primary);
+    border-radius: var(--radius-full);
+    transition: width 0.4s ease;
+  }
+
+  .sidebar-modules-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  @media (max-width: 1024px) {
+    .course-study-sidebar {
+      width: 100%;
+      height: auto;
+      position: static;
+      border-left: none;
+      border-top: 1px solid var(--border-subtle);
+    }
+  }
+</style>

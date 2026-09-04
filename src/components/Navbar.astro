@@ -1,0 +1,290 @@
+---
+// Navbar.astro - Premium progressive glass navbar with Command Palette trigger
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = '/' } = Astro.props;
+
+const navItems = [
+  { label: 'Início', href: '/' },
+  { label: 'Cursos', href: '/courses' },
+  { label: 'Categorias', href: '/categories' },
+  { label: 'Minha Lista', href: '/my-list' },
+  { label: 'Biblioteca', href: '/library' },
+];
+---
+
+<header class="navbar" id="main-navbar">
+  <div class="container nav-content">
+    <div class="nav-left">
+      <a href="/" class="brand-logo" aria-label="Mindflix Home">
+        <span class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </span>
+        <span class="logo-text">MIND<span>FLIX</span></span>
+      </a>
+
+      <nav class="nav-links" aria-label="Menu Principal">
+        {navItems.map(item => (
+          <a
+            href={item.href}
+            class={`nav-link ${currentPath === item.href ? 'active' : ''}`}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+    </div>
+
+    <div class="nav-right">
+      <!-- Command Palette Trigger Button -->
+      <button type="button" class="cmd-trigger-btn" id="open-search-modal-btn" aria-label="Abrir busca (Ctrl+K)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span class="cmd-trigger-text">Buscar cursos...</span>
+        <div class="cmd-badges">
+          <kbd class="cmd-kbd">Ctrl</kbd>
+          <kbd class="cmd-kbd">K</kbd>
+        </div>
+      </button>
+
+      <!-- Profile Avatar Button -->
+      <div class="user-menu-container">
+        <a href="/profile" class="user-avatar-btn" aria-label="Perfil do Usuário">
+          <div class="avatar-circle">
+            <span id="user-initials">ED</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Progressive glass & height adjustment on scroll (72px -> 64px)
+  const navbar = document.getElementById('main-navbar');
+  const triggerSearchBtn = document.getElementById('open-search-modal-btn');
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 25) {
+      navbar?.classList.add('scrolled');
+    } else {
+      navbar?.classList.remove('scrolled');
+    }
+  }, { passive: true });
+
+  // Open Command Palette event
+  triggerSearchBtn?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('mindflix:open-search'));
+  });
+
+  // Check logged user initials
+  try {
+    const user = localStorage.getItem('mindflix_user');
+    if (user) {
+      const data = JSON.parse(user);
+      const name = data.full_name || data.email || 'ED';
+      const el = document.getElementById('user-initials');
+      if (el) el.textContent = name.substring(0, 2).toUpperCase();
+    }
+  } catch (err) {}
+</script>
+
+<style>
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    z-index: var(--z-sticky);
+    transition: height var(--motion-normal) var(--ease-out),
+                background-color var(--motion-normal) var(--ease-out),
+                backdrop-filter var(--motion-normal) var(--ease-out),
+                box-shadow var(--motion-normal) var(--ease-out),
+                border-bottom-color var(--motion-normal) var(--ease-out);
+    background: linear-gradient(180deg, rgba(7, 9, 14, 0.8) 0%, rgba(11, 13, 19, 0) 100%);
+    border-bottom: 1px solid transparent;
+  }
+
+  .navbar.scrolled {
+    height: 64px;
+    background: rgba(11, 14, 21, 0.88);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--border-subtle);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  }
+
+  .nav-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--grad-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #07090e;
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.4);
+    transition: transform var(--motion-fast) var(--ease-out);
+  }
+
+  .brand-logo:hover .logo-icon {
+    transform: scale(1.05);
+  }
+
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+  }
+
+  .logo-text span {
+    background: var(--grad-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+  }
+
+  .nav-link {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    position: relative;
+    padding: 0.35rem 0;
+    transition: color var(--motion-fast) var(--ease-out);
+  }
+
+  .nav-link:hover {
+    color: #ffffff;
+  }
+
+  .nav-link.active {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--grad-primary);
+    border-radius: var(--radius-full);
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  /* Command Palette Trigger */
+  .cmd-trigger-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    padding: 0.45rem 0.95rem;
+    border-radius: var(--radius-full);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--motion-normal) var(--ease-out);
+  }
+
+  .cmd-trigger-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: var(--border-highlight);
+    color: var(--text-secondary);
+    transform: translateY(-1px);
+  }
+
+  .cmd-badges {
+    display: flex;
+    gap: 0.2rem;
+  }
+
+  .cmd-kbd {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.7rem;
+    font-family: monospace;
+    color: var(--text-secondary);
+  }
+
+  .avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    border: 1.5px solid var(--border-highlight);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #38bdf8;
+    cursor: pointer;
+    transition: all var(--motion-fast) var(--ease-out);
+  }
+
+  .avatar-circle:hover {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.35);
+    transform: scale(1.04);
+  }
+
+  @media (max-width: 800px) {
+    .nav-links {
+      display: none;
+    }
+    .cmd-trigger-text, .cmd-badges {
+      display: none;
+    }
+    .cmd-trigger-btn {
+      padding: 0.45rem;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      justify-content: center;
+    }
+  }
+</style>

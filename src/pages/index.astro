@@ -1,11 +1,232 @@
 ---
-import Welcome from '../components/Welcome.astro';
+// index.astro - Mindflix Streaming Home with Continue Watching, Next in Path & Rotating Hero
 import Layout from '../layouts/Layout.astro';
+import HeroCourse from '../components/HeroCourse.astro';
+import CourseRow from '../components/CourseRow.astro';
+import CourseCard from '../components/CourseCard.astro';
+import { getAllCourses, getCoursesByCategory } from '../lib/catalog';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const allCourses = getAllCourses();
+
+// Eligible courses for hero showcase (must not be hidden and have playable lesson videos)
+const eligibleHeroCourses = allCourses.filter(c => {
+  if (c.is_hidden) return false;
+  const firstLesson = c.modules?.[0]?.lessons?.[0];
+  return Boolean(firstLesson?.relative_path);
+});
+
+// Fisher-Yates shuffle algorithm for uniform randomness
+function getRandomHeroCourses(list: typeof allCourses, count = 5) {
+  const pool = [...list];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
+}
+
+// Randomly select 5 diverse courses on each page load/request
+const poolToSample = eligibleHeroCourses.length >= 5 ? eligibleHeroCourses : allCourses;
+const featuredCourses = getRandomHeroCourses(poolToSample, 5);
+
+// Course slices by main categories
+const iaCourses = getCoursesByCategory('ia');
+const automacaoCourses = getCoursesByCategory('automacao-agentes');
+const devCourses = getCoursesByCategory('programacao-dev');
+const webCourses = getCoursesByCategory('web-vibe-coding');
+const backendCourses = getCoursesByCategory('backend-infra');
+const dataCourses = getCoursesByCategory('dados-datascience');
+const tradingCourses = getCoursesByCategory('trading');
+const personalCourses = getCoursesByCategory('desenvolvimento-pessoal');
+
+// Recommended path courses (Section 65: "Próximo da sua Trilha")
+const nextInPathCourses = allCourses.filter(c => 
+  c.categories.includes('ia') || c.categories.includes('automacao-agentes') || c.categories.includes('web-vibe-coding')
+).slice(0, 8);
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Mindflix — Biblioteca Pessoal de Cursos">
+  <!-- Multi-featured Editorial Rotating Hero -->
+  <HeroCourse featuredCourses={featuredCourses} />
+
+  <div class="container home-rows-container">
+    <!-- Dynamic Priority Row: Continue Estudando (1-click resume) -->
+    <div id="continue-studying-section" class="dynamic-row" style="display: none;">
+      <div class="dynamic-row-header">
+        <div class="title-with-badge">
+          <h2 class="row-title">Continuar Estudando</h2>
+          <span class="badge badge-cyan">Retomar em 1 Clique</span>
+        </div>
+        <span class="row-subtitle">Suas aulas recentes em andamento</span>
+      </div>
+      <div class="dynamic-grid" id="continue-studying-grid"></div>
+    </div>
+
+    <!-- Dynamic "Minha Lista" Row -->
+    <div id="my-list-section" class="dynamic-row" style="display: none;">
+      <div class="dynamic-row-header">
+        <h2 class="row-title">Minha Lista</h2>
+        <a href="/my-list" class="view-all-link">Ver lista completa →</a>
+      </div>
+      <div class="dynamic-grid" id="my-list-grid"></div>
+    </div>
+
+    <!-- Próximo da sua Trilha (Section 65) -->
+    <CourseRow
+      title="Próximo da sua Trilha — Especialização em IA & NoCode"
+      courses={nextInPathCourses}
+      viewAllHref="/category/ia"
+    />
+
+    <!-- Categorized Streaming Carousels -->
+    <CourseRow
+      title="Inteligência Artificial & LLMs"
+      courses={iaCourses}
+      viewAllHref="/category/ia"
+    />
+
+    <CourseRow
+      title="Automação & Agentes Autônomos"
+      courses={automacaoCourses}
+      viewAllHref="/category/automacao-agentes"
+    />
+
+    <CourseRow
+      title="Web, Apps & Vibe Coding"
+      courses={webCourses}
+      viewAllHref="/category/web-vibe-coding"
+    />
+
+    <CourseRow
+      title="Programação & Desenvolvimento"
+      courses={devCourses}
+      viewAllHref="/category/programacao-dev"
+    />
+
+    <CourseRow
+      title="Backend, Bancos de Dados & Infraestrutura"
+      courses={backendCourses}
+      viewAllHref="/category/backend-infra"
+    />
+
+    <CourseRow
+      title="Dados & Data Science"
+      courses={dataCourses}
+      viewAllHref="/category/dados-datascience"
+    />
+
+    <CourseRow
+      title="Trading & Mercado Financeiro"
+      courses={tradingCourses}
+      viewAllHref="/category/trading"
+    />
+
+    <CourseRow
+      title="Desenvolvimento Pessoal & Soft Skills"
+      courses={personalCourses}
+      viewAllHref="/category/desenvolvimento-pessoal"
+    />
+  </div>
 </Layout>
+
+<script>
+  import { getRecentCourseIds, getFavoriteCourseIds } from '../lib/progress';
+
+  const recentIds = getRecentCourseIds();
+  const favIds = getFavoriteCourseIds();
+
+  // Populate "Continue Estudando" (Direct 1-click watch link)
+  const continueSection = document.getElementById('continue-studying-section');
+  const continueGrid = document.getElementById('continue-studying-grid');
+
+  if (recentIds.length > 0 && continueSection && continueGrid) {
+    const cardsToClone: HTMLElement[] = [];
+    recentIds.slice(0, 4).forEach(id => {
+      const card = document.querySelector(`.course-card-wrapper[data-course-id="${id}"]`);
+      if (card) {
+        const cloned = card.cloneNode(true) as HTMLElement;
+        cardsToClone.push(cloned);
+      }
+    });
+
+    if (cardsToClone.length > 0) {
+      continueSection.style.display = 'block';
+      cardsToClone.forEach(card => continueGrid.appendChild(card));
+    }
+  }
+
+  // Populate "Minha Lista"
+  const myListSection = document.getElementById('my-list-section');
+  const myListGrid = document.getElementById('my-list-grid');
+
+  if (favIds.length > 0 && myListSection && myListGrid) {
+    const cardsToClone: HTMLElement[] = [];
+    favIds.slice(0, 4).forEach(id => {
+      const card = document.querySelector(`.course-card-wrapper[data-course-id="${id}"]`);
+      if (card) {
+        const cloned = card.cloneNode(true) as HTMLElement;
+        cardsToClone.push(cloned);
+      }
+    });
+
+    if (cardsToClone.length > 0) {
+      myListSection.style.display = 'block';
+      cardsToClone.forEach(card => myListGrid.appendChild(card));
+    }
+  }
+</script>
+
+<style>
+  .home-rows-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 5rem;
+  }
+
+  .dynamic-row {
+    margin-bottom: 2.75rem;
+  }
+
+  .dynamic-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .row-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+  }
+
+  .row-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .dynamic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .view-all-link {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    transition: color var(--motion-fast) ease;
+  }
+
+  .view-all-link:hover {
+    color: #38bdf8;
+  }
+</style>

@@ -1,0 +1,543 @@
+---
+// InteractiveBackground.astro - Fluid Animated Wave Ribbons & Interactive Mouse Canvas
+// Guaranteed active 60fps animation loop, mouse deflection, cursor rays, and ambient flow
+interface Props {
+  disableInteraction?: boolean;
+}
+
+const { disableInteraction = false } = Astro.props;
+---
+
+<div class="bg-viewport" aria-hidden="true">
+  <!-- Subtle ambient glow orbs -->
+  <div class="glow-orb orb-cyan"></div>
+  <div class="glow-orb orb-indigo"></div>
+  <div class="glow-orb orb-purple"></div>
+  
+  <!-- Interactive Canvas Lines & Particles -->
+  <canvas
+    id="interactive-lines-canvas"
+    class="interactive-lines-canvas"
+    data-disable-interaction={disableInteraction ? 'true' : 'false'}
+  ></canvas>
+
+  <!-- Balanced vignette overlay allowing lines to remain clearly visible -->
+  <div class="bg-vignette"></div>
+</div>
+
+<script>
+  interface WavePoint {
+    x: number;
+    baseY: number;
+    currY: number;
+    targetY: number;
+  }
+
+  interface WaveLine {
+    points: WavePoint[];
+    speed: number;
+    amplitude: number;
+    wavelength: number;
+    phase: number;
+    color: string;
+    activeColor: string;
+  }
+
+  interface NodeParticle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    radius: number;
+    alpha: number;
+    color: string;
+  }
+
+  interface Ripple {
+    x: number;
+    y: number;
+    radius: number;
+    maxRadius: number;
+    intensity: number;
+    decay: number;
+  }
+
+  const canvas = document.getElementById('interactive-lines-canvas') as HTMLCanvasElement | null;
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      // Check if on video page
+      function isWatchPage(): boolean {
+        return window.location.pathname.startsWith('/watch') || canvas?.dataset.disableInteraction === 'true';
+      }
+
+      function resizeCanvas() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        if (!canvas || !ctx) return;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.resetTransform?.();
+        ctx.scale(dpr, dpr);
+      }
+
+      resizeCanvas();
+
+      const isMobile = window.innerWidth < 768;
+
+      // Mouse state with smooth lerping
+      const mouse = {
+        x: -9999,
+        y: -9999,
+        targetX: -9999,
+        targetY: -9999,
+        prevX: -9999,
+        prevY: -9999,
+        active: false,
+        radius: isMobile ? 180 : 260
+      };
+
+      let animFrameId: number;
+      let isVisible = true;
+
+      // --- 1. Wave Ribbons Setup (Clearly Visible, Moving & Interactive) ---
+      const lineCount = isMobile ? 9 : 14;
+      const pointSpacing = isMobile ? 40 : 26;
+      const lines: WaveLine[] = [];
+
+      const lineColors = [
+        { base: 'rgba(0, 242, 254, 0.26)', active: 'rgba(0, 242, 254, 0.95)' },  // Neon Cyan
+        { base: 'rgba(56, 189, 248, 0.24)', active: 'rgba(56, 189, 248, 0.90)' },  // Sky Blue
+        { base: 'rgba(99, 102, 241, 0.22)', active: 'rgba(129, 140, 248, 0.88)' },  // Indigo
+        { base: 'rgba(168, 85, 247, 0.20)', active: 'rgba(192, 132, 252, 0.85)' }   // Purple
+      ];
+
+      function initLines() {
+        lines.length = 0;
+        const totalPoints = Math.ceil(width / pointSpacing) + 4;
+
+        for (let i = 0; i < lineCount; i++) {
+          const baseY = (height / (lineCount + 1)) * (i + 1);
+          const points: WavePoint[] = [];
+
+          for (let p = 0; p < totalPoints; p++) {
+            points.push({
+              x: p * pointSpacing,
+              baseY: baseY,
+              currY: baseY,
+              targetY: baseY
+            });
+          }
+
+          const colorScheme = lineColors[i % lineColors.length];
+
+          lines.push({
+            points,
+            speed: 0.0006 + (i % 4) * 0.00035,
+            amplitude: 15 + (i % 4) * 6,
+            wavelength: 0.0018 + (i % 3) * 0.0007,
+            phase: (i * Math.PI) / 3,
+            color: colorScheme.base,
+            activeColor: colorScheme.active
+          });
+        }
+      }
+
+      // --- 2. Floating Constellation Nodes ---
+      const particleCount = isMobile ? 16 : 34;
+      const particles: NodeParticle[] = [];
+
+      function initParticles() {
+        particles.length = 0;
+        for (let i = 0; i < particleCount; i++) {
+          particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.45,
+            vy: (Math.random() - 0.5) * 0.45,
+            radius: 1.4 + Math.random() * 1.5,
+            alpha: 0.35 + Math.random() * 0.3,
+            color: i % 2 === 0 ? '#00f2fe' : '#818cf8'
+          });
+        }
+      }
+
+      // --- 3. Dynamic Ripples on Fast Mouse Movement ---
+      const ripples: Ripple[] = [];
+
+      function addRipple(x: number, y: number, intensity = 28) {
+        if (isWatchPage()) return;
+        if (ripples.length > 4) ripples.shift();
+        ripples.push({
+          x,
+          y,
+          radius: 10,
+          maxRadius: isMobile ? 160 : 300,
+          intensity,
+          decay: 0.94
+        });
+      }
+
+      initLines();
+      initParticles();
+
+      // Mouse & Touch Tracking: Unconditional global capture
+      function updatePointer(clientX: number, clientY: number) {
+        if (isWatchPage()) return;
+        mouse.targetX = clientX;
+        mouse.targetY = clientY;
+        if (!mouse.active) {
+          mouse.x = clientX;
+          mouse.y = clientY;
+          mouse.active = true;
+        }
+
+        const dx = clientX - mouse.prevX;
+        const dy = clientY - mouse.prevY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 65) {
+          addRipple(clientX, clientY, Math.min(dist * 0.22, 30));
+          mouse.prevX = clientX;
+          mouse.prevY = clientY;
+        }
+      }
+
+      window.addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY), { passive: true });
+      window.addEventListener('pointermove', (e) => updatePointer(e.clientX, e.clientY), { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+          updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('click', (e) => {
+        if (!isWatchPage()) addRipple(e.clientX, e.clientY, 40);
+      });
+
+      document.addEventListener('mouseleave', () => {
+        mouse.active = false;
+        mouse.targetX = -9999;
+        mouse.targetY = -9999;
+      });
+
+      // Window resize
+      let resizeTimeout: ReturnType<typeof setTimeout>;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          resizeCanvas();
+          initLines();
+          initParticles();
+        }, 120);
+      }, { passive: true });
+
+      // Tab visibility management
+      document.addEventListener('visibilitychange', () => {
+        isVisible = !document.hidden;
+        if (isVisible) {
+          lastTime = performance.now();
+          animFrameId = requestAnimationFrame(loop);
+        } else {
+          cancelAnimationFrame(animFrameId);
+        }
+      });
+
+      // Fullscreen video pause
+      document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+          cancelAnimationFrame(animFrameId);
+        } else if (isVisible) {
+          lastTime = performance.now();
+          animFrameId = requestAnimationFrame(loop);
+        }
+      });
+
+      // Main 60 FPS Animation & Interaction Loop
+      let lastTime = performance.now();
+
+      function loop(timestamp: number) {
+        if (!isVisible) return;
+        const dt = Math.min(timestamp - lastTime, 40);
+        lastTime = timestamp;
+
+        if (ctx) {
+          ctx.clearRect(0, 0, width, height);
+
+          const onWatch = isWatchPage();
+
+          // Smooth mouse position lerping
+          if (!onWatch && mouse.active) {
+            mouse.x += (mouse.targetX - mouse.x) * 0.15;
+            mouse.y += (mouse.targetY - mouse.y) * 0.15;
+          } else {
+            mouse.x += (-9999 - mouse.x) * 0.1;
+            mouse.y += (-9999 - mouse.y) * 0.1;
+          }
+
+          const mouseRadius = mouse.radius;
+          const mouseRadiusSq = mouseRadius * mouseRadius;
+
+          // --- A. Render Mouse Ambient Glow Spotlight ---
+          if (!onWatch && mouse.active && mouse.x > 0 && mouse.y > 0) {
+            const glowGrad = ctx.createRadialGradient(
+              mouse.x, mouse.y, 0,
+              mouse.x, mouse.y, mouseRadius * 1.2
+            );
+            glowGrad.addColorStop(0, 'rgba(0, 242, 254, 0.16)');
+            glowGrad.addColorStop(0.45, 'rgba(99, 102, 241, 0.07)');
+            glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(mouse.x, mouse.y, mouseRadius * 1.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // --- B. Update & Render Dynamic Ripples ---
+          if (!onWatch) {
+            for (let r = ripples.length - 1; r >= 0; r--) {
+              const rip = ripples[r];
+              rip.radius += 3.0;
+              rip.intensity *= rip.decay;
+
+              if (rip.radius > rip.maxRadius || rip.intensity < 0.5) {
+                ripples.splice(r, 1);
+                continue;
+              }
+
+              ctx.strokeStyle = `rgba(0, 242, 254, ${Math.min(rip.intensity * 0.008, 0.16)})`;
+              ctx.lineWidth = 1.1;
+              ctx.beginPath();
+              ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
+
+          // --- C. Update & Render Topographic Wave Lines ---
+          lines.forEach((line) => {
+            line.phase += line.speed * dt;
+
+            const pts = line.points;
+            let lineNearMouse = false;
+
+            for (let i = 0; i < pts.length; i++) {
+              const pt = pts[i];
+
+              // Continuous natural harmonic wave movement
+              const naturalWave = Math.sin(pt.x * line.wavelength + line.phase) * line.amplitude;
+              let target = pt.baseY + naturalWave;
+
+              // Mouse deflection force field (only on non-watch pages)
+              if (!onWatch && mouse.active) {
+                const dx = pt.x - mouse.x;
+                const dy = pt.currY - mouse.y;
+                const distSq = dx * dx + dy * dy;
+
+                if (distSq < mouseRadiusSq && distSq > 0) {
+                  lineNearMouse = true;
+                  const dist = Math.sqrt(distSq);
+                  const factor = (1 - dist / mouseRadius);
+                  const pushY = (dy / dist) * factor * 55;
+                  target += pushY;
+                }
+              }
+
+              // Ripple perturbations
+              if (!onWatch) {
+                for (let r = 0; r < ripples.length; r++) {
+                  const rip = ripples[r];
+                  const rdx = pt.x - rip.x;
+                  const rdy = pt.currY - rip.y;
+                  const rDist = Math.sqrt(rdx * rdx + rdy * rdy);
+                  const waveDiff = Math.abs(rDist - rip.radius);
+                  if (waveDiff < 32) {
+                    const waveFactor = Math.cos((waveDiff / 32) * (Math.PI / 2)) * rip.intensity;
+                    target += (rdy >= 0 ? 1 : -1) * waveFactor * 0.38;
+                  }
+                }
+              }
+
+              // Spring damping physics
+              pt.currY += (target - pt.currY) * 0.13;
+            }
+
+            // Draw smooth bezier ribbon
+            ctx.beginPath();
+            ctx.lineWidth = lineNearMouse ? 1.6 : 1.2;
+
+            if (!onWatch && lineNearMouse) {
+              const lineGrad = ctx.createLinearGradient(0, 0, width, 0);
+              lineGrad.addColorStop(0, line.color);
+              const mouseNorm = Math.max(0, Math.min(1, mouse.x / width));
+              lineGrad.addColorStop(Math.max(0, mouseNorm - 0.22), line.color);
+              lineGrad.addColorStop(mouseNorm, line.activeColor);
+              lineGrad.addColorStop(Math.min(1, mouseNorm + 0.22), line.color);
+              lineGrad.addColorStop(1, line.color);
+              ctx.strokeStyle = lineGrad;
+            } else {
+              ctx.strokeStyle = line.color;
+            }
+
+            for (let i = 0; i < pts.length; i++) {
+              const pt = pts[i];
+              if (i === 0) {
+                ctx.moveTo(pt.x, pt.currY);
+              } else {
+                const prev = pts[i - 1];
+                const midX = (prev.x + pt.x) / 2;
+                const midY = (prev.currY + pt.currY) / 2;
+                ctx.quadraticCurveTo(prev.x, prev.currY, midX, midY);
+              }
+            }
+            ctx.stroke();
+          });
+
+          // --- D. Update & Render Constellation Nodes & Connecting Rays ---
+          if (!onWatch && particles.length > 0) {
+            const maxConnDist = isMobile ? 85 : 125;
+            const maxConnDistSq = maxConnDist * maxConnDist;
+            const mouseConnDist = isMobile ? 110 : 175;
+            const mouseConnDistSq = mouseConnDist * mouseConnDist;
+
+            for (let i = 0; i < particles.length; i++) {
+              const p = particles[i];
+
+              p.x += p.vx;
+              p.y += p.vy;
+
+              if (p.x < -10) p.x = width + 10;
+              else if (p.x > width + 10) p.x = -10;
+              if (p.y < -10) p.y = height + 10;
+              else if (p.y > height + 10) p.y = -10;
+
+              if (mouse.active) {
+                const pdx = p.x - mouse.x;
+                const pdy = p.y - mouse.y;
+                const pdistSq = pdx * pdx + pdy * pdy;
+
+                if (pdistSq < mouseConnDistSq && pdistSq > 0) {
+                  const pdist = Math.sqrt(pdistSq);
+                  const pushStrength = (1 - pdist / mouseConnDist) * 0.55;
+                  p.x += (pdx / pdist) * pushStrength;
+                  p.y += (pdy / pdist) * pushStrength;
+
+                  // Glowing Laser Ray from Cursor to Node
+                  const rayAlpha = (1 - pdist / mouseConnDist) * 0.5;
+                  ctx.strokeStyle = `rgba(0, 242, 254, ${rayAlpha})`;
+                  ctx.lineWidth = 1;
+                  ctx.beginPath();
+                  ctx.moveTo(mouse.x, mouse.y);
+                  ctx.lineTo(p.x, p.y);
+                  ctx.stroke();
+                }
+              }
+
+              // Draw particle node
+              ctx.fillStyle = p.color;
+              ctx.globalAlpha = p.alpha;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+
+              // Connecting lines between nearby nodes
+              for (let j = i + 1; j < particles.length; j++) {
+                const p2 = particles[j];
+                const dx = p.x - p2.x;
+                const dy = p.y - p2.y;
+                const dSq = dx * dx + dy * dy;
+
+                if (dSq < maxConnDistSq) {
+                  const alpha = (1 - Math.sqrt(dSq) / maxConnDist) * 0.22;
+                  ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+                  ctx.lineWidth = 0.8;
+                  ctx.beginPath();
+                  ctx.moveTo(p.x, p.y);
+                  ctx.lineTo(p2.x, p2.y);
+                  ctx.stroke();
+                }
+              }
+            }
+          }
+        }
+
+        animFrameId = requestAnimationFrame(loop);
+      }
+
+      // Unconditional start of the animation loop!
+      animFrameId = requestAnimationFrame(loop);
+    }
+  }
+</script>
+
+<style>
+  .bg-viewport {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    background-color: var(--bg-main);
+  }
+
+  /* Distant ambient glow orbs */
+  .glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(140px);
+    opacity: 0.15;
+    pointer-events: none;
+    will-change: transform;
+    transition: transform 1.2s var(--ease-out);
+  }
+
+  .orb-cyan {
+    width: 650px;
+    height: 650px;
+    top: -150px;
+    right: -100px;
+    background: radial-gradient(circle, #00f2fe 0%, #3b82f6 70%, transparent 100%);
+  }
+
+  .orb-indigo {
+    width: 750px;
+    height: 750px;
+    bottom: -200px;
+    left: -150px;
+    background: radial-gradient(circle, #6366f1 0%, #8b5cf6 70%, transparent 100%);
+  }
+
+  .orb-purple {
+    width: 500px;
+    height: 500px;
+    top: 40%;
+    left: 45%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+    opacity: 0.08;
+  }
+
+  /* Interactive Canvas */
+  .interactive-lines-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Balanced vignette overlay allowing lines to remain clearly visible */
+  .bg-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 35%, transparent 45%, rgba(7, 9, 14, 0.6) 100%);
+    pointer-events: none;
+  }
+</style>

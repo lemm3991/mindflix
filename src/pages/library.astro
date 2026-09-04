@@ -1,0 +1,768 @@
+---
+// library.astro - Painel de Administração e Scanner da Biblioteca Mindflix
+import Layout from '../layouts/Layout.astro';
+import { getAllCourses, getCategories, getAllProviders } from '../lib/catalog';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const courses = getAllCourses();
+const categories = getCategories();
+const providers = getAllProviders();
+
+let summary = {
+  last_scan_at: new Date().toISOString(),
+  courses_root: "..",
+  total_courses: courses.length,
+  total_modules: courses.reduce((acc, c) => acc + c.modules_count, 0),
+  total_lessons: courses.reduce((acc, c) => acc + c.lessons_count, 0),
+  missing_courses: 0,
+  new_courses: 0
+};
+
+const summaryPath = path.resolve(process.cwd(), 'src', 'data', 'catalog_summary.json');
+if (fs.existsSync(summaryPath)) {
+  try {
+    summary = { ...summary, ...JSON.parse(fs.readFileSync(summaryPath, 'utf-8')) };
+  } catch {}
+}
+
+const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR', {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+});
+---
+
+<Layout title="Administração da Biblioteca — Mindflix">
+  <div class="container library-admin-page">
+    <header class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">Administração da Biblioteca</h1>
+        <p class="page-subtitle">Gerencie o scanner inteligente, visualize a estrutura física, audite alterações e edite metadados sem tocar nos arquivos originais.</p>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="btn btn-secondary" id="btn-dry-run-scan">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Escanear (Dry Run)</span>
+        </button>
+
+        <button type="button" class="btn btn-primary" id="btn-apply-scan">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+          </svg>
+          <span>Atualizar Biblioteca</span>
+        </button>
+
+        <a href="/api/library/backup" download="mindflix-catalog-backup.json" class="btn btn-ghost" title="Exportar Backup de Metadados">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Backup</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Stats Dashboard Grid -->
+    <div class="admin-stats-grid">
+      <div class="admin-stat-card">
+        <span class="stat-label">Pasta Raiz (COURSES_ROOT)</span>
+        <strong class="stat-val mono" title={summary.courses_root}>{summary.courses_root}</strong>
+        <span class="stat-hint">Definida dinamicamente via ambiente</span>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="stat-label">Última Varredura</span>
+        <strong class="stat-val">{formattedLastScan}</strong>
+        <span class="stat-hint">Sincronizado com catálogo local</span>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="stat-label">Acervo Total</span>
+        <strong class="stat-val accent-cyan">{summary.total_courses} Cursos</strong>
+        <span class="stat-hint">{summary.total_modules} módulos catalogados</span>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="stat-label">Total de Aulas</span>
+        <strong class="stat-val accent-emerald">{summary.total_lessons} Aulas</strong>
+        <span class="stat-hint">{summary.missing_courses > 0 ? `${summary.missing_courses} ausentes` : 'Todos os arquivos íntegros'}</span>
+      </div>
+    </div>
+
+    <!-- Courses Management Table -->
+    <section class="admin-section">
+      <div class="section-toolbar">
+        <div class="toolbar-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="filter-course-input" placeholder="Filtrar cursos por título, fornecedor ou pasta..." />
+        </div>
+
+        <div class="toolbar-filter">
+          <select id="filter-provider-select" class="form-select">
+            <option value="">Todos os Fornecedores</option>
+            {providers.map(p => (
+              <option value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div class="courses-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Curso</th>
+              <th>Fornecedor</th>
+              <th>Módulos / Aulas</th>
+              <th>Duração</th>
+              <th>Categorias</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="admin-courses-tbody">
+            {courses.map(course => (
+              <tr class="course-row-item" data-id={course.id} data-provider={course.provider} data-title={course.display_title.toLowerCase()} data-raw={course.raw_title.toLowerCase()}>
+                <td class="cell-title">
+                  <div class="course-meta-box">
+                    <strong class="course-display-name">{course.display_title}</strong>
+                    <span class="course-raw-path" title={course.relative_path}>{course.relative_path}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge badge-provider">{course.provider}</span>
+                </td>
+                <td>
+                  <span>{course.modules_count} mods • {course.lessons_count} aulas</span>
+                </td>
+                <td>
+                  <span class="text-muted">{course.total_duration_formatted || 'Calculado'}</span>
+                </td>
+                <td>
+                  <div class="cats-tags-cell">
+                    {course.categories.map(cat => (
+                      <span class="mini-chip">{cat}</span>
+                    ))}
+                  </div>
+                </td>
+                <td>
+                  {course.is_hidden ? (
+                    <span class="badge badge-warning">Oculto</span>
+                  ) : (
+                    <span class="badge badge-success">Ativo</span>
+                  )}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm btn-edit-course"
+                    data-course={JSON.stringify({
+                      id: course.id,
+                      display_title: course.display_title,
+                      description: course.description,
+                      provider: course.provider,
+                      categories: course.categories,
+                      tags: course.tags,
+                      is_hidden: course.is_hidden,
+                      is_featured: course.is_featured
+                    })}
+                  >
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Modal: Dry Run Report -->
+    <div id="dryrun-modal" class="admin-modal-backdrop" style="display: none;">
+      <div class="admin-modal-dialog">
+        <div class="modal-header">
+          <h2 class="modal-title" id="dryrun-modal-title">Relatório de Varredura (Dry Run)</h2>
+          <button type="button" class="btn-close-modal" id="btn-close-dryrun">×</button>
+        </div>
+        <div class="modal-body">
+          <pre id="dryrun-output" class="dryrun-code">Executando varredura na pasta raiz...</pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="btn-cancel-dryrun">Fechar</button>
+          <button type="button" class="btn btn-primary" id="btn-confirm-apply">Aplicar Alterações no Catálogo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Course Metadata Editor -->
+    <div id="edit-modal" class="admin-modal-backdrop" style="display: none;">
+      <div class="admin-modal-dialog modal-dialog-lg">
+        <div class="modal-header">
+          <h2 class="modal-title">Editar Metadados do Curso</h2>
+          <button type="button" class="btn-close-modal" id="btn-close-edit">×</button>
+        </div>
+        <form id="edit-course-form" class="modal-body form-grid">
+          <input type="hidden" id="edit-course-id" />
+
+          <div class="form-group full-width">
+            <label for="edit-display-title">Título de Exibição</label>
+            <input type="text" id="edit-display-title" class="form-input" required />
+            <span class="field-hint">O nome que aparecerá na Home, cards e player (não altera os arquivos no HD).</span>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-provider">Fornecedor / Produtor</label>
+            <input type="text" id="edit-provider" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="edit-tags">Tags (separadas por vírgula)</label>
+            <input type="text" id="edit-tags" class="form-input" />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="edit-description">Descrição do Curso</label>
+            <textarea id="edit-description" class="form-textarea" rows="3"></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Categorias</label>
+            <div class="categories-checkbox-grid">
+              {categories.map(cat => (
+                <label class="cat-checkbox-item">
+                  <input type="checkbox" name="edit-cat" value={cat.id} />
+                  <span>{cat.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div class="form-group full-width checkbox-row">
+            <label class="switch-label">
+              <input type="checkbox" id="edit-is-hidden" />
+              <span>Ocultar curso da biblioteca pública</span>
+            </label>
+            <label class="switch-label">
+              <input type="checkbox" id="edit-is-featured" />
+              <span>Destaque no Hero da Home</span>
+            </label>
+          </div>
+        </form>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="btn-cancel-edit">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-save-course-meta">Salvar Metadados</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { showToast } from '../lib/toast';
+
+  const btnDryRun = document.getElementById('btn-dry-run-scan');
+  const btnApply = document.getElementById('btn-apply-scan');
+  const dryRunModal = document.getElementById('dryrun-modal');
+  const dryRunOutput = document.getElementById('dryrun-output');
+  const btnCloseDryRun = document.getElementById('btn-close-dryrun');
+  const btnCancelDryRun = document.getElementById('btn-cancel-dryrun');
+  const btnConfirmApply = document.getElementById('btn-confirm-apply');
+
+  // Edit Course Modal Elements
+  const editModal = document.getElementById('edit-modal');
+  const btnCloseEdit = document.getElementById('btn-close-edit');
+  const btnCancelEdit = document.getElementById('btn-cancel-edit');
+  const btnSaveEdit = document.getElementById('btn-save-course-meta');
+  const editId = document.getElementById('edit-course-id') as HTMLInputElement | null;
+  const editTitle = document.getElementById('edit-display-title') as HTMLInputElement | null;
+  const editProvider = document.getElementById('edit-provider') as HTMLInputElement | null;
+  const editTags = document.getElementById('edit-tags') as HTMLInputElement | null;
+  const editDesc = document.getElementById('edit-description') as HTMLTextAreaElement | null;
+  const editHidden = document.getElementById('edit-is-hidden') as HTMLInputElement | null;
+  const editFeatured = document.getElementById('edit-is-featured') as HTMLInputElement | null;
+
+  // Filter Table
+  const filterInput = document.getElementById('filter-course-input') as HTMLInputElement | null;
+  const filterProvider = document.getElementById('filter-provider-select') as HTMLSelectElement | null;
+  const rows = Array.from(document.querySelectorAll<HTMLElement>('.course-row-item'));
+
+  function filterTable() {
+    const q = (filterInput?.value || '').toLowerCase().trim();
+    const p = filterProvider?.value || '';
+
+    rows.forEach(r => {
+      const title = r.getAttribute('data-title') || '';
+      const raw = r.getAttribute('data-raw') || '';
+      const provider = r.getAttribute('data-provider') || '';
+
+      const matchesQ = !q || title.includes(q) || raw.includes(q) || provider.toLowerCase().includes(q);
+      const matchesP = !p || provider === p;
+
+      r.style.display = matchesQ && matchesP ? '' : 'none';
+    });
+  }
+
+  filterInput?.addEventListener('input', filterTable);
+  filterProvider?.addEventListener('change', filterTable);
+
+  // Trigger Dry Run Scan
+  async function triggerScan(dryRun = true) {
+    if (dryRunModal && dryRunOutput) {
+      dryRunModal.style.display = 'flex';
+      dryRunOutput.textContent = 'Executando varredura na pasta raiz... Aguarde.';
+    }
+
+    try {
+      const res = await fetch('/api/library/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dry_run: dryRun })
+      });
+      const data = await res.json();
+
+      if (dryRunOutput) {
+        dryRunOutput.textContent = data.output || JSON.stringify(data.summary, null, 2);
+      }
+
+      if (!dryRun) {
+        showToast('Biblioteca atualizada com sucesso!', 'success');
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (err: any) {
+      if (dryRunOutput) dryRunOutput.textContent = `Erro ao executar varredura: ${err?.message || err}`;
+    }
+  }
+
+  btnDryRun?.addEventListener('click', () => triggerScan(true));
+  btnApply?.addEventListener('click', () => {
+    if (confirm('Deseja atualizar a biblioteca com os arquivos detectados? Seus metadados manuais e progresso serão 100% preservados.')) {
+      triggerScan(false);
+    }
+  });
+
+  btnConfirmApply?.addEventListener('click', () => {
+    dryRunModal && (dryRunModal.style.display = 'none');
+    triggerScan(false);
+  });
+
+  btnCloseDryRun?.addEventListener('click', () => dryRunModal && (dryRunModal.style.display = 'none'));
+  btnCancelDryRun?.addEventListener('click', () => dryRunModal && (dryRunModal.style.display = 'none'));
+
+  // Edit Course Modal Logic
+  document.querySelectorAll<HTMLButtonElement>('.btn-edit-course').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const raw = btn.getAttribute('data-course');
+      if (!raw || !editModal) return;
+      const c = JSON.parse(raw);
+
+      if (editId) editId.value = c.id;
+      if (editTitle) editTitle.value = c.display_title;
+      if (editProvider) editProvider.value = c.provider;
+      if (editTags) editTags.value = (c.tags || []).join(', ');
+      if (editDesc) editDesc.value = c.description;
+      if (editHidden) editHidden.checked = Boolean(c.is_hidden);
+      if (editFeatured) editFeatured.checked = Boolean(c.is_featured);
+
+      // Checkboxes
+      const catCheckboxes = document.querySelectorAll<HTMLInputElement>('input[name="edit-cat"]');
+      catCheckboxes.forEach(cb => {
+        cb.checked = (c.categories || []).includes(cb.value);
+      });
+
+      editModal.style.display = 'flex';
+    });
+  });
+
+  btnCloseEdit?.addEventListener('click', () => editModal && (editModal.style.display = 'none'));
+  btnCancelEdit?.addEventListener('click', () => editModal && (editModal.style.display = 'none'));
+
+  btnSaveEdit?.addEventListener('click', async () => {
+    const courseId = editId?.value;
+    if (!courseId) return;
+
+    const selectedCats = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="edit-cat"]:checked')).map(cb => cb.value);
+    const tagsArr = (editTags?.value || '').split(',').map(t => t.trim()).filter(Boolean);
+
+    try {
+      btnSaveEdit.textContent = 'Salvando...';
+      const res = await fetch('/api/library/update-course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId,
+          display_title: editTitle?.value,
+          provider: editProvider?.value,
+          description: editDesc?.value,
+          categories: selectedCats,
+          tags: tagsArr,
+          is_hidden: editHidden?.checked,
+          is_featured: editFeatured?.checked
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast('Metadados salvos com sucesso!', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showToast(data.error || 'Erro ao salvar metadados', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Erro de conexão', 'error');
+    } finally {
+      btnSaveEdit.textContent = 'Salvar Metadados';
+    }
+  });
+</script>
+
+<style>
+  .library-admin-page {
+    padding-top: 100px;
+    padding-bottom: 5rem;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .header-content {
+    max-width: 680px;
+  }
+
+  .page-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .admin-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .stat-val {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .stat-val.mono {
+    font-family: monospace;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stat-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .admin-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .section-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-search {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.85rem;
+    flex: 1;
+    min-width: 260px;
+    max-width: 440px;
+  }
+
+  .toolbar-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    width: 100%;
+  }
+
+  .courses-table-container {
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    text-align: left;
+  }
+
+  .admin-table th {
+    padding: 0.85rem 1rem;
+    background: rgba(11, 14, 20, 0.8);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .admin-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+  }
+
+  .admin-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .course-meta-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .course-display-name {
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+  }
+
+  .course-raw-path {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: monospace;
+  }
+
+  .badge-provider {
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(0, 242, 254, 0.2);
+  }
+
+  .cats-tags-cell {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .mini-chip {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-xs);
+    color: var(--text-muted);
+  }
+
+  .admin-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    z-index: var(--z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .admin-modal-dialog {
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-dialog-lg {
+    max-width: 720px;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .btn-close-modal {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+    max-height: 65vh;
+    overflow-y: auto;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(11, 14, 20, 0.5);
+  }
+
+  .dryrun-code {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #38bdf8;
+    white-space: pre-wrap;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+  }
+
+  .form-input, .form-textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.85rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    outline: none;
+  }
+
+  .form-input:focus, .form-textarea:focus {
+    border-color: var(--accent-cyan);
+  }
+
+  .field-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    display: block;
+  }
+
+  .categories-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .cat-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .checkbox-row {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .switch-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+</style>

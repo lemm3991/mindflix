@@ -1,0 +1,1175 @@
+---
+// categories.astro - Navegação por Categorias (Bento Grid com 3D Parallax & Spotlight Border)
+import Layout from '../layouts/Layout.astro';
+import { getCategories, getAllCourses } from '../lib/catalog';
+
+const rawCategories = getCategories();
+const allCourses = getAllCourses();
+
+// Category metadata: distinct icons, gradients, accents, groups, and layout tiers
+const categoryMeta: Record<string, {
+  accent: string;
+  accentSoft: string;
+  grad: string;
+  group: 'ia' | 'dev' | 'data' | 'other';
+  icon: string;
+  featured?: boolean;
+}> = {
+  'ia': {
+    accent: '#00f2fe',
+    accentSoft: 'rgba(0, 242, 254, 0.12)',
+    grad: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+    group: 'ia',
+    icon: 'sparkles',
+    featured: true
+  },
+  'automacao-agentes': {
+    accent: '#a855f7',
+    accentSoft: 'rgba(168, 85, 247, 0.12)',
+    grad: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    group: 'ia',
+    icon: 'bot'
+  },
+  'programacao-dev': {
+    accent: '#10b981',
+    accentSoft: 'rgba(16, 185, 129, 0.12)',
+    grad: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    group: 'dev',
+    icon: 'terminal'
+  },
+  'web-vibe-coding': {
+    accent: '#f43f5e',
+    accentSoft: 'rgba(244, 63, 94, 0.12)',
+    grad: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 100%)',
+    group: 'dev',
+    icon: 'layers'
+  },
+  'backend-infra': {
+    accent: '#f59e0b',
+    accentSoft: 'rgba(245, 158, 11, 0.12)',
+    grad: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+    group: 'dev',
+    icon: 'database'
+  },
+  'dados-datascience': {
+    accent: '#06b6d4',
+    accentSoft: 'rgba(6, 182, 212, 0.12)',
+    grad: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+    group: 'data',
+    icon: 'chart',
+    featured: true
+  },
+  'python': {
+    accent: '#eab308',
+    accentSoft: 'rgba(234, 179, 8, 0.12)',
+    grad: 'linear-gradient(135deg, #eab308 0%, #3b82f6 100%)',
+    group: 'dev',
+    icon: 'code'
+  },
+  'trading': {
+    accent: '#22c55e',
+    accentSoft: 'rgba(34, 197, 94, 0.12)',
+    grad: 'linear-gradient(135deg, #22c55e 0%, #10b981 100%)',
+    group: 'data',
+    icon: 'trending'
+  },
+  'negocios': {
+    accent: '#8b5cf6',
+    accentSoft: 'rgba(139, 92, 246, 0.12)',
+    grad: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
+    group: 'other',
+    icon: 'briefcase'
+  },
+  'saude-lifestyle': {
+    accent: '#fb7185',
+    accentSoft: 'rgba(251, 113, 133, 0.12)',
+    grad: 'linear-gradient(135deg, #fb7185 0%, #e11d48 100%)',
+    group: 'other',
+    icon: 'heart'
+  },
+  'musica': {
+    accent: '#d946ef',
+    accentSoft: 'rgba(217, 70, 239, 0.12)',
+    grad: 'linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%)',
+    group: 'other',
+    icon: 'music'
+  },
+  'formacoes-trilhas': {
+    accent: '#38bdf8',
+    accentSoft: 'rgba(56, 189, 248, 0.12)',
+    grad: 'linear-gradient(135deg, #38bdf8 0%, #6366f1 100%)',
+    group: 'other',
+    icon: 'compass'
+  }
+};
+
+const categories = rawCategories.map(cat => {
+  const catCourses = allCourses.filter(c => c.categories.includes(cat.id));
+  const count = catCourses.length;
+  const totalLessons = catCourses.reduce((acc, c) => acc + (c.lessons_count || 0), 0);
+  const sampleCourses = catCourses.slice(0, 4).map(c => c.display_title);
+  const meta = categoryMeta[cat.id] || {
+    accent: '#00f2fe',
+    accentSoft: 'rgba(0, 242, 254, 0.12)',
+    grad: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+    group: 'other',
+    icon: 'folder'
+  };
+
+  return {
+    ...cat,
+    count,
+    totalLessons,
+    sampleCourses,
+    ...meta
+  };
+});
+
+// Sort to place featured categories prominently
+const sortedCategories = [...categories].sort((a, b) => {
+  if (a.featured && !b.featured) return -1;
+  if (!a.featured && b.featured) return 1;
+  return b.count - a.count;
+});
+
+const totalCoursesCount = allCourses.length;
+const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count || 0), 0);
+---
+
+<Layout title="Categorias & Trilhas — Mindflix" description="Explore os cursos organizados por trilhas temáticas, tecnologias e áreas de conhecimento.">
+  <div class="container categories-page">
+    
+    <!-- Hero Header -->
+    <header class="page-header">
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        <span>Biblioteca Inteligente</span>
+      </div>
+      <h1 class="page-title">Explorar Categorias & Trilhas</h1>
+      <p class="page-subtitle">
+        Navegue pelas jornadas de conhecimento estruturadas para o seu aprendizado contínuo.
+      </p>
+
+      <!-- Global Stats Pills -->
+      <div class="header-stats">
+        <div class="stat-pill">
+          <span class="stat-number">{categories.length}</span>
+          <span class="stat-label">Trilhas</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-number">{totalCoursesCount}</span>
+          <span class="stat-label">Cursos</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-pill">
+          <span class="stat-number">+{totalLessonsCount.toLocaleString('pt-BR')}</span>
+          <span class="stat-label">Aulas Disponíveis</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filter & Search Controls -->
+    <div class="controls-bar">
+      <!-- Search input -->
+      <div class="search-box">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          id="category-search" 
+          placeholder="Buscar por nome, tecnologia ou curso..."
+          autocomplete="off"
+        />
+        <button id="clear-search" class="clear-btn" aria-label="Limpar busca" style="display: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Quick Group Tabs -->
+      <div class="filter-tabs" role="tablist">
+        <button class="filter-tab active" data-group="all">
+          <span>Todas</span>
+          <span class="tab-count">{categories.length}</span>
+        </button>
+        <button class="filter-tab" data-group="ia">
+          <span>IA & Agentes</span>
+        </button>
+        <button class="filter-tab" data-group="dev">
+          <span>Dev & Software</span>
+        </button>
+        <button class="filter-tab" data-group="data">
+          <span>Dados & Finanças</span>
+        </button>
+        <button class="filter-tab" data-group="other">
+          <span>Outras Áreas</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bento Grid Container -->
+    <div class="bento-grid" id="categories-bento-grid">
+      {sortedCategories.map(cat => (
+        <a 
+          href={`/category/${cat.id}`} 
+          class={`bento-cat-card ${cat.featured ? 'bento-featured' : ''}`}
+          data-cat-id={cat.id}
+          data-cat-group={cat.group}
+          data-search-content={`${cat.name} ${cat.description} ${cat.sampleCourses.join(' ')}`.toLowerCase()}
+          style={`--cat-accent: ${cat.accent}; --cat-accent-soft: ${cat.accentSoft}; --cat-grad: ${cat.grad};`}
+        >
+          <!-- Dynamic ambient spotlight inside card -->
+          <div class="cat-spotlight-bg"></div>
+
+          <!-- Card Content Wrapper (with 3D transform preserve) -->
+          <div class="cat-card-inner">
+            
+            <!-- Card Header -->
+            <div class="cat-card-header parallax-layer-2">
+              <div class="cat-icon-box" style={`background: ${cat.accentSoft}; border-color: ${cat.accent}40; color: ${cat.accent};`}>
+                {cat.icon === 'sparkles' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+                    <path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path>
+                  </svg>
+                )}
+                {cat.icon === 'bot' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+                    <circle cx="12" cy="5" r="2"></circle>
+                    <path d="M12 7v4"></path>
+                    <line x1="8" y1="16" x2="8" y2="16.01"></line>
+                    <line x1="16" y1="16" x2="16" y2="16.01"></line>
+                  </svg>
+                )}
+                {cat.icon === 'terminal' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="4 17 10 11 4 5"></polyline>
+                    <line x1="12" y1="19" x2="20" y2="19"></line>
+                  </svg>
+                )}
+                {cat.icon === 'layers' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                  </svg>
+                )}
+                {cat.icon === 'database' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                  </svg>
+                )}
+                {cat.icon === 'chart' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                )}
+                {cat.icon === 'code' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                  </svg>
+                )}
+                {cat.icon === 'trending' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                    <polyline points="17 6 23 6 23 12"></polyline>
+                  </svg>
+                )}
+                {cat.icon === 'briefcase' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                  </svg>
+                )}
+                {cat.icon === 'heart' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                )}
+                {cat.icon === 'music' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18V5l12-2v13"></path>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <circle cx="18" cy="16" r="3"></circle>
+                  </svg>
+                )}
+                {cat.icon === 'compass' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                  </svg>
+                )}
+                {cat.icon === 'folder' && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+                  </svg>
+                )}
+              </div>
+
+              <div class="cat-badges-wrapper">
+                {cat.featured && (
+                  <span class="badge-featured" style={`border-color: ${cat.accent}50; color: ${cat.accent};`}>
+                    ★ Trilha Principal
+                  </span>
+                )}
+                <span class="cat-count-pill">
+                  <strong>{cat.count}</strong> {cat.count === 1 ? 'curso' : 'cursos'}
+                </span>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="cat-card-body parallax-layer-1">
+              <h3 class="cat-title">{cat.name}</h3>
+              <p class="cat-desc">{cat.description}</p>
+            </div>
+
+            <!-- Sample Courses Chips / Topics Preview -->
+            {cat.sampleCourses.length > 0 && (
+              <div class="cat-sample-courses parallax-layer-1">
+                <span class="sample-label">Cursos em destaque:</span>
+                <div class="sample-chips">
+                  {cat.sampleCourses.map(courseTitle => (
+                    <span class="course-chip" title={courseTitle}>
+                      {courseTitle}
+                    </span>
+                  ))}
+                  {cat.count > cat.sampleCourses.length && (
+                    <span class="course-chip-more" style={`color: ${cat.accent};`}>
+                      +{cat.count - cat.sampleCourses.length} mais
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <!-- Card Footer -->
+            <div class="cat-card-footer parallax-layer-2">
+              <div class="footer-meta">
+                <span class="lessons-count">{cat.totalLessons} aulas gravadas</span>
+              </div>
+              <div class="cat-action-btn" style={`color: ${cat.accent};`}>
+                <span>Acessar trilha</span>
+                <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </div>
+            </div>
+
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <!-- Empty State for Search Filter -->
+    <div id="no-results-state" class="no-results" style="display: none;">
+      <div class="no-results-icon">🔍</div>
+      <h3>Nenhuma categoria encontrada</h3>
+      <p>Tente buscar por outro termo ou limpe os filtros para ver todas as trilhas.</p>
+      <button id="reset-filter-btn" class="btn btn-secondary">Limpar Busca</button>
+    </div>
+
+  </div>
+</Layout>
+
+<style>
+  .categories-page {
+    padding-top: 110px;
+    padding-bottom: 6rem;
+  }
+
+  /* --- Page Header --- */
+  .page-header {
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    background: rgba(0, 242, 254, 0.08);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    margin-bottom: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+    animation: pulseGlow 2s infinite ease-in-out;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    margin-bottom: 0.6rem;
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .page-subtitle {
+    font-size: 1.0625rem;
+    color: var(--text-secondary);
+    max-width: 680px;
+    line-height: 1.6;
+    margin-bottom: 1.75rem;
+  }
+
+  .header-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(18, 22, 32, 0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(12px);
+  }
+
+  .stat-pill {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .stat-number {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+
+  .stat-label {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--border-medium);
+  }
+
+  /* --- Controls & Filter Bar --- */
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 280px;
+    max-width: 420px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: color var(--motion-fast);
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 2.75rem;
+    background: rgba(18, 22, 32, 0.75);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-family: var(--font-body);
+    outline: none;
+    transition: all var(--motion-normal);
+  }
+
+  .search-box input:focus {
+    border-color: var(--border-focus);
+    background: rgba(22, 27, 39, 0.95);
+    box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.15);
+  }
+
+  .search-box input:focus ~ .search-icon {
+    color: var(--accent-cyan);
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+  }
+
+  .clear-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .filter-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .filter-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    background: rgba(18, 22, 32, 0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--motion-normal);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .filter-tab:hover {
+    color: var(--text-primary);
+    border-color: var(--border-medium);
+    background: rgba(26, 32, 46, 0.8);
+  }
+
+  .filter-tab.active {
+    background: rgba(0, 242, 254, 0.1);
+    border-color: rgba(0, 242, 254, 0.4);
+    color: var(--accent-cyan);
+    box-shadow: 0 2px 12px rgba(0, 242, 254, 0.15);
+  }
+
+  .tab-count {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+  }
+
+  .filter-tab.active .tab-count {
+    background: rgba(0, 242, 254, 0.2);
+    color: var(--accent-cyan);
+  }
+
+  /* --- Bento Grid --- */
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    perspective: 1200px; /* Enable 3D perspective for cards */
+  }
+
+  /* Featured Bento Card (Spans 2 columns on desktop) */
+  .bento-cat-card.bento-featured {
+    grid-column: span 2;
+  }
+
+  /* --- 3D Parallax & Spotlight Card Base --- */
+  .bento-cat-card {
+    position: relative;
+    background: #0d111a;
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 250px;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0);
+    transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.25s ease, background 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Border Spotlight Layer (Creates bright glowing border line tracking mouse) */
+  .bento-cat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px; /* Border line thickness */
+    background: radial-gradient(
+      320px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+      var(--cat-accent, #00f2fe) 0%,
+      rgba(255, 255, 255, 0.3) 30%,
+      transparent 75%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: 10;
+  }
+
+  .bento-cat-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Ambient radial spotlight background */
+  .cat-spotlight-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      450px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+      var(--cat-accent-soft, rgba(0, 242, 254, 0.12)) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+  }
+
+  .bento-cat-card:hover .cat-spotlight-bg {
+    opacity: 1;
+  }
+
+  .bento-cat-card:hover {
+    box-shadow: 0 20px 45px -12px rgba(0, 0, 0, 0.7), 0 0 25px -8px var(--cat-accent-soft);
+    background: #111622;
+  }
+
+  /* Inner Wrapper with 3D Depth Layers */
+  .cat-card-inner {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transform-style: preserve-3d;
+  }
+
+  .parallax-layer-1 {
+    transform: translateZ(15px);
+    transition: transform 0.15s ease-out;
+  }
+
+  .parallax-layer-2 {
+    transform: translateZ(28px);
+    transition: transform 0.15s ease-out;
+  }
+
+  /* --- Card Header --- */
+  .cat-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .cat-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    border: 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--motion-normal), box-shadow var(--motion-normal);
+  }
+
+  .bento-cat-card:hover .cat-icon-box {
+    transform: scale(1.08) translateZ(10px);
+    box-shadow: 0 8px 20px var(--cat-accent-soft);
+  }
+
+  .cat-badges-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .badge-featured {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.6rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid;
+    border-radius: var(--radius-full);
+  }
+
+  .cat-count-pill {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-full);
+  }
+
+  .cat-count-pill strong {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  /* --- Card Body --- */
+  .cat-card-body {
+    margin-bottom: 1.25rem;
+  }
+
+  .cat-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.45rem;
+    line-height: 1.3;
+    transition: color var(--motion-fast);
+  }
+
+  .bento-cat-card:hover .cat-title {
+    color: #ffffff;
+  }
+
+  .cat-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .bento-cat-card.bento-featured .cat-desc {
+    -webkit-line-clamp: 3;
+    font-size: 0.9375rem;
+  }
+
+  /* --- Sample Courses Chips --- */
+  .cat-sample-courses {
+    margin-top: auto;
+    margin-bottom: 1.25rem;
+    padding-top: 0.85rem;
+    border-top: 1px dashed rgba(255, 255, 255, 0.07);
+  }
+
+  .sample-label {
+    display: block;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .sample-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .course-chip {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-sm);
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all var(--motion-fast);
+  }
+
+  .bento-cat-card:hover .course-chip {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+  }
+
+  .course-chip-more {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.4rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* --- Card Footer --- */
+  .cat-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .lessons-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .cat-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition: gap var(--motion-normal);
+  }
+
+  .arrow-icon {
+    transition: transform var(--motion-normal);
+  }
+
+  .bento-cat-card:hover .arrow-icon {
+    transform: translateX(4px);
+  }
+
+  /* --- Empty State for search --- */
+  .no-results {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(18, 22, 32, 0.4);
+    border: 1px dashed var(--border-subtle);
+    border-radius: var(--radius-xl);
+    margin-top: 1.5rem;
+  }
+
+  .no-results-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .no-results h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .no-results p {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* --- Responsive Breakpoints --- */
+  @media (max-width: 1080px) {
+    .bento-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .bento-cat-card.bento-featured {
+      grid-column: span 2;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .bento-grid {
+      grid-template-columns: 1fr;
+    }
+    .bento-cat-card.bento-featured {
+      grid-column: span 1;
+    }
+    .page-title {
+      font-size: 2rem;
+    }
+    .controls-bar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .search-box {
+      max-width: 100%;
+    }
+  }
+</style>
+
+<script>
+  // --- Coordinated Multi-Card 3D Parallax & Dynamic Spotlight Border Engine ---
+  const cards = document.querySelectorAll<HTMLElement>('.bento-cat-card');
+  const isDesktop = window.matchMedia('(min-width: 640px)').matches;
+
+  interface CategoryParallaxItem {
+    card: HTMLElement;
+    currX: number;
+    currY: number;
+    targetX: number;
+    targetY: number;
+    isHovered: boolean;
+    isVisible: boolean;
+  }
+
+  const parallaxItems: CategoryParallaxItem[] = [];
+
+  const globalMouse = {
+    x: -9999,
+    y: -9999,
+    targetX: -9999,
+    targetY: -9999,
+    active: false
+  };
+
+  function handlePointer(clientX: number, clientY: number) {
+    globalMouse.targetX = clientX;
+    globalMouse.targetY = clientY;
+    if (!globalMouse.active) {
+      globalMouse.x = clientX;
+      globalMouse.y = clientY;
+      globalMouse.active = true;
+    }
+  }
+
+  window.addEventListener('pointermove', (e) => handlePointer(e.clientX, e.clientY), { passive: true });
+  window.addEventListener('mousemove', (e) => handlePointer(e.clientX, e.clientY), { passive: true });
+
+  document.addEventListener('mouseleave', () => {
+    globalMouse.active = false;
+    globalMouse.targetX = -9999;
+    globalMouse.targetY = -9999;
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const item = parallaxItems.find(p => p.card === entry.target);
+      if (item) item.isVisible = entry.isIntersecting;
+    });
+  }, { threshold: 0.05 });
+
+  cards.forEach(card => {
+    const item: CategoryParallaxItem = {
+      card,
+      currX: 0,
+      currY: 0,
+      targetX: 0,
+      targetY: 0,
+      isHovered: false,
+      isVisible: true
+    };
+    parallaxItems.push(item);
+    observer.observe(card);
+
+    card.addEventListener('mouseenter', (e) => {
+      item.isHovered = true;
+      const rect = card.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${mouseX}px`);
+      card.style.setProperty('--mouse-y', `${mouseY}px`);
+    });
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${mouseX}px`);
+      card.style.setProperty('--mouse-y', `${mouseY}px`);
+    });
+
+    card.addEventListener('mouseleave', () => {
+      item.isHovered = false;
+      card.style.setProperty('--mouse-x', '-999px');
+      card.style.setProperty('--mouse-y', '-999px');
+    });
+  });
+
+  let rafId: number;
+  let isTabVisible = true;
+
+  document.addEventListener('visibilitychange', () => {
+    isTabVisible = !document.hidden;
+    if (isTabVisible) {
+      rafId = requestAnimationFrame(updateCoordinatedParallax);
+    } else {
+      cancelAnimationFrame(rafId);
+    }
+  });
+
+  function updateCoordinatedParallax() {
+    if (!isTabVisible) return;
+
+    if (globalMouse.active) {
+      globalMouse.x += (globalMouse.targetX - globalMouse.x) * 0.16;
+      globalMouse.y += (globalMouse.targetY - globalMouse.y) * 0.16;
+    }
+
+    const screenW = window.innerWidth || 1920;
+    const screenH = window.innerHeight || 1080;
+
+    for (let i = 0; i < parallaxItems.length; i++) {
+      const item = parallaxItems[i];
+      if (!item.isVisible) continue;
+
+      if (globalMouse.active && isDesktop) {
+        if (item.isHovered) {
+          // O card sob o mouse fica estático (sem inclinação distorcida)
+          item.targetX = 0;
+          item.targetY = 0;
+        } else {
+          // Os outros cards rotacionam em direção ao mouse
+          const rect = item.card.getBoundingClientRect();
+          const cardCenterX = rect.left + rect.width / 2;
+          const cardCenterY = rect.top + rect.height / 2;
+
+          const dx = globalMouse.x - cardCenterX;
+          const dy = globalMouse.y - cardCenterY;
+
+          const normX = Math.max(-1.5, Math.min(1.5, dx / (screenW * 0.4)));
+          const normY = Math.max(-1.5, Math.min(1.5, dy / (screenH * 0.4)));
+
+          // Rotação suave e discreta:
+          item.targetY = normX * 2.2;  // rotateY suave em graus
+          item.targetX = -normY * 1.6; // rotateX suave em graus
+        }
+      } else {
+        item.targetX = 0;
+        item.targetY = 0;
+      }
+
+      const lerpFactor = item.isHovered ? 0.22 : 0.12;
+      item.currX += (item.targetX - item.currX) * lerpFactor;
+      item.currY += (item.targetY - item.currY) * lerpFactor;
+
+      const elevation = item.isHovered ? 'translateY(-4px) scale(1.015)' : 'translateY(0) scale(1)';
+      item.card.style.transform = `perspective(1200px) rotateX(${item.currX.toFixed(2)}deg) rotateY(${item.currY.toFixed(2)}deg) ${elevation}`;
+    }
+
+    rafId = requestAnimationFrame(updateCoordinatedParallax);
+  }
+
+  rafId = requestAnimationFrame(updateCoordinatedParallax);
+
+  // --- Real-time Search & Group Filter System ---
+  const searchInput = document.getElementById('category-search') as HTMLInputElement;
+  const clearBtn = document.getElementById('clear-search') as HTMLButtonElement;
+  const filterTabs = document.querySelectorAll<HTMLButtonElement>('.filter-tab');
+  const noResultsState = document.getElementById('no-results-state') as HTMLElement;
+  const resetFilterBtn = document.getElementById('reset-filter-btn') as HTMLButtonElement;
+
+  let currentGroup = 'all';
+  let searchQuery = '';
+
+  function normalize(str: string): string {
+    return (str || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  function applyFilters() {
+    let visibleCount = 0;
+    const query = normalize(searchQuery);
+
+    cards.forEach(card => {
+      const cardGroup = card.getAttribute('data-cat-group') || 'other';
+      const searchContent = normalize(card.getAttribute('data-search-content') || '');
+
+      const matchesGroup = currentGroup === 'all' || cardGroup === currentGroup;
+      const matchesSearch = !query || searchContent.includes(query);
+
+      if (matchesGroup && matchesSearch) {
+        card.style.display = 'flex';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (noResultsState) {
+      noResultsState.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+
+    if (clearBtn) {
+      clearBtn.style.display = searchQuery ? 'flex' : 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = (e.target as HTMLInputElement).value;
+      applyFilters();
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (searchInput) {
+        searchInput.value = '';
+        searchQuery = '';
+        applyFilters();
+        searchInput.focus();
+      }
+    });
+  }
+
+  filterTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      filterTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentGroup = tab.getAttribute('data-group') || 'all';
+      applyFilters();
+    });
+  });
+
+  if (resetFilterBtn) {
+    resetFilterBtn.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      searchQuery = '';
+      currentGroup = 'all';
+      filterTabs.forEach(t => {
+        if (t.getAttribute('data-group') === 'all') t.classList.add('active');
+        else t.classList.remove('active');
+      });
+      applyFilters();
+    });
+  }
+</script>

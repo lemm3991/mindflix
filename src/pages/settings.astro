@@ -1,0 +1,369 @@
+---
+// settings.astro - Painel de Preferências
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Preferências — Mindflix">
+  <div class="container settings-page">
+    <header class="page-header">
+      <h1 class="page-title">Configurações & Preferências</h1>
+      <p class="page-subtitle">Personalize a sua experiência de estudo, reprodução de vídeo e interface visual.</p>
+    </header>
+
+    <div class="settings-sections-wrapper">
+      <!-- Playback Preferences -->
+      <section class="settings-card">
+        <h2 class="card-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+          </svg>
+          <span>Preferências de Reprodução</span>
+        </h2>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <span class="setting-name">Velocidade Padrão do Player</span>
+            <span class="setting-hint">Define a velocidade com que todos os vídeos serão abertos inicialmente.</span>
+          </div>
+          <div class="setting-control">
+            <select id="pref-speed" class="form-select">
+              <option value="0.75">0.75x</option>
+              <option value="1.0" selected>1.0x (Normal)</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="1.75">1.75x</option>
+              <option value="2.0">2.0x</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <span class="setting-name">Autoplay da Próxima Aula</span>
+            <span class="setting-hint">Ao terminar o vídeo da aula atual, abre e reproduz a próxima aula automaticamente.</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="pref-autoplay" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <span class="setting-name">Retomar Aulas Automaticamente</span>
+            <span class="setting-hint">Ao abrir uma aula já iniciada, salta direto para o último segundo salvo sem perguntar.</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="pref-auto-resume" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <span class="setting-name">Prévia Automática nos Cards</span>
+            <span class="setting-hint">Permite reproduzir prévia de introdução ao passar o mouse sobre o card (preparado para Etapa 2).</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="pref-auto-preview" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visual Preferences -->
+      <section class="settings-card">
+        <h2 class="card-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+          </svg>
+          <span>Preferências Visuais & Efeitos</span>
+        </h2>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <span class="setting-name">Efeito Parallax</span>
+            <span class="setting-hint">Camadas de profundidade discretas ao movimentar o mouse e rolar a página.</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="pref-parallax" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <span class="setting-name">Background Interativo</span>
+            <span class="setting-hint">Orbes de iluminação dinâmica e malha tecnológica no fundo da página.</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="pref-interactive-bg" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <span class="setting-name">Reduzir Animações</span>
+            <span class="setting-hint">Desativa transições e movimentos para maior sobriedade ou acessibilidade.</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="pref-reduce-motion" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI & RAG Preferences -->
+      <section class="settings-card">
+        <h2 class="card-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-2h2zm0-4h-2V7h2z"></path>
+          </svg>
+          <span>Inteligência Artificial & Busca no Acervo</span>
+        </h2>
+
+        <div class="setting-row">
+          <div class="setting-text">
+            <span class="setting-name">Chave da API Google Gemini (Opcional)</span>
+            <span class="setting-hint">Habilita síntese contextual em linguagem natural das mais de 2.400 transcrições do acervo. Se não configurado, o Mindflix utiliza o motor local integrado de ranqueamento e análise semântica.</span>
+          </div>
+          <div class="setting-control" style="width: 280px;">
+            <input
+              type="password"
+              id="pref-gemini-key"
+              class="form-input"
+              placeholder="AIzaSy... (Opcional)"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+      </section>
+
+      <div class="save-status-box" id="save-status-box" style="display: none;">
+        <span>Preferências salvas com sucesso!</span>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { getUserPreferences, saveUserPreferences } from '../lib/progress';
+  import { getLocalUser } from '../lib/supabase';
+
+  const user = getLocalUser();
+  if (!user) {
+    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+  }
+
+  const speed = document.getElementById('pref-speed') as HTMLSelectElement | null;
+  const autoplay = document.getElementById('pref-autoplay') as HTMLInputElement | null;
+  const autoResume = document.getElementById('pref-auto-resume') as HTMLInputElement | null;
+  const autoPreview = document.getElementById('pref-auto-preview') as HTMLInputElement | null;
+  const parallax = document.getElementById('pref-parallax') as HTMLInputElement | null;
+  const interactiveBg = document.getElementById('pref-interactive-bg') as HTMLInputElement | null;
+  const reduceMotion = document.getElementById('pref-reduce-motion') as HTMLInputElement | null;
+  const geminiKey = document.getElementById('pref-gemini-key') as HTMLInputElement | null;
+  const statusBox = document.getElementById('save-status-box');
+
+  const prefs = getUserPreferences();
+
+  if (speed) speed.value = prefs.playback_speed.toString();
+  if (autoplay) autoplay.checked = prefs.autoplay_next;
+  if (autoResume) autoResume.checked = prefs.auto_resume;
+  if (autoPreview) autoPreview.checked = prefs.auto_preview;
+  if (parallax) parallax.checked = prefs.parallax_enabled;
+  if (interactiveBg) interactiveBg.checked = prefs.interactive_bg_enabled;
+  if (reduceMotion) reduceMotion.checked = prefs.reduce_motion;
+  if (geminiKey) geminiKey.value = prefs.gemini_api_key || '';
+
+  const showSaved = () => {
+    if (statusBox) {
+      statusBox.style.display = 'block';
+      setTimeout(() => { statusBox.style.display = 'none'; }, 2000);
+    }
+  };
+
+  const handleUpdate = () => {
+    saveUserPreferences({
+      playback_speed: parseFloat(speed?.value || '1.0'),
+      autoplay_next: autoplay?.checked ?? true,
+      auto_resume: autoResume?.checked ?? true,
+      auto_preview: autoPreview?.checked ?? false,
+      parallax_enabled: parallax?.checked ?? true,
+      interactive_bg_enabled: interactiveBg?.checked ?? true,
+      reduce_motion: reduceMotion?.checked ?? false,
+      gemini_api_key: geminiKey?.value.trim() || ''
+    });
+    showSaved();
+  };
+
+  speed?.addEventListener('change', handleUpdate);
+  autoplay?.addEventListener('change', handleUpdate);
+  autoResume?.addEventListener('change', handleUpdate);
+  autoPreview?.addEventListener('change', handleUpdate);
+  parallax?.addEventListener('change', handleUpdate);
+  interactiveBg?.addEventListener('change', handleUpdate);
+  reduceMotion?.addEventListener('change', handleUpdate);
+  geminiKey?.addEventListener('change', handleUpdate);
+</script>
+
+<style>
+  .settings-page {
+    padding-top: 110px;
+    padding-bottom: 5rem;
+    max-width: 860px;
+  }
+
+  .page-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .page-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-subtitle {
+    font-size: 1.0625rem;
+    color: var(--text-secondary);
+  }
+
+  .settings-sections-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .settings-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .card-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+  }
+
+  .card-section-title svg {
+    color: var(--accent-cyan);
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .setting-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .setting-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .setting-hint {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .form-select {
+    height: 40px;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Modern iOS-style toggle switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.12);
+    transition: var(--transition-fast);
+    border-radius: var(--radius-full);
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: var(--transition-fast);
+    border-radius: 50%;
+  }
+
+  input:checked + .slider {
+    background-color: var(--accent-cyan);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(22px);
+    background-color: #0b0d13;
+  }
+
+  .save-status-box {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: var(--accent-emerald);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    animation: fadeIn 0.2s ease;
+  }
+</style>

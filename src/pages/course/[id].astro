@@ -1,0 +1,18 @@
+---
+// course/[id].astro - Redirecionamento Automático para o Player
+import { getCourseById } from '../../lib/catalog';
+
+const { id } = Astro.params;
+const course = id ? getCourseById(id) : undefined;
+
+if (!course) {
+  return Astro.redirect('/courses');
+}
+
+const firstLesson = course.modules[0]?.lessons[0];
+const targetUrl = firstLesson 
+  ? `/watch/${course.id}/${firstLesson.id}` 
+  : `/courses`;
+
+return Astro.redirect(targetUrl);
+---

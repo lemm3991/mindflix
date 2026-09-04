@@ -1,0 +1,1092 @@
+---
+// CommandPalette.astro - Global Raycast / Linear style Command Palette with Type Filters & AI Transcript RAG Search
+import { getAllCourses } from '../lib/catalog';
+
+const allCourses = getAllCourses();
+
+// Build flat search index of courses, modules, lessons, providers, and tags
+const searchIndex: any[] = [];
+
+allCourses.forEach(c => {
+  const firstLessonId = c.modules[0]?.lessons[0]?.id;
+  // Course entry
+  searchIndex.push({
+    type: 'course',
+    title: c.display_title,
+    subtitle: `${c.provider} • ${c.lessons_count} aulas`,
+    url: '#',
+    courseId: c.id,
+    category: 'Cursos',
+    icon: 'book'
+  });
+
+  // Modules entry
+  c.modules.forEach(m => {
+    const modFirstLessonId = m.lessons[0]?.id || firstLessonId;
+    searchIndex.push({
+      type: 'module',
+      title: m.display_title,
+      subtitle: `Módulo em: ${c.display_title}`,
+      url: modFirstLessonId ? `/watch/${c.id}/${modFirstLessonId}` : `/courses`,
+      courseId: c.id,
+      category: 'Módulos',
+      icon: 'folder'
+    });
+
+    // All lessons in module
+    m.lessons.forEach(l => {
+      searchIndex.push({
+        type: 'lesson',
+        title: l.display_title,
+        subtitle: `Aula em: ${c.display_title} • ${m.display_title}`,
+        url: `/watch/${c.id}/${l.id}`,
+        courseId: c.id,
+        category: 'Aulas',
+        icon: 'play'
+      });
+    });
+  });
+});
+---
+
+<div id="cmd-palette-backdrop" class="cmd-palette-backdrop" style="display: none;" aria-hidden="true">
+  <div class="cmd-palette-dialog" role="dialog" aria-modal="true" aria-label="Busca Global">
+    
+    <!-- Header / Input -->
+    <div class="cmd-input-row">
+      <svg class="cmd-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        id="cmd-palette-input"
+        class="cmd-input"
+        placeholder="Buscar cursos, aulas, módulos, tags... (↑ ↓ para navegar)"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button type="button" id="cmd-ai-search-btn" class="cmd-action-ai-btn" style="display: none;">
+        <span>Analisar com IA</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+      <span class="cmd-kbd-esc">ESC</span>
+    </div>
+
+    <!-- Type Filters Tabs Bar (Curso, Módulo, Aulas & IA) -->
+    <div class="cmd-filters-bar" id="cmd-filters-bar">
+      <button type="button" class="cmd-filter-tab active" data-type="all">Todos</button>
+      <button type="button" class="cmd-filter-tab" data-type="course">Cursos</button>
+      <button type="button" class="cmd-filter-tab" data-type="module">Módulos</button>
+      <button type="button" class="cmd-filter-tab" data-type="lesson">Aulas</button>
+      <button type="button" class="cmd-filter-tab cmd-filter-ai" data-type="ai">
+        <span class="ai-sparkle">✦</span> Buscar por Assunto (IA)
+      </button>
+    </div>
+
+    <!-- Results Area -->
+    <div class="cmd-results-wrapper" id="cmd-results-list">
+      <!-- Populated via script -->
+    </div>
+
+    <!-- Footer Hints -->
+    <div class="cmd-palette-footer">
+      <span class="cmd-hint" id="cmd-hint-nav"><kbd>↑</kbd> <kbd>↓</kbd> Navegar</span>
+      <span class="cmd-hint" id="cmd-hint-select"><kbd>↵</kbd> <span id="cmd-hint-action-text">Selecionar</span></span>
+      <span class="cmd-hint"><kbd>ESC</kbd> Fechar</span>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ searchIndex }}>
+  const backdrop = document.getElementById('cmd-palette-backdrop');
+  const input = document.getElementById('cmd-palette-input');
+  const resultsContainer = document.getElementById('cmd-results-list');
+  const aiSearchBtn = document.getElementById('cmd-ai-search-btn');
+  const filterTabs = document.querySelectorAll('.cmd-filter-tab');
+  const hintActionText = document.getElementById('cmd-hint-action-text');
+
+  let activeIndex = -1;
+  let currentResults = [];
+  let currentFilter = 'all'; // 'all' | 'course' | 'module' | 'lesson' | 'ai'
+  let isAiSearching = false;
+  let lastAiQuery = '';
+
+  const norm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+  function openPalette(initialFilter = 'all', initialQuery = '') {
+    if (!backdrop || !input) return;
+    backdrop.style.display = 'flex';
+    backdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    if (initialQuery) {
+      input.value = initialQuery;
+    }
+    
+    setFilter(initialFilter, false);
+
+    if (initialFilter === 'ai' && initialQuery.trim()) {
+      runAiSearch(initialQuery.trim());
+    } else {
+      renderResults(input.value);
+    }
+
+    setTimeout(() => input.focus(), 50);
+  }
+
+  function closePalette() {
+    if (!backdrop) return;
+    backdrop.classList.remove('active');
+    document.body.style.overflow = '';
+    setTimeout(() => {
+      backdrop.style.display = 'none';
+    }, 150);
+  }
+
+  function setFilter(type, shouldRender = true) {
+    currentFilter = type;
+    filterTabs.forEach(tab => {
+      if (tab.getAttribute('data-type') === type) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    if (type === 'ai') {
+      input.placeholder = "Pergunte sobre qualquer assunto no acervo (ex: 'prompt para criar imagem?')...";
+      if (aiSearchBtn) aiSearchBtn.style.display = 'flex';
+      if (hintActionText) hintActionText.textContent = 'Pesquisar com IA';
+      if (shouldRender) {
+        if (input.value.trim().length >= 3) {
+          runAiSearch(input.value.trim());
+        } else {
+          renderAiWelcome();
+        }
+      }
+    } else {
+      if (aiSearchBtn) aiSearchBtn.style.display = 'none';
+      if (hintActionText) hintActionText.textContent = 'Selecionar';
+
+      if (type === 'course') input.placeholder = "Filtrar por nome do curso ou fornecedor...";
+      else if (type === 'module') input.placeholder = "Filtrar módulos da biblioteca...";
+      else if (type === 'lesson') input.placeholder = "Buscar aulas específicas no catálogo...";
+      else input.placeholder = "Buscar cursos, aulas, módulos, tags... (↑ ↓ para navegar)";
+
+      if (shouldRender) renderResults(input.value);
+    }
+  }
+
+  filterTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const type = tab.getAttribute('data-type') || 'all';
+      setFilter(type, true);
+    });
+  });
+
+  // Keyboard shortcut Ctrl+K / Cmd+K
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      if (backdrop?.style.display === 'flex') {
+        closePalette();
+      } else {
+        openPalette('all', '');
+      }
+    } else if (e.key === 'Escape' && backdrop?.style.display === 'flex') {
+      closePalette();
+    }
+  });
+
+  // External open trigger (e.g. from navbar or searchbar)
+  window.addEventListener('mindflix:open-search', (e) => {
+    const detail = e.detail || {};
+    openPalette(detail.type || 'all', detail.query || '');
+  });
+
+  // Close on backdrop click outside dialog
+  backdrop?.addEventListener('click', (e) => {
+    if (e.target === backdrop) {
+      closePalette();
+    }
+  });
+
+  // Render AI Welcome prompt when user enters AI mode without query
+  function renderAiWelcome() {
+    if (!resultsContainer) return;
+    resultsContainer.innerHTML = `
+      <div class="cmd-ai-welcome">
+        <div class="ai-welcome-glow">✦</div>
+        <h3>Busca Inteligente por Assunto nas Transcrições</h3>
+        <p>A IA varre as transcrições das mais de 2.400 aulas e artigos do acervo para responder onde o tema é ensinado, citando trechos exatos e marcas de tempo.</p>
+        <div class="ai-suggested-pills">
+          <span class="ai-pill-label">Exemplos populares:</span>
+          <button type="button" class="ai-sample-pill" data-query="prompt para criar imagem">"prompt para criar imagem"</button>
+          <button type="button" class="ai-sample-pill" data-query="como criar agentes no n8n">"como criar agentes no n8n"</button>
+          <button type="button" class="ai-sample-pill" data-query="leilão de carros judiciais">"leilão de carros judiciais"</button>
+          <button type="button" class="ai-sample-pill" data-query="backtesting dados historicos">"backtesting com python"</button>
+        </div>
+      </div>
+    `;
+
+    resultsContainer.querySelectorAll('.ai-sample-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const q = btn.getAttribute('data-query') || '';
+        input.value = q;
+        runAiSearch(q);
+      });
+    });
+  }
+
+  // Execute RAG Search over /api/search/ai
+  async function runAiSearch(query) {
+    if (!query || isAiSearching || !resultsContainer) return;
+    isAiSearching = true;
+    lastAiQuery = query;
+
+    resultsContainer.innerHTML = `
+      <div class="cmd-ai-loading">
+        <div class="ai-pulse-orb"></div>
+        <h4 class="ai-loading-title">Analisando mais de 2.400 transcrições do acervo...</h4>
+        <p class="ai-loading-desc">Cruzando aulas, trechos comentados e sintetizando os melhores pontos de estudo para "${query}"</p>
+      </div>
+    `;
+
+    try {
+      // Check for user-configured gemini key in localStorage
+      let apiKey = '';
+      try {
+        const prefs = JSON.parse(localStorage.getItem('mindflix_preferences') || '{}');
+        apiKey = prefs.gemini_api_key || '';
+      } catch {}
+
+      const res = await fetch('/api/search/ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey ? { 'x-gemini-api-key': apiKey } : {})
+        },
+        body: JSON.stringify({ query, apiKey })
+      });
+
+      if (!res.ok) throw new Error('Falha na resposta do servidor.');
+      const data = await res.json();
+      renderAiResults(data);
+    } catch (err) {
+      resultsContainer.innerHTML = `
+        <div class="cmd-empty">
+          <p>Ocorreu um erro ao consultar o acervo com IA: ${err.message || 'Erro desconhecido'}</p>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-ai" style="margin-top: 1rem;">Tentar Novamente</button>
+        </div>
+      `;
+      document.getElementById('btn-retry-ai')?.addEventListener('click', () => runAiSearch(query));
+    } finally {
+      isAiSearching = false;
+    }
+  }
+
+  // Format AI summary markdown to HTML
+  function formatSummaryHtml(text) {
+    if (!text) return '';
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+  }
+
+  // Highlight keywords in snippet
+  function highlightSnippet(snippet, keywords) {
+    if (!keywords || keywords.length === 0) return snippet;
+    let text = snippet;
+    keywords.forEach(kw => {
+      if (kw.length >= 3) {
+        const regex = new RegExp(`(${kw})`, 'gi');
+        text = text.replace(regex, '<mark class="ai-term-mark">$1</mark>');
+      }
+    });
+    return text;
+  }
+
+  // Render AI Results Section
+  function renderAiResults(data) {
+    if (!resultsContainer) return;
+    const { query, summary, matches, totalMatches, searchTimeMs, hasGeminiKey } = data;
+
+    if (!matches || matches.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="cmd-empty">
+          <p>Nenhuma menção direta ao tema "<strong>${query}</strong>" foi encontrada nas transcrições.</p>
+          <p style="font-size: 0.8125rem; margin-top: 0.5rem; color: var(--text-muted);">Tente buscar por termos sinônimos ou conceitos relacionados.</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <div class="ai-results-wrapper">
+        <!-- AI Synthesis Card -->
+        <div class="ai-summary-card">
+          <div class="ai-summary-header">
+            <div class="ai-badge-group">
+              <span class="ai-sparkle-badge">✦ Análise Inteligente do Acervo</span>
+              <span class="ai-mode-tag">${hasGeminiKey ? 'Gemini 2.5' : 'Motor RAG Local'}</span>
+            </div>
+            <span class="ai-meta-time">${totalMatches} referências em ${searchTimeMs}ms</span>
+          </div>
+          <div class="ai-summary-body">
+            ${formatSummaryHtml(summary)}
+          </div>
+        </div>
+
+        <!-- Matching Lessons Header -->
+        <div class="ai-matches-header">
+          <span class="ai-matches-title">Aulas Recomendadas no Acervo</span>
+          <span class="ai-matches-count">${matches.length} principais aulas encontradas</span>
+        </div>
+
+        <!-- Lessons Cards List -->
+        <div class="ai-matches-list">
+    `;
+
+    matches.forEach(m => {
+      html += `
+        <div class="ai-match-card">
+          <div class="ai-match-top">
+            <div class="ai-match-tags">
+              <span class="ai-course-tag">${m.courseTitle}</span>
+              <span class="ai-tag-sep">•</span>
+              <span class="ai-module-tag">${m.moduleTitle}</span>
+            </div>
+            ${m.timestamp ? `<span class="ai-timestamp-pill">⏱ ${m.timestamp}</span>` : ''}
+          </div>
+
+          <h4 class="ai-match-title">${m.lessonTitle}</h4>
+
+          <div class="ai-match-snippet">
+            <p>"${highlightSnippet(m.snippet, m.highlightWords)}"</p>
+          </div>
+
+          <div class="ai-match-footer">
+            <a href="${m.watchUrl}" class="ai-watch-link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Assistir Aula no Player</span>
+            </a>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    resultsContainer.innerHTML = html;
+  }
+
+  // Standard Metadata Search Rendering
+  function renderResults(query) {
+    if (!resultsContainer) return;
+    const q = norm(query);
+
+    let filtered = searchIndex;
+    if (currentFilter !== 'all') {
+      filtered = searchIndex.filter(item => item.type === currentFilter);
+    }
+
+    if (!q) {
+      currentResults = filtered.slice(0, 12);
+    } else {
+      currentResults = filtered
+        .filter(item => norm(item.title).includes(q) || norm(item.subtitle).includes(q))
+        .slice(0, 16);
+    }
+
+    activeIndex = currentResults.length > 0 ? 0 : -1;
+
+    if (currentResults.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="cmd-empty">
+          <p>Nenhum resultado encontrado para "<strong>${query}</strong>"</p>
+          <p style="font-size: 0.8125rem; margin-top: 0.5rem;">Dica: experimente a aba <strong>✦ Buscar por Assunto (IA)</strong> para pesquisar nas transcrições!</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    currentResults.forEach((item, idx) => {
+      const isSelected = idx === activeIndex ? 'selected' : '';
+      html += `
+        <a href="${item.url}" class="cmd-result-item ${isSelected}" data-index="${idx}">
+          <div class="cmd-item-left">
+            <span class="cmd-badge-type">${item.category}</span>
+            <div class="cmd-item-titles">
+              <strong class="cmd-item-title">${item.title}</strong>
+              <span class="cmd-item-subtitle">${item.subtitle}</span>
+            </div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      `;
+    });
+
+    resultsContainer.innerHTML = html;
+  }
+
+  input?.addEventListener('input', () => {
+    if (currentFilter === 'ai') {
+      // In AI mode, typing can suggest sample queries or user can press Enter
+      if (!input.value.trim()) {
+        renderAiWelcome();
+      }
+    } else {
+      renderResults(input.value);
+    }
+  });
+
+  aiSearchBtn?.addEventListener('click', () => {
+    if (input.value.trim()) {
+      runAiSearch(input.value.trim());
+    }
+  });
+
+  function executeItem(item: any) {
+    if (!item) return;
+    if (item.type === 'course' && item.courseId) {
+      closePalette();
+      if ((window as any).openCourseModal) {
+        (window as any).openCourseModal(item.courseId);
+      } else {
+        document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId: item.courseId } }));
+      }
+    } else if (item.url && item.url !== '#') {
+      window.location.href = item.url;
+    }
+  }
+
+  resultsContainer?.addEventListener('click', (e) => {
+    const link = (e.target as HTMLElement).closest('.cmd-result-item');
+    if (link) {
+      const idx = parseInt(link.getAttribute('data-index') || '-1', 10);
+      if (idx >= 0 && currentResults[idx]) {
+        e.preventDefault();
+        executeItem(currentResults[idx]);
+      }
+    }
+  });
+
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (currentFilter === 'ai') {
+        if (input.value.trim()) {
+          runAiSearch(input.value.trim());
+        }
+      } else {
+        if (activeIndex >= 0 && activeIndex < currentResults.length) {
+          executeItem(currentResults[activeIndex]);
+        }
+      }
+    } else if (currentFilter !== 'ai') {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (currentResults.length > 0) {
+          activeIndex = (activeIndex + 1) % currentResults.length;
+          updateSelectedUI();
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentResults.length > 0) {
+          activeIndex = (activeIndex - 1 + currentResults.length) % currentResults.length;
+          updateSelectedUI();
+        }
+      }
+    }
+  });
+
+  function updateSelectedUI() {
+    const items = resultsContainer?.querySelectorAll('.cmd-result-item');
+    items?.forEach((el, idx) => {
+      if (idx === activeIndex) {
+        el.classList.add('selected');
+        el.scrollIntoView({ block: 'nearest' });
+      } else {
+        el.classList.remove('selected');
+      }
+    });
+  }
+</script>
+
+<style>
+  .cmd-palette-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    background: rgba(5, 7, 11, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 10vh;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-bottom: 2rem;
+    opacity: 0;
+    transition: opacity var(--motion-fast) var(--ease-out);
+  }
+
+  .cmd-palette-backdrop.active {
+    opacity: 1;
+  }
+
+  .cmd-palette-dialog {
+    width: 100%;
+    max-width: 680px;
+    max-height: 82vh;
+    background: rgba(18, 22, 32, 0.96);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.96);
+    transition: transform var(--motion-normal) var(--ease-spring);
+  }
+
+  .cmd-palette-backdrop.active .cmd-palette-dialog {
+    transform: scale(1);
+  }
+
+  /* Input Row */
+  .cmd-input-row {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+    gap: 0.75rem;
+  }
+
+  .cmd-search-icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .cmd-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 1.0625rem;
+  }
+
+  .cmd-input::placeholder {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+  }
+
+  .cmd-action-ai-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    border: none;
+    color: #07090e;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: opacity var(--motion-fast) ease, transform var(--motion-fast) ease;
+    white-space: nowrap;
+  }
+
+  .cmd-action-ai-btn:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+  }
+
+  .cmd-kbd-esc {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.45rem;
+    border-radius: var(--radius-xs);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+  }
+
+  /* Type Filter Tabs Bar */
+  .cmd-filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    background: rgba(14, 18, 27, 0.9);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+  }
+
+  .cmd-filter-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-size: 0.78125rem;
+    font-weight: 600;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--motion-fast) ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .cmd-filter-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+  }
+
+  .cmd-filter-tab.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .cmd-filter-tab.cmd-filter-ai {
+    color: var(--accent-cyan);
+    border-color: rgba(0, 242, 254, 0.2);
+    background: rgba(0, 242, 254, 0.04);
+  }
+
+  .cmd-filter-tab.cmd-filter-ai:hover {
+    background: rgba(0, 242, 254, 0.1);
+    border-color: rgba(0, 242, 254, 0.35);
+  }
+
+  .cmd-filter-tab.cmd-filter-ai.active {
+    background: rgba(0, 242, 254, 0.18);
+    border-color: var(--accent-cyan);
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+  }
+
+  .ai-sparkle {
+    font-size: 0.85rem;
+    color: var(--accent-cyan);
+  }
+
+  /* Results Wrapper */
+  .cmd-results-wrapper {
+    flex: 1;
+    max-height: 480px;
+    overflow-y: auto;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  :global(.cmd-result-item) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
+  }
+
+  :global(.cmd-result-item:hover),
+  :global(.cmd-result-item.selected) {
+    background: rgba(0, 242, 254, 0.1);
+    color: #ffffff;
+  }
+
+  :global(.cmd-result-item.selected .cmd-item-title) {
+    color: var(--accent-cyan);
+  }
+
+  :global(.cmd-item-left) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  :global(.cmd-badge-type) {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-xs);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  :global(.cmd-item-titles) {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.15rem;
+  }
+
+  :global(.cmd-item-title) {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global(.cmd-item-subtitle) {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global(.cmd-empty) {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+  }
+
+  /* AI Welcome View */
+  :global(.cmd-ai-welcome) {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  :global(.ai-welcome-glow) {
+    font-size: 2.2rem;
+    color: var(--accent-cyan);
+    margin-bottom: 0.75rem;
+    text-shadow: 0 0 24px rgba(0, 242, 254, 0.5);
+  }
+
+  :global(.cmd-ai-welcome h3) {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.cmd-ai-welcome p) {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    max-width: 480px;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+
+  :global(.ai-suggested-pills) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  :global(.ai-pill-label) {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+
+  :global(.ai-sample-pill) {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--accent-cyan);
+    font-size: 0.78125rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--motion-fast) ease;
+  }
+
+  :global(.ai-sample-pill:hover) {
+    background: rgba(0, 242, 254, 0.12);
+    border-color: rgba(0, 242, 254, 0.3);
+    transform: translateY(-1px);
+  }
+
+  /* AI Loading State */
+  :global(.cmd-ai-loading) {
+    padding: 3rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  :global(.ai-pulse-orb) {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #00f2fe 0%, #6366f1 70%, transparent 100%);
+    box-shadow: 0 0 24px rgba(0, 242, 254, 0.6);
+    animation: aiPulse 1.4s ease-in-out infinite alternate;
+    margin-bottom: 1.25rem;
+  }
+
+  @keyframes aiPulse {
+    0% { transform: scale(0.85); opacity: 0.6; }
+    100% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 16px #00f2fe); }
+  }
+
+  :global(.ai-loading-title) {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+  }
+
+  :global(.ai-loading-desc) {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    max-width: 420px;
+    line-height: 1.4;
+  }
+
+  /* AI Results View */
+  :global(.ai-results-wrapper) {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem 0.25rem;
+  }
+
+  :global(.ai-summary-card) {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.08) 0%, rgba(99, 102, 241, 0.06) 100%);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  :global(.ai-summary-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  :global(.ai-badge-group) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  :global(.ai-sparkle-badge) {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #07090e;
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-xs);
+    letter-spacing: 0.02em;
+  }
+
+  :global(.ai-mode-tag) {
+    font-size: 0.6875rem;
+    color: var(--accent-cyan);
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.2);
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-xs);
+  }
+
+  :global(.ai-meta-time) {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  :global(.ai-summary-body) {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: rgba(241, 245, 249, 0.95);
+  }
+
+  :global(.ai-summary-body strong) {
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  :global(.ai-matches-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    padding: 0 0.25rem;
+  }
+
+  :global(.ai-matches-title) {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  :global(.ai-matches-count) {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  :global(.ai-matches-list) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  :global(.ai-match-card) {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    transition: border-color var(--motion-fast) ease, background-color var(--motion-fast) ease;
+  }
+
+  :global(.ai-match-card:hover) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(0, 242, 254, 0.3);
+  }
+
+  :global(.ai-match-top) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  :global(.ai-match-tags) {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    overflow: hidden;
+  }
+
+  :global(.ai-course-tag) {
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+
+  :global(.ai-timestamp-pill) {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-xs);
+  }
+
+  :global(.ai-match-title) {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.35;
+  }
+
+  :global(.ai-match-snippet) {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    background: rgba(0, 0, 0, 0.25);
+    border-left: 2px solid var(--accent-cyan);
+    padding: 0.45rem 0.75rem;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  }
+
+  :global(.ai-term-mark) {
+    background: rgba(0, 242, 254, 0.25);
+    color: #00f2fe;
+    padding: 0 0.2rem;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+
+  :global(.ai-match-footer) {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+  }
+
+  :global(.ai-watch-link) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78125rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    text-decoration: none;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--radius-sm);
+    background: rgba(0, 242, 254, 0.08);
+    border: 1px solid rgba(0, 242, 254, 0.2);
+    transition: all var(--motion-fast) ease;
+  }
+
+  :global(.ai-watch-link:hover) {
+    background: var(--accent-cyan);
+    color: #07090e;
+    transform: translateY(-1px);
+  }
+
+  /* Footer */
+  .cmd-palette-footer {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.65rem 1.25rem;
+    background: rgba(11, 13, 19, 0.6);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .cmd-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .cmd-hint kbd {
+    font-family: monospace;
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-subtle);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    color: var(--text-secondary);
+  }
+</style>

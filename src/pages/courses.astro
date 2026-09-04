@@ -1,0 +1,318 @@
+---
+// courses.astro - Catálogo Geral de Cursos com Active Filter Chips
+import Layout from '../layouts/Layout.astro';
+import CourseCard from '../components/CourseCard.astro';
+import SearchBar from '../components/SearchBar.astro';
+import CourseFilters from '../components/CourseFilters.astro';
+import EmptyState from '../components/EmptyState.astro';
+import { getAllCourses, getCategories, getAllProviders } from '../lib/catalog';
+
+const courses = getAllCourses();
+const categories = getCategories();
+const providers = getAllProviders();
+---
+
+<Layout title="Catálogo Completo — Mindflix" description="Explore todos os cursos disponíveis na sua biblioteca pessoal com filtros avançados e busca em tempo real.">
+  <div class="container catalog-page-container">
+    <header class="catalog-header">
+      <h1 class="catalog-title">Catálogo de Cursos</h1>
+      <p class="catalog-subtitle">Explore sua biblioteca completa com mais de {courses.length} cursos organizados por especialidade.</p>
+    </header>
+
+    <div class="catalog-controls">
+      <SearchBar placeholder="Pesquise por curso, tecnologia, módulo ou fornecedor..." />
+      <CourseFilters categories={categories} providers={providers} />
+      
+      <!-- Active Filter Chips (Section 33) -->
+      <div class="active-filter-chips" id="active-filter-chips" style="display: none;">
+        <span class="chips-label">Filtros ativos:</span>
+        <div class="chips-list" id="chips-list"></div>
+      </div>
+    </div>
+
+    <!-- Course Grid -->
+    <div class="courses-grid" id="catalog-grid">
+      {courses.map(course => {
+        const corpus = [
+          course.display_title,
+          course.provider,
+          ...course.tags,
+          ...course.modules.map(m => m.display_title),
+          ...course.modules.flatMap(m => m.lessons.map(l => l.display_title))
+        ].join(' ');
+        return (
+          <div
+            class="course-grid-item"
+            data-title={course.display_title.toLowerCase()}
+            data-provider={course.provider}
+            data-categories={course.categories.join(',')}
+            data-tags={course.tags.join(',').toLowerCase()}
+            data-corpus={corpus}
+            data-course-id={course.id}
+          >
+            <CourseCard course={course} />
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- Empty Results Fallback -->
+    <div id="no-results-state" style="display: none;">
+      <EmptyState
+        title="Nenhum curso encontrado"
+        description="Tente ajustar os termos de pesquisa ou resetar os filtros selecionados para ver mais resultados."
+        actionText="Ver Todos os Cursos"
+        actionHref="/courses"
+      />
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { getCourseCompletionStats, isCourseFavorite } from '../lib/progress';
+
+  const searchInput = document.getElementById('global-search-input') as HTMLInputElement | null;
+  const categorySelect = document.getElementById('filter-category') as HTMLSelectElement | null;
+  const providerSelect = document.getElementById('filter-provider') as HTMLSelectElement | null;
+  const statusSelect = document.getElementById('filter-status') as HTMLSelectElement | null;
+  const sortSelect = document.getElementById('filter-sort') as HTMLSelectElement | null;
+  const resetBtn = document.getElementById('reset-filters-btn');
+  const items = Array.from(document.querySelectorAll<HTMLElement>('.course-grid-item'));
+  const noResults = document.getElementById('no-results-state');
+  const chipsContainer = document.getElementById('active-filter-chips');
+  const chipsList = document.getElementById('chips-list');
+
+  // Check URL query param for initial category or search
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialCategory = urlParams.get('category');
+  const initialQuery = urlParams.get('q');
+
+  if (initialCategory && categorySelect) {
+    categorySelect.value = initialCategory;
+  }
+  if (initialQuery && searchInput) {
+    searchInput.value = initialQuery;
+  }
+
+  function renderChips() {
+    if (!chipsContainer || !chipsList) return;
+    chipsList.innerHTML = '';
+    const activeFilters: { label: string; clear: () => void }[] = [];
+
+    if (searchInput?.value.trim()) {
+      activeFilters.push({
+        label: `Busca: "${searchInput.value.trim()}"`,
+        clear: () => { searchInput.value = ''; filterAndSort(); }
+      });
+    }
+
+    if (categorySelect?.value) {
+      const selectedOption = categorySelect.options[categorySelect.selectedIndex]?.text;
+      activeFilters.push({
+        label: selectedOption || categorySelect.value,
+        clear: () => { categorySelect.value = ''; filterAndSort(); }
+      });
+    }
+
+    if (providerSelect?.value) {
+      activeFilters.push({
+        label: providerSelect.value,
+        clear: () => { providerSelect.value = ''; filterAndSort(); }
+      });
+    }
+
+    if (statusSelect?.value) {
+      const statusNames: Record<string, string> = {
+        not_started: 'Não iniciado',
+        in_progress: 'Em andamento',
+        completed: 'Concluído',
+        favorited: 'Favoritos'
+      };
+      activeFilters.push({
+        label: statusNames[statusSelect.value] || statusSelect.value,
+        clear: () => { statusSelect.value = ''; filterAndSort(); }
+      });
+    }
+
+    if (activeFilters.length > 0) {
+      chipsContainer.style.display = 'flex';
+      activeFilters.forEach(f => {
+        const chip = document.createElement('button');
+        chip.className = 'filter-chip';
+        chip.innerHTML = `<span>${f.label}</span> <span class="chip-remove">×</span>`;
+        chip.addEventListener('click', f.clear);
+        chipsList.appendChild(chip);
+      });
+    } else {
+      chipsContainer.style.display = 'none';
+    }
+  }
+
+  const norm = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+  function filterAndSort() {
+    const query = norm(searchInput?.value || '');
+    const selectedCategory = categorySelect?.value || '';
+    const selectedProvider = providerSelect?.value || '';
+    const selectedStatus = statusSelect?.value || '';
+    const selectedSort = sortSelect?.value || 'recent';
+
+    let visibleCount = 0;
+
+    items.forEach(item => {
+      const corpus = norm(item.getAttribute('data-corpus') || item.getAttribute('data-title') || '');
+      const provider = item.getAttribute('data-provider') || '';
+      const categories = (item.getAttribute('data-categories') || '').split(',');
+      const courseId = item.getAttribute('data-course-id') || '';
+
+      const matchesSearch = !query || corpus.includes(query);
+      const matchesCategory = !selectedCategory || categories.includes(selectedCategory);
+      const matchesProvider = !selectedProvider || provider === selectedProvider;
+
+      let matchesStatus = true;
+      if (selectedStatus) {
+        const stats = getCourseCompletionStats(courseId, 100);
+        const isFav = isCourseFavorite(courseId);
+
+        if (selectedStatus === 'not_started') matchesStatus = stats.percentage === 0;
+        else if (selectedStatus === 'in_progress') matchesStatus = stats.percentage > 0 && stats.percentage < 90;
+        else if (selectedStatus === 'completed') matchesStatus = stats.percentage >= 90;
+        else if (selectedStatus === 'favorited') matchesStatus = isFav;
+      }
+
+      if (matchesSearch && matchesCategory && matchesProvider && matchesStatus) {
+        item.style.display = 'block';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    // Sorting visible items
+    const grid = document.getElementById('catalog-grid');
+    if (grid) {
+      const sorted = [...items].sort((a, b) => {
+        const titleA = a.getAttribute('data-title') || '';
+        const titleB = b.getAttribute('data-title') || '';
+        if (selectedSort === 'az') return titleA.localeCompare(titleB);
+        if (selectedSort === 'za') return titleB.localeCompare(titleA);
+        return 0;
+      });
+      sorted.forEach(el => grid.appendChild(el));
+    }
+
+    if (noResults) {
+      noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+
+    if (resetBtn) {
+      const hasFilters = Boolean(query || selectedCategory || selectedProvider || selectedStatus);
+      resetBtn.style.display = hasFilters ? 'inline-flex' : 'none';
+    }
+
+    renderChips();
+  }
+
+  searchInput?.addEventListener('input', filterAndSort);
+  categorySelect?.addEventListener('change', filterAndSort);
+  providerSelect?.addEventListener('change', filterAndSort);
+  statusSelect?.addEventListener('change', filterAndSort);
+  sortSelect?.addEventListener('change', filterAndSort);
+
+  resetBtn?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    if (categorySelect) categorySelect.value = '';
+    if (providerSelect) providerSelect.value = '';
+    if (statusSelect) statusSelect.value = '';
+    filterAndSort();
+  });
+
+  filterAndSort();
+</script>
+
+<style>
+  .catalog-page-container {
+    padding-top: 110px;
+    padding-bottom: 5rem;
+  }
+
+  .catalog-header {
+    margin-bottom: 2rem;
+  }
+
+  .catalog-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .catalog-subtitle {
+    font-size: 1.0625rem;
+    color: var(--text-secondary);
+  }
+
+  .catalog-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .active-filter-chips {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 0;
+  }
+
+  .chips-label {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  :global(.filter-chip) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    color: var(--accent-cyan);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--motion-fast) var(--ease-out);
+  }
+
+  :global(.filter-chip:hover) {
+    background: rgba(0, 242, 254, 0.2);
+    border-color: var(--accent-cyan);
+  }
+
+  :global(.chip-remove) {
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    perspective: 1200px;
+  }
+
+  .course-grid-item {
+    perspective: 1000px;
+    height: 100%;
+  }
+</style>

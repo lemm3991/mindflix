@@ -1,0 +1,131 @@
+---
+// Toast.astro - Sleek, non-intrusive floating toast notifications
+---
+
+<div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+  import type { ToastEventDetail } from '../lib/toast';
+
+  const container = document.getElementById('toast-container');
+
+  window.addEventListener('mindflix:toast', ((e: CustomEvent<ToastEventDetail>) => {
+    if (!container) return;
+
+    const { message, type = 'success', duration = 3000 } = e.detail;
+
+    const toast = document.createElement('div');
+    toast.className = `toast-item toast-${type}`;
+
+    let iconSvg = '';
+    if (type === 'success') {
+      iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    } else if (type === 'warning') {
+      iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+    } else {
+      iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+    }
+
+    toast.innerHTML = `
+      <span class="toast-icon">${iconSvg}</span>
+      <span class="toast-text">${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    // Trigger enter animation
+    requestAnimationFrame(() => {
+      toast.classList.add('visible');
+    });
+
+    // Auto dismiss
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      toast.classList.add('leaving');
+      setTimeout(() => {
+        toast.remove();
+      }, 250);
+    }, duration);
+  }) as EventListener);
+</script>
+
+<style>
+  .toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    pointer-events: none;
+    max-width: 380px;
+  }
+
+  :global(.toast-item) {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(18, 22, 32, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-medium);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    padding: 0.75rem 1.15rem;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+    transition: opacity var(--motion-normal) var(--ease-out), transform var(--motion-normal) var(--ease-spring);
+  }
+
+  :global(.toast-item.visible) {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  :global(.toast-item.leaving) {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+    transition: opacity var(--motion-fast) ease, transform var(--motion-fast) ease;
+  }
+
+  :global(.toast-icon) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  :global(.toast-success .toast-icon) {
+    color: var(--accent-emerald);
+  }
+
+  :global(.toast-warning .toast-icon) {
+    color: var(--accent-amber);
+  }
+
+  :global(.toast-info .toast-icon) {
+    color: var(--accent-cyan);
+  }
+
+  :global(.toast-error .toast-icon) {
+    color: var(--accent-rose);
+  }
+
+  :global(.toast-text) {
+    line-height: 1.4;
+  }
+
+  @media (max-width: 640px) {
+    .toast-container {
+      bottom: 1.25rem;
+      right: 1rem;
+      left: 1rem;
+      max-width: none;
+    }
+  }
+</style>

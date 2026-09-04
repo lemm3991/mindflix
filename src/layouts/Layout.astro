@@ -1,23 +1,162 @@
+---
+// Layout.astro - Main Layout with Background, Navbar, CommandPalette and Toasts
+import '../styles/global.css';
+import Navbar from '../components/Navbar.astro';
+import InteractiveBackground from '../components/InteractiveBackground.astro';
+import CommandPalette from '../components/CommandPalette.astro';
+import CourseDetailModal from '../components/CourseDetailModal.astro';
+import Toast from '../components/Toast.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  hideNavbar?: boolean;
+  disableBgInteraction?: boolean;
+}
+
+const {
+  title = 'Mindflix — Plataforma Pessoal de Cursos & Estudos',
+  description = 'Organize, assista e acompanhe o progresso da sua biblioteca pessoal de cursos de IA, automações, programação e dados.',
+  hideNavbar = false,
+  disableBgInteraction = false
+} = Astro.props;
+
+const currentPath = Astro.url.pathname;
+const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
+---
+
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    <!-- Plano 1: Interactive Canvas Background -->
+    <InteractiveBackground disableInteraction={isWatchPage} />
+    
+    <!-- Plano 3: Navbar -->
+    {!hideNavbar && <Navbar currentPath={currentPath} />}
+
+    <!-- Main Content Area -->
+    <main id="main-content">
+      <slot />
+    </main>
+
+    <!-- Global Command Palette Modal (Ctrl+K) -->
+    <CommandPalette />
+
+    <!-- Global Course Detail Modal (Glassmorphism & Background Blur) -->
+    <CourseDetailModal />
+
+    <!-- Global Toast Container -->
+    <Toast />
+
+    {!hideNavbar && (
+      <footer class="app-footer">
+        <div class="container footer-content">
+          <div class="footer-left">
+            <span class="footer-logo">MIND<span>FLIX</span></span>
+            <p class="footer-copy">Sua biblioteca pessoal de cursos, estudos e evolução contínua.</p>
+          </div>
+          <div class="footer-right">
+            <a href="/settings" class="footer-link">Preferências</a>
+            <a href="/profile" class="footer-link">Minha Conta</a>
+            <a href="/courses" class="footer-link">Catálogo</a>
+          </div>
+        </div>
+      </footer>
+    )}
+  </body>
 </html>
 
 <style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
+  #main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+  }
+
+  .app-footer {
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(7, 9, 14, 0.95);
+    padding: 2.5rem 0;
+    margin-top: 4rem;
+  }
+
+  .footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .footer-logo {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #ffffff;
+  }
+
+  .footer-logo span {
+    background: var(--grad-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .footer-copy {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+  }
+
+  .footer-right {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer-link {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .footer-link:hover {
+    color: var(--accent-cyan);
+  }
+
+  /* Global Theater and Focus Mode styles */
+  :global(body.focus-mode-active #main-navbar),
+  :global(body.focus-mode-active .app-footer) {
+    display: none !important;
+  }
+
+  :global(.watch-layout.theater-mode) {
+    flex-direction: column !important;
+  }
+
+  :global(.watch-layout.theater-mode .watch-main-column) {
+    max-width: 100% !important;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  :global(.watch-layout.theater-mode .watch-video-section) {
+    max-width: 100% !important;
+  }
+
+  :global(.watch-layout.theater-mode .course-study-sidebar) {
+    width: 100% !important;
+    height: auto !important;
+    position: static !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border-subtle) !important;
+  }
 </style>

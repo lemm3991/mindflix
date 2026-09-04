@@ -1,0 +1,265 @@
+---
+// SearchBar.astro - Search bar with Type Filter Chips (Curso, Módulo, Aulas) & AI Transcript Search Trigger
+interface Props {
+  placeholder?: string;
+  initialValue?: string;
+}
+
+const { placeholder = "Pesquisar cursos, módulos, aulas ou buscar por assunto...", initialValue = "" } = Astro.props;
+---
+
+<div class="search-bar-component">
+  <div class="search-input-wrapper">
+    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input
+      type="text"
+      id="global-search-input"
+      class="search-input"
+      placeholder={placeholder}
+      value={initialValue}
+      autocomplete="off"
+    />
+    <button type="button" id="clear-search-btn" class="clear-btn" aria-label="Limpar pesquisa" style="display: none;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Trigger AI Subject Search Modal button -->
+    <button type="button" id="trigger-ai-modal-btn" class="search-ai-shortcut-btn" title="Buscar por assunto nas transcrições com IA">
+      <span class="ai-sparkle">✦</span>
+      <span class="ai-btn-label">Buscar Assunto (IA)</span>
+    </button>
+  </div>
+
+  <!-- Quick Type Filters Bar -->
+  <div class="search-quick-filters">
+    <span class="quick-filter-label">Filtro:</span>
+    <button type="button" class="quick-filter-chip active" data-type="all">Todos</button>
+    <button type="button" class="quick-filter-chip" data-type="course">Cursos</button>
+    <button type="button" class="quick-filter-chip" data-type="module">Módulos</button>
+    <button type="button" class="quick-filter-chip" data-type="lesson">Aulas</button>
+    <button type="button" class="quick-filter-chip chip-ai" data-type="ai">
+      <span class="ai-sparkle">✦</span> Buscar por Assunto (IA)
+    </button>
+  </div>
+</div>
+
+<script>
+  const input = document.getElementById('global-search-input') as HTMLInputElement | null;
+  const clearBtn = document.getElementById('clear-search-btn');
+  const triggerAiBtn = document.getElementById('trigger-ai-modal-btn');
+  const chips = document.querySelectorAll<HTMLButtonElement>('.quick-filter-chip');
+
+  if (input && clearBtn) {
+    const toggleClear = () => {
+      clearBtn.style.display = input.value.trim().length > 0 ? 'flex' : 'none';
+    };
+
+    input.addEventListener('input', toggleClear);
+    toggleClear();
+
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      toggleClear();
+      input.focus();
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  }
+
+  // AI Modal Trigger Button in Input
+  triggerAiBtn?.addEventListener('click', () => {
+    const q = input?.value.trim() || '';
+    window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+      detail: { type: 'ai', query: q }
+    }));
+  });
+
+  // Type Filter Chips click handling
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      const type = chip.getAttribute('data-type') || 'all';
+      const q = input?.value.trim() || '';
+
+      if (type === 'ai') {
+        // Open AI Subject Search Modal
+        window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+          detail: { type: 'ai', query: q }
+        }));
+      } else if (type === 'module' || type === 'lesson') {
+        // Open global palette filtered directly to modules or lessons
+        window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+          detail: { type: type, query: q }
+        }));
+      } else {
+        // 'all' or 'course' filters on the current page grid
+        window.dispatchEvent(new CustomEvent('mindflix:catalog-filter-type', {
+          detail: { type }
+        }));
+      }
+    });
+  });
+</script>
+
+<style>
+  .search-bar-component {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0 0.75rem 0 1rem;
+    transition: all var(--motion-fast) ease;
+    gap: 0.5rem;
+  }
+
+  .search-input-wrapper:focus-within {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.15);
+    background: rgba(30, 38, 55, 0.95);
+  }
+
+  .search-icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    height: 48px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    outline: none;
+  }
+
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .clear-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-secondary);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--motion-fast) ease;
+  }
+
+  .clear-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+  }
+
+  .search-ai-shortcut-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    color: var(--accent-cyan);
+    font-size: 0.78125rem;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--motion-fast) ease;
+    white-space: nowrap;
+  }
+
+  .search-ai-shortcut-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.28) 0%, rgba(99, 102, 241, 0.28) 100%);
+    border-color: var(--accent-cyan);
+    transform: translateY(-1px);
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+  }
+
+  .ai-sparkle {
+    color: var(--accent-cyan);
+    font-size: 0.9rem;
+  }
+
+  /* Type Filter Chips */
+  .search-quick-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding-left: 0.25rem;
+  }
+
+  .quick-filter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-right: 0.25rem;
+  }
+
+  .quick-filter-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--motion-fast) ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .quick-filter-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+  }
+
+  .quick-filter-chip.active {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .quick-filter-chip.chip-ai {
+    color: var(--accent-cyan);
+    border-color: rgba(0, 242, 254, 0.25);
+    background: rgba(0, 242, 254, 0.05);
+  }
+
+  .quick-filter-chip.chip-ai:hover {
+    background: rgba(0, 242, 254, 0.15);
+    border-color: var(--accent-cyan);
+  }
+
+  @media (max-width: 640px) {
+    .ai-btn-label {
+      display: none;
+    }
+    .search-ai-shortcut-btn {
+      padding: 0.35rem 0.5rem;
+    }
+  }
+</style>

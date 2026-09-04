@@ -1,0 +1,282 @@
+---
+// watch/[courseId]/[lessonId].astro - Player e Tela de Estudo
+import Layout from '../../../layouts/Layout.astro';
+import VideoPlayer from '../../../components/VideoPlayer.astro';
+import CourseSidebar from '../../../components/CourseSidebar.astro';
+import { getCourseById } from '../../../lib/catalog';
+
+const { courseId, lessonId } = Astro.params;
+const course = courseId ? getCourseById(courseId) : undefined;
+
+if (!course) {
+  return Astro.redirect('/404');
+}
+
+// Find module and lesson
+let currentLesson;
+let currentModule;
+let allLessonsInCourse: any[] = [];
+
+for (const mod of course.modules) {
+  for (const les of mod.lessons) {
+    allLessonsInCourse.push({ ...les, moduleId: mod.id });
+    if (les.id === lessonId) {
+      currentLesson = les;
+      currentModule = mod;
+    }
+  }
+}
+
+if (!currentLesson) {
+  // If lesson not found in course, fallback to first lesson or course details
+  if (allLessonsInCourse.length > 0) {
+    currentLesson = allLessonsInCourse[0];
+    currentModule = course.modules[0];
+  } else {
+    return Astro.redirect('/courses');
+  }
+}
+
+const currentIdx = allLessonsInCourse.findIndex(l => l.id === currentLesson.id);
+const prevLesson = currentIdx > 0 ? allLessonsInCourse[currentIdx - 1] : null;
+const nextLesson = currentIdx < allLessonsInCourse.length - 1 ? allLessonsInCourse[currentIdx + 1] : null;
+
+const prevLessonHref = prevLesson ? `/watch/${course.id}/${prevLesson.id}` : undefined;
+const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : undefined;
+---
+
+<Layout title={`${currentLesson.display_title} — ${course.display_title}`} hideNavbar={false}>
+  <div class="watch-layout">
+    <!-- Main Content Area: Video and Details -->
+    <div class="watch-main-column">
+      <div class="watch-video-section">
+        <VideoPlayer
+          courseId={course.id}
+          lesson={currentLesson}
+          prevLessonHref={prevLessonHref}
+          nextLessonHref={nextLessonHref}
+          nextLessonTitle={nextLesson?.display_title}
+        />
+      </div>
+
+      <!-- Lesson Metadata and Materials -->
+      <div class="lesson-details-section">
+        <div class="lesson-header-row">
+          <div class="lesson-info">
+            <span class="lesson-module-tag">
+              Módulo {currentModule?.order_index}: {currentModule?.display_title}
+            </span>
+            <h1 class="lesson-main-title">{currentLesson.display_title}</h1>
+          </div>
+
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-watch-grade-modal" data-course-id={course.id}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            <span>Grade Completa</span>
+          </button>
+        </div>
+
+        <!-- Complementary Materials & Documents (Excluding articles and transcripts) -->
+        {(() => {
+          const validMaterials = (currentLesson.materials || []).filter((mat: any) => {
+            const t = (mat.title || '').toLowerCase();
+            const p = (mat.relative_path || '').toLowerCase();
+            return !t.includes('artigo') && !t.includes('transcri') && !t.includes('transcript') && !t.includes('article') &&
+                   !p.includes('artigo') && !p.includes('transcri') && !p.includes('transcript') && !p.includes('article');
+          });
+
+          return validMaterials.length > 0 ? (
+            <div class="materials-box">
+              <h3 class="materials-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Materiais Complementares</span>
+              </h3>
+
+              <div class="materials-grid">
+                {validMaterials.map((mat: any) => (
+                  <div class="material-item-card">
+                    <div class="material-icon-badge">
+                      <span class="type-badge">{mat.type.toUpperCase()}</span>
+                    </div>
+                    <div class="material-meta">
+                      <strong class="material-name">{mat.title}</strong>
+                      <span class="material-path">{mat.relative_path}</span>
+                    </div>
+                    <a
+                      href={`/api/video?path=${encodeURIComponent(mat.relative_path)}`}
+                      target="_blank"
+                      class="btn btn-secondary btn-sm"
+                      download
+                    >
+                      Baixar / Visualizar
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null;
+        })()}
+      </div>
+    </div>
+
+    <!-- Course Syllabus Sidebar -->
+    <CourseSidebar
+      course={course}
+      currentLessonId={currentLesson.id}
+    />
+  </div>
+</Layout>
+
+<script>
+  const gradeBtn = document.getElementById('btn-watch-grade-modal');
+  if (gradeBtn) {
+    gradeBtn.addEventListener('click', () => {
+      const courseId = gradeBtn.getAttribute('data-course-id');
+      if (courseId && (window as any).openCourseModal) {
+        (window as any).openCourseModal(courseId);
+      }
+    });
+  }
+</script>
+
+<style>
+  .watch-layout {
+    display: flex;
+    padding-top: 72px;
+    min-height: calc(100vh - 72px);
+  }
+
+  .watch-main-column {
+    flex: 1;
+    min-width: 0;
+    padding: 1.5rem 2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .watch-video-section {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .lesson-details-section {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .lesson-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .lesson-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .lesson-module-tag {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+  }
+
+  .lesson-main-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .materials-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+  }
+
+  .materials-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+  }
+
+  .materials-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .material-item-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+  }
+
+  .material-icon-badge .type-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.4rem;
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--accent-cyan);
+    border-radius: 4px;
+  }
+
+  .material-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .material-name {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .material-path {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 1024px) {
+    .watch-layout {
+      flex-direction: column;
+    }
+    .watch-main-column {
+      padding: 1rem;
+    }
+  }
+</style>

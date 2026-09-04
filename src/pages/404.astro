@@ -1,0 +1,67 @@
+---
+// 404.astro - Página Não Encontrada
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Página Não Encontrada — Mindflix">
+  <div class="container notfound-container">
+    <div class="notfound-card">
+      <span class="error-code">404</span>
+      <h1 class="error-title">Conteúdo não encontrado</h1>
+      <p class="error-desc">O curso, aula ou página que você está procurando não existe ou foi movido.</p>
+      <div class="error-actions">
+        <a href="/" class="btn btn-primary">Voltar para o Início</a>
+        <a href="/courses" class="btn btn-secondary">Explorar Catálogo</a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .notfound-container {
+    padding-top: 140px;
+    padding-bottom: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .notfound-card {
+    text-align: center;
+    max-width: 500px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+  }
+
+  .error-code {
+    font-size: 5rem;
+    font-weight: 900;
+    font-family: var(--font-display);
+    background: var(--grad-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .error-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .error-desc {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+
+  .error-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+</style>

@@ -1,0 +1,202 @@
+---
+// LessonItem.astro - Individual lesson item with clear status, active glow and materials
+import type { Lesson } from '../types/catalog';
+
+interface Props {
+  courseId: string;
+  lesson: Lesson;
+  isCurrent?: boolean;
+}
+
+const { courseId, lesson, isCurrent = false } = Astro.props;
+const watchHref = `/watch/${courseId}/${lesson.id}`;
+---
+
+<div
+  class={`lesson-item ${isCurrent ? 'current-lesson' : ''}`}
+  data-lesson-id={lesson.id}
+  data-course-id={courseId}
+>
+  <a href={watchHref} class="lesson-link">
+    <div class="lesson-status-icon" data-status-icon-for={lesson.id}>
+      {isCurrent ? (
+        <svg class="icon-playing" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+      ) : (
+        <>
+          <svg class="icon-unwatched" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <svg class="icon-completed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </>
+      )}
+    </div>
+
+    <div class="lesson-info">
+      <span class="lesson-index">{String(lesson.order_index).padStart(2, '0')}</span>
+      <span class="lesson-title">{lesson.display_title}</span>
+    </div>
+
+    <div class="lesson-meta">
+      {(() => {
+        const validMats = (lesson.materials || []).filter((m: any) => {
+          const t = (m.title || '').toLowerCase();
+          const p = (m.relative_path || '').toLowerCase();
+          return !t.includes('artigo') && !t.includes('transcri') && !t.includes('transcript') && !t.includes('article') &&
+                 !p.includes('artigo') && !p.includes('transcri') && !p.includes('transcript') && !p.includes('article');
+        });
+        return validMats.length > 0 ? (
+          <span class="materials-badge" title={`${validMats.length} material(is) complementar(es)`}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>{validMats.length}</span>
+          </span>
+        ) : null;
+      })()}
+      <span class="lesson-duration">{lesson.duration_formatted}</span>
+    </div>
+  </a>
+</div>
+
+<script>
+  import { getLessonProgress } from '../lib/progress';
+
+  document.querySelectorAll('.lesson-item').forEach(item => {
+    const lessonId = item.getAttribute('data-lesson-id');
+    if (!lessonId) return;
+
+    const progress = getLessonProgress(lessonId);
+    if (progress && progress.completed) {
+      item.classList.add('completed');
+      const unwatchedIcon = item.querySelector('.icon-unwatched') as HTMLElement;
+      const completedIcon = item.querySelector('.icon-completed') as HTMLElement;
+      if (unwatchedIcon) unwatchedIcon.style.display = 'none';
+      if (completedIcon) completedIcon.style.display = 'block';
+    } else if (progress && progress.percentage > 0) {
+      item.classList.add('in-progress');
+    }
+  });
+</script>
+
+<style>
+  .lesson-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background-color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out);
+    position: relative;
+  }
+
+  .lesson-item:last-child {
+    border-bottom: none;
+  }
+
+  .lesson-item:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .lesson-item.current-lesson {
+    background: rgba(0, 242, 254, 0.08);
+    border-left: 3px solid var(--accent-cyan);
+  }
+
+  .lesson-link {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1.25rem;
+    gap: 1rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .lesson-status-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: all var(--motion-fast) var(--ease-out);
+  }
+
+  .current-lesson .lesson-status-icon {
+    background: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+    color: #07090e;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+  }
+
+  .lesson-item:hover .lesson-status-icon {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+  }
+
+  .lesson-item.completed .lesson-status-icon {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: var(--accent-emerald);
+  }
+
+  .lesson-info {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .lesson-index {
+    font-family: var(--font-display);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .current-lesson .lesson-index {
+    color: var(--accent-cyan);
+  }
+
+  .lesson-title {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .current-lesson .lesson-title {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .lesson-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .materials-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-xs);
+  }
+
+  .lesson-duration {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+</style>

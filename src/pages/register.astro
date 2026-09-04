@@ -1,0 +1,255 @@
+---
+// register.astro - Tela de Cadastro
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Criar Conta — Mindflix" hideNavbar={true}>
+  <div class="auth-page-container">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <a href="/" class="brand-logo">
+          <span class="logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </span>
+          <span class="logo-text">MIND<span>FLIX</span></span>
+        </a>
+      </div>
+
+      <h1 class="auth-title">Criar sua conta</h1>
+      <p class="auth-subtitle">Cadastre-se para sincronizar seu progresso em todos os dispositivos.</p>
+
+      <form id="register-form" class="auth-form">
+        <div class="form-group">
+          <label for="fullname" class="form-label">Nome Completo</label>
+          <input
+            type="text"
+            id="fullname"
+            class="form-input"
+            placeholder="Seu nome"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email" class="form-label">E-mail</label>
+          <input
+            type="email"
+            id="reg-email"
+            class="form-input"
+            placeholder="seu@email.com"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password" class="form-label">Senha</label>
+          <input
+            type="password"
+            id="reg-password"
+            class="form-input"
+            placeholder="Mínimo 6 caracteres"
+            minlength="6"
+            required
+          />
+        </div>
+
+        <div class="auth-error-msg" id="reg-error-box" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-submit">
+          <span>Criar Conta & Acessar</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Já possui conta? <a href="/login">Fazer login</a></p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { supabase, isSupabaseConfigured, setLocalUser } from '../lib/supabase';
+
+  const form = document.getElementById('register-form');
+  const nameInput = document.getElementById('fullname') as HTMLInputElement | null;
+  const emailInput = document.getElementById('reg-email') as HTMLInputElement | null;
+  const passInput = document.getElementById('reg-password') as HTMLInputElement | null;
+  const errorBox = document.getElementById('reg-error-box');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fullName = nameInput?.value.trim() || 'Estudante';
+    const email = emailInput?.value.trim();
+    const password = passInput?.value.trim();
+
+    if (!email || !password) return;
+
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName }
+        }
+      });
+
+      if (error) {
+        if (errorBox) {
+          errorBox.textContent = error.message;
+          errorBox.style.display = 'block';
+        }
+        return;
+      }
+
+      if (data.user) {
+        setLocalUser({
+          id: data.user.id,
+          email: data.user.email || email,
+          full_name: fullName
+        });
+        window.location.href = '/';
+      }
+    } else {
+      // Local fallback
+      setLocalUser({
+        id: 'local-user-id-01',
+        email,
+        full_name: fullName
+      });
+      window.location.href = '/';
+    }
+  });
+</script>
+
+<style>
+  .auth-page-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  }
+
+  .auth-brand {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--grad-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0b0d13;
+  }
+
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+  }
+
+  .logo-text span {
+    background: var(--grad-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 0.35rem;
+  }
+
+  .auth-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .form-input {
+    height: 44px;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0 1rem;
+    font-size: 0.9375rem;
+    outline: none;
+    transition: border-color var(--transition-fast);
+  }
+
+  .form-input:focus {
+    border-color: var(--accent-cyan);
+  }
+
+  .auth-error-msg {
+    background: rgba(244, 63, 94, 0.15);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    color: #fda4af;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+  }
+
+  .btn-submit {
+    height: 46px;
+    margin-top: 0.5rem;
+  }
+
+  .auth-footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .auth-footer a {
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+</style>

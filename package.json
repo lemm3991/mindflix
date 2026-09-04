@@ -8,10 +8,13 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:index": "node scripts/build_rag_index.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/node": "^11.1.5",
+    "@supabase/supabase-js": "^2.115.0",
     "astro": "^7.3.1"
   },
   "allowScripts": {

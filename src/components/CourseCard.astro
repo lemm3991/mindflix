@@ -1,0 +1,754 @@
+---
+// CourseCard.astro - Premium 3D Tilt, Spotlight Border, Smart Direct Watch & Modal Trigger
+import type { Course } from '../types/catalog';
+import ProgressBar from './ProgressBar.astro';
+
+interface Props {
+  course: Course;
+}
+
+const { course } = Astro.props;
+
+// Default first lesson for SSR fallback
+const firstLesson = course.modules[0]?.lessons[0];
+const defaultWatchUrl = firstLesson 
+  ? `/watch/${course.id}/${firstLesson.id}` 
+  : '/courses';
+
+// Deterministic gradient based on course id
+let hash = 0;
+for (let i = 0; i < course.id.length; i++) {
+  hash = course.id.charCodeAt(i) + ((hash << 5) - hash);
+}
+const hues = [
+  'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
+  'linear-gradient(135deg, #1f1c2c, #4a475a)',
+  'linear-gradient(135deg, #141e30, #243b55)',
+  'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
+  'linear-gradient(135deg, #16222f, #1a365d)',
+  'linear-gradient(135deg, #1a1c29, #2d3748)',
+  'linear-gradient(135deg, #1e1b4b, #312e81)',
+  'linear-gradient(135deg, #064e3b, #047857)',
+  'linear-gradient(135deg, #4a0e2e, #831843)'
+];
+const coverGradient = hues[Math.abs(hash) % hues.length];
+const sampleVideoPath = firstLesson?.relative_path || '';
+---
+
+<div class="course-card-wrapper" data-course-id={course.id} data-video-path={sampleVideoPath}>
+  <div class="course-card" id={`card-${course.id}`} tabindex="0" role="button" aria-label={`Ver detalhes do curso ${course.display_title}`}>
+    
+    <!-- Specular Highlight Overlay -->
+    <div class="card-specular-highlight"></div>
+
+    <!-- Card Cover -->
+    <div class="card-cover" style={course.cover_image ? undefined : `background: ${coverGradient};`}>
+      {course.cover_image && (
+        <img 
+          src={course.cover_image} 
+          alt={course.display_title} 
+          class="card-cover-img" 
+          loading="lazy" 
+          decoding="async" 
+        />
+      )}
+      <div class="cover-overlay"></div>
+      
+      <!-- Video Preview Canvas/Player (Loaded only on hover intent) -->
+      <div class="card-preview-container" style="display: none;">
+        <video class="card-preview-video" muted loop playsinline preload="none"></video>
+      </div>
+
+      <div class="cover-badge-top">
+        <span class="provider-pill">{course.provider}</span>
+        <span class="status-indicator" data-status-for={course.id}></span>
+      </div>
+
+      {!course.cover_image && (
+        <div class="cover-center-art">
+          <div class="course-glyph">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </div>
+          <div class="cover-title-preview">{course.display_title}</div>
+        </div>
+      )}
+
+      <!-- Progress bar if started -->
+      <div class="card-progress-bar" data-progress-bar-for={course.id}>
+        <ProgressBar percentage={0} height="3px" />
+      </div>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+      <div class="card-meta">
+        <span class="module-count">{course.modules_count} módulos • {course.lessons_count} aulas</span>
+        <button type="button" class="card-fav-btn" data-fav-id={course.id} aria-label="Favoritar" data-action="favorite">
+          <svg class="heart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      </div>
+
+      <h3 class="card-title">
+        <span class="card-title-text" title={course.display_title}>
+          {course.display_title}
+        </span>
+      </h3>
+
+      <!-- Clean static description without jumpy expansion -->
+      <p class="card-desc-text">
+        {course.description}
+      </p>
+
+      <div class="card-tags">
+        {course.tags.slice(0, 2).map(tag => (
+          <span class="card-tag">#{tag}</span>
+        ))}
+      </div>
+
+      <!-- Action Footer: Only Assistir button (Grade button removed) -->
+      <div class="card-hover-actions">
+        <a 
+          href={defaultWatchUrl} 
+          class="btn btn-primary btn-play-fast" 
+          data-action="watch" 
+          data-course-id={course.id}
+          aria-label={`Assistir ${course.display_title}`}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span class="watch-btn-label" data-watch-label-for={course.id}>Assistir</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .course-card-wrapper {
+    position: relative;
+    height: 100%;
+    perspective: 1000px;
+  }
+
+  .course-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    position: relative;
+    height: 100%;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+    transition: box-shadow var(--motion-normal) var(--ease-out),
+                border-color var(--motion-normal) var(--ease-out),
+                background var(--motion-normal) var(--ease-out);
+    will-change: transform;
+    outline: none;
+  }
+
+  .course-card:focus-visible {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 2px rgba(0, 242, 254, 0.4);
+  }
+
+  /* Dynamic Spotlight Glowing Border */
+  .course-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: radial-gradient(
+      320px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+      #00f2fe 0%,
+      rgba(0, 242, 254, 0.9) 25%,
+      rgba(79, 172, 254, 0.4) 45%,
+      transparent 70%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 25;
+  }
+
+  .course-card-wrapper:hover .course-card::before {
+    opacity: 1;
+  }
+
+  .course-card-wrapper:hover .course-card {
+    border-color: rgba(0, 242, 254, 0.4);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 25px rgba(0, 242, 254, 0.15);
+    background: var(--bg-card-hover, #181e2b);
+  }
+
+  /* Specular Highlight */
+  .card-specular-highlight {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity var(--motion-fast) ease;
+    border-radius: var(--radius-md);
+  }
+
+  .card-cover {
+    position: relative;
+    height: 155px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0.85rem;
+    overflow: hidden;
+    background-color: var(--bg-surface-elevated, #161a23);
+  }
+
+  .card-cover-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .course-card-wrapper:hover .card-cover-img {
+    transform: scale(1.06);
+  }
+
+  .cover-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(11, 13, 19, 0.15) 0%, rgba(11, 13, 19, 0.85) 100%);
+    pointer-events: none;
+  }
+
+  /* Video Preview */
+  .card-preview-container {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: #000000;
+  }
+
+  .card-preview-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cover-badge-top {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .provider-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-full);
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .status-indicator {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-full);
+  }
+
+  .status-progress {
+    background: rgba(0, 242, 254, 0.15);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+  }
+
+  .status-completed {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-emerald);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .cover-center-art {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.4rem;
+  }
+
+  .course-glyph {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    transition: transform var(--motion-normal) var(--ease-spring),
+                background-color var(--motion-fast) var(--ease-out),
+                color var(--motion-fast) var(--ease-out);
+    will-change: transform;
+  }
+
+  .course-card-wrapper:hover .course-glyph {
+    background: var(--grad-primary);
+    color: #07090e;
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.4);
+  }
+
+  .cover-title-preview {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 90%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 4;
+    display: none;
+  }
+
+  .card-progress-bar.visible {
+    display: block;
+  }
+
+  /* --- Body Section --- */
+  .card-body {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.45rem;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .card-fav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--motion-fast) var(--ease-spring), color var(--motion-fast) ease;
+    z-index: 10;
+  }
+
+  .card-fav-btn:hover {
+    color: var(--text-primary);
+    transform: scale(1.15);
+  }
+
+  .card-fav-btn.active {
+    color: var(--accent-rose);
+  }
+
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  .card-title-text {
+    color: var(--text-primary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color var(--motion-fast);
+  }
+
+  .course-card-wrapper:hover .card-title-text {
+    color: #ffffff;
+  }
+
+  /* Clean static description */
+  .card-desc-text {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: auto;
+    padding-top: 0.25rem;
+  }
+
+  .card-tag {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Footer Action */
+  .card-hover-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .btn-play-fast {
+    flex: 1;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    z-index: 10;
+  }
+</style>
+
+<script>
+  import { getCourseById, getAllCourses } from '../lib/catalog';
+  import { getCourseCompletionStats, isCourseFavorite, toggleFavorite, getUserPreferences, getNextLessonToWatch } from '../lib/progress';
+  import { showToast } from '../lib/toast';
+
+  const isDesktop = window.matchMedia('(min-width: 640px)').matches;
+  const allCourses = getAllCourses();
+
+  interface CardParallaxItem {
+    wrapper: HTMLElement;
+    card: HTMLElement;
+    specular: HTMLElement | null;
+    glyph: HTMLElement | null;
+    currX: number;
+    currY: number;
+    targetX: number;
+    targetY: number;
+    isHovered: boolean;
+    localX: number;
+    localY: number;
+    isVisible: boolean;
+  }
+
+  const parallaxItems: CardParallaxItem[] = [];
+
+  // Global mouse position
+  const globalMouse = {
+    x: -9999,
+    y: -9999,
+    targetX: -9999,
+    targetY: -9999,
+    active: false
+  };
+
+  function handleGlobalPointer(clientX: number, clientY: number) {
+    globalMouse.targetX = clientX;
+    globalMouse.targetY = clientY;
+    if (!globalMouse.active) {
+      globalMouse.x = clientX;
+      globalMouse.y = clientY;
+      globalMouse.active = true;
+    }
+  }
+
+  window.addEventListener('pointermove', (e) => handleGlobalPointer(e.clientX, e.clientY), { passive: true });
+  window.addEventListener('mousemove', (e) => handleGlobalPointer(e.clientX, e.clientY), { passive: true });
+
+  document.addEventListener('mouseleave', () => {
+    globalMouse.active = false;
+    globalMouse.targetX = -9999;
+    globalMouse.targetY = -9999;
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const item = parallaxItems.find(p => p.wrapper === entry.target);
+      if (item) item.isVisible = entry.isIntersecting;
+    });
+  }, { threshold: 0.05 });
+
+  function setupCard(wrapper: HTMLElement) {
+    if (wrapper.dataset.cardInitialized === 'true') return;
+    wrapper.dataset.cardInitialized = 'true';
+
+    const card = wrapper.querySelector<HTMLElement>('.course-card');
+    const specular = wrapper.querySelector<HTMLElement>('.card-specular-highlight');
+    const glyph = wrapper.querySelector<HTMLElement>('.course-glyph');
+    const courseId = wrapper.getAttribute('data-course-id');
+    const videoPath = wrapper.getAttribute('data-video-path');
+    const previewContainer = wrapper.querySelector<HTMLElement>('.card-preview-container');
+    const previewVideo = wrapper.querySelector<HTMLVideoElement>('.card-preview-video');
+    const watchBtn = wrapper.querySelector<HTMLAnchorElement>('[data-action="watch"]');
+
+    if (!card || !courseId) return;
+
+    const courseObj = allCourses.find(c => c.id === courseId || c.slug === courseId);
+
+    // 1. Calculate Smart Next/Resume Lesson URL
+    if (courseObj && watchBtn) {
+      const nextWatch = getNextLessonToWatch(courseObj);
+      watchBtn.href = nextWatch.watchUrl;
+      const labelEl = watchBtn.querySelector('.watch-btn-label');
+      if (labelEl) {
+        labelEl.textContent = nextWatch.isResume ? 'Continuar' : 'Assistir';
+      }
+    }
+
+    // 2. Check stats
+    const stats = getCourseCompletionStats(courseId, 100);
+    const progressWrapper = card.querySelector(`[data-progress-bar-for="${courseId}"]`);
+    const statusIndicator = card.querySelector(`[data-status-for="${courseId}"]`);
+
+    if (stats.percentage > 0) {
+      if (progressWrapper) {
+        const fill = progressWrapper.querySelector('.progress-fill') as HTMLElement;
+        if (fill) fill.style.width = `${stats.percentage}%`;
+        progressWrapper.classList.add('visible');
+      }
+      if (statusIndicator) {
+        if (stats.percentage >= 95) {
+          statusIndicator.textContent = 'Concluído';
+          statusIndicator.className = 'status-indicator status-completed';
+        } else {
+          statusIndicator.textContent = `${stats.percentage}%`;
+          statusIndicator.className = 'status-indicator status-progress';
+        }
+      }
+    }
+
+    // 3. Favorite button
+    const favBtn = card.querySelector(`[data-fav-id="${courseId}"]`);
+    if (favBtn) {
+      if (isCourseFavorite(courseId)) {
+        favBtn.classList.add('active');
+        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+      }
+
+      favBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isFav = await toggleFavorite(courseId);
+        if (isFav) {
+          favBtn.classList.add('active');
+          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+          showToast('Curso adicionado à Minha Lista', 'success');
+        } else {
+          favBtn.classList.remove('active');
+          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+          showToast('Curso removido da Minha Lista', 'info');
+        }
+      });
+    }
+
+    // 4. Click anywhere on card (except Watch button and Favorite button) -> Open Glassmorphism Modal!
+    card.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      // If user clicked the watch button or favorite button, let them perform their own action
+      if (target.closest('[data-action="watch"]') || target.closest('[data-action="favorite"]')) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      if ((window as any).openCourseModal) {
+        (window as any).openCourseModal(courseId);
+      } else {
+        document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId } }));
+      }
+    });
+
+    // 5. Parallax tracking item
+    const item: CardParallaxItem = {
+      wrapper,
+      card,
+      specular,
+      glyph,
+      currX: 0,
+      currY: 0,
+      targetX: 0,
+      targetY: 0,
+      isHovered: false,
+      localX: 0,
+      localY: 0,
+      isVisible: true
+    };
+    parallaxItems.push(item);
+    observer.observe(wrapper);
+
+    // 6. Video Preview and Coordinates updates
+    let previewTimer: any;
+
+    function updateCardMousePos(clientX: number, clientY: number) {
+      const rect = card.getBoundingClientRect();
+      const mouseX = clientX - rect.left;
+      const mouseY = clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${mouseX}px`);
+      card.style.setProperty('--mouse-y', `${mouseY}px`);
+      item.localX = mouseX;
+      item.localY = mouseY;
+    }
+
+    wrapper.addEventListener('mouseenter', (e) => {
+      item.isHovered = true;
+      updateCardMousePos(e.clientX, e.clientY);
+
+      const prefs = getUserPreferences();
+      if (prefs.auto_preview && videoPath && previewContainer && previewVideo) {
+        previewTimer = setTimeout(() => {
+          previewVideo.src = `/api/video?path=${encodeURIComponent(videoPath)}`;
+          previewContainer.style.display = 'block';
+          previewVideo.play().catch(() => {});
+        }, 750);
+      }
+    });
+
+    wrapper.addEventListener('mousemove', (e) => {
+      updateCardMousePos(e.clientX, e.clientY);
+    });
+
+    wrapper.addEventListener('mouseleave', () => {
+      item.isHovered = false;
+      card.style.setProperty('--mouse-x', '-999px');
+      card.style.setProperty('--mouse-y', '-999px');
+
+      clearTimeout(previewTimer);
+
+      if (previewContainer && previewVideo) {
+        previewVideo.pause();
+        previewVideo.src = '';
+        previewContainer.style.display = 'none';
+      }
+    });
+  }
+
+  // Register all initial cards
+  document.querySelectorAll<HTMLElement>('.course-card-wrapper').forEach(setupCard);
+
+  // Watch for dynamic DOM additions
+  const mutationObserver = new MutationObserver(() => {
+    document.querySelectorAll<HTMLElement>('.course-card-wrapper').forEach(setupCard);
+  });
+  mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+  // Coordinated 60fps RAF loop
+  let rafId: number;
+  let isTabVisible = true;
+
+  document.addEventListener('visibilitychange', () => {
+    isTabVisible = !document.hidden;
+    if (isTabVisible) {
+      rafId = requestAnimationFrame(updateCoordinatedParallax);
+    } else {
+      cancelAnimationFrame(rafId);
+    }
+  });
+
+  function updateCoordinatedParallax() {
+    if (!isTabVisible) return;
+
+    if (globalMouse.active) {
+      globalMouse.x += (globalMouse.targetX - globalMouse.x) * 0.16;
+      globalMouse.y += (globalMouse.targetY - globalMouse.y) * 0.16;
+    }
+
+    const screenW = window.innerWidth || 1920;
+    const screenH = window.innerHeight || 1080;
+
+    for (let i = 0; i < parallaxItems.length; i++) {
+      const item = parallaxItems[i];
+      if (!item.isVisible) continue;
+
+      if (globalMouse.active && isDesktop) {
+        if (item.isHovered) {
+          // O card sob o cursor fica 100% estático (sem inclinação angular)
+          item.targetX = 0;
+          item.targetY = 0;
+        } else {
+          // Outros cards olham em direção ao mouse
+          const rect = item.card.getBoundingClientRect();
+          const cardCenterX = rect.left + rect.width / 2;
+          const cardCenterY = rect.top + rect.height / 2;
+
+          const dx = globalMouse.x - cardCenterX;
+          const dy = globalMouse.y - cardCenterY;
+
+          const normX = Math.max(-1.5, Math.min(1.5, dx / (screenW * 0.4)));
+          const normY = Math.max(-1.5, Math.min(1.5, dy / (screenH * 0.4)));
+
+          item.targetY = normX * 6.0;  // rotateY
+          item.targetX = -normY * 4.5; // rotateX
+        }
+      } else {
+        item.targetX = 0;
+        item.targetY = 0;
+      }
+
+      // Interpolação suave
+      const lerpFactor = item.isHovered ? 0.22 : 0.12;
+      item.currX += (item.targetX - item.currX) * lerpFactor;
+      item.currY += (item.targetY - item.currY) * lerpFactor;
+
+      const elevation = item.isHovered ? 'translateY(-6px) scale(1.02)' : 'translateY(0) scale(1)';
+      item.card.style.transform = `perspective(1000px) rotateX(${item.currX.toFixed(2)}deg) rotateY(${item.currY.toFixed(2)}deg) ${elevation}`;
+
+      if (item.glyph) {
+        if (item.isHovered) {
+          item.glyph.style.transform = 'translate(0, 0)';
+        } else {
+          item.glyph.style.transform = `translate(${(-item.currY * 0.7).toFixed(1)}px, ${(-item.currX * 0.7).toFixed(1)}px)`;
+        }
+      }
+    }
+
+    rafId = requestAnimationFrame(updateCoordinatedParallax);
+  }
+
+  rafId = requestAnimationFrame(updateCoordinatedParallax);
+</script>

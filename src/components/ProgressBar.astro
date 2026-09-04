@@ -1,0 +1,68 @@
+---
+// ProgressBar.astro
+interface Props {
+  percentage: number;
+  height?: string;
+  showLabel?: boolean;
+}
+
+const { percentage = 0, height = '4px', showLabel = false } = Astro.props;
+const cleanPercentage = Math.max(0, Math.min(100, Math.round(percentage)));
+---
+
+<div class="progress-container">
+  {showLabel && (
+    <div class="progress-header">
+      <span class="progress-label">Progresso</span>
+      <span class="progress-value">{cleanPercentage}%</span>
+    </div>
+  )}
+  <div class="progress-track" style={`height: ${height};`}>
+    <div
+      class="progress-fill"
+      style={`width: ${cleanPercentage}%;`}
+      role="progressbar"
+      aria-valuenow={cleanPercentage}
+      aria-valuemin="0"
+      aria-valuemax="100"
+    ></div>
+  </div>
+</div>
+
+<style>
+  .progress-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .progress-value {
+    color: var(--accent-cyan);
+    font-weight: 700;
+  }
+
+  .progress-track {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--grad-primary);
+    border-radius: var(--radius-full);
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 8px rgba(0, 242, 254, 0.5);
+  }
+</style>

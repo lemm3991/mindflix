@@ -1,0 +1,517 @@
+---
+// HeroCourse.astro - Rotating editorial showcase with mouse parallax and smooth crossfade
+import type { Course } from '../types/catalog';
+import ProgressBar from './ProgressBar.astro';
+
+interface Props {
+  featuredCourses: Course[];
+}
+
+const { featuredCourses } = Astro.props;
+const courses = featuredCourses.length > 0 ? featuredCourses : [];
+---
+
+<section class="hero-section" id="home-hero-section">
+  <!-- Parallax Background Layer (Plano 1) -->
+  <div class="hero-parallax-bg" id="hero-parallax-bg">
+    <div class="backdrop-gradient"></div>
+    <div class="backdrop-pattern"></div>
+    <div class="hero-ambient-glow" id="hero-glow"></div>
+  </div>
+
+  <!-- Video Backdrop Layer with Feathered Gradient Edges & Dark Overlay -->
+  <div class="hero-video-backdrop" id="hero-video-backdrop">
+    {courses.map((course, idx) => {
+      const firstLesson = course.modules[0]?.lessons[0];
+      const videoPath = firstLesson?.relative_path || '';
+      return (
+        <div
+          class={`hero-video-item ${idx === 0 ? 'active' : ''}`}
+          data-video-index={idx}
+        >
+          {videoPath && (
+            <video
+              class="hero-bg-video"
+              muted
+              loop
+              playsinline
+              preload={idx === 0 ? 'auto' : 'none'}
+              src={idx === 0 ? `/api/video?path=${encodeURIComponent(videoPath)}` : undefined}
+              data-src={`/api/video?path=${encodeURIComponent(videoPath)}`}
+            ></video>
+          )}
+        </div>
+      );
+    })}
+
+    <!-- Multi-directional dark gradient overlays & feathered edges to protect text readability -->
+    <div class="hero-video-veil"></div>
+  </div>
+
+  <div class="container hero-content-wrapper">
+    {courses.map((course, idx) => {
+      const firstLesson = course.modules[0]?.lessons[0];
+      const watchUrl = firstLesson ? `/watch/${course.id}/${firstLesson.id}` : '/courses';
+      return (
+        <div
+          class={`hero-slide ${idx === 0 ? 'active' : ''}`}
+          data-slide-index={idx}
+          data-course-id={course.id}
+        >
+          <div class="hero-meta">
+            <div class="badges-row">
+              <span class="badge badge-cyan">{course.provider}</span>
+              <span class="badge badge-purple">{course.modules_count} Módulos</span>
+              <span class="badge">{course.lessons_count} Aulas</span>
+            </div>
+
+            <h1 class="hero-title">{course.display_title}</h1>
+            
+            <p class="hero-description">{course.description}</p>
+
+            <div class="hero-tags">
+              {course.tags.slice(0, 4).map(tag => (
+                <span class="tag-pill">#{tag}</span>
+              ))}
+            </div>
+
+            <!-- Dynamic Progress bar if course has been started -->
+            <div class="hero-progress-box" data-progress-course-id={course.id} style="display: none;">
+              <div class="hero-progress-info">
+                <span class="hero-progress-text">Continuar de onde parou</span>
+                <span class="hero-progress-percent">0%</span>
+              </div>
+              <ProgressBar percentage={0} height="5px" />
+            </div>
+
+            <div class="hero-actions">
+              <a href={watchUrl} class="btn btn-primary btn-hero">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>Continuar Assistindo</span>
+              </a>
+
+              <button type="button" class="btn btn-secondary btn-hero btn-hero-info" data-course-id={course.id}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Mais Informações</span>
+              </button>
+
+              <button class="btn btn-secondary btn-icon hero-fav-btn" data-fav-id={course.id} aria-label="Favoritar">
+                <svg class="heart-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    })}
+
+    <!-- Slide Indicators / Dots -->
+    {courses.length > 1 && (
+      <div class="hero-indicators">
+        {courses.map((_, idx) => (
+          <button
+            type="button"
+            class={`indicator-dot ${idx === 0 ? 'active' : ''}`}
+            data-dot-index={idx}
+            aria-label={`Ir para destaque ${idx + 1}`}
+          ></button>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+<script>
+  import { getCourseCompletionStats, isCourseFavorite, toggleFavorite, getUserPreferences } from '../lib/progress';
+  import { showToast } from '../lib/toast';
+
+  const heroSection = document.getElementById('home-hero-section');
+  const parallaxBg = document.getElementById('hero-parallax-bg');
+  const glow = document.getElementById('hero-glow');
+  const slides = document.querySelectorAll<HTMLElement>('.hero-slide');
+  const dots = document.querySelectorAll<HTMLElement>('.indicator-dot');
+
+  const videoItems = document.querySelectorAll<HTMLElement>('.hero-video-item');
+
+  function updateVideoBackdrop(index: number) {
+    videoItems.forEach((item, idx) => {
+      const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
+      if (idx === index) {
+        item.classList.add('active');
+        if (vid) {
+          if (!vid.src && vid.dataset.src) {
+            vid.src = vid.dataset.src;
+          }
+          vid.play().catch(() => {});
+        }
+      } else {
+        item.classList.remove('active');
+        if (vid && !vid.paused) {
+          vid.pause();
+        }
+      }
+    });
+  }
+
+  // Initial video start
+  updateVideoBackdrop(0);
+
+  // Multi-slide rotation
+  let currentSlide = 0;
+  const totalSlides = slides.length;
+  let rotationTimer: any;
+
+  function setSlide(index: number) {
+    if (index === currentSlide) return;
+    slides[currentSlide]?.classList.remove('active');
+    dots[currentSlide]?.classList.remove('active');
+
+    currentSlide = index;
+
+    slides[currentSlide]?.classList.add('active');
+    dots[currentSlide]?.classList.add('active');
+    updateVideoBackdrop(currentSlide);
+  }
+
+  function nextSlide() {
+    const next = (currentSlide + 1) % totalSlides;
+    setSlide(next);
+  }
+
+  if (totalSlides > 1) {
+    rotationTimer = setInterval(nextSlide, 12000);
+
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        clearInterval(rotationTimer);
+        const idx = parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+        setSlide(idx);
+        rotationTimer = setInterval(nextSlide, 12000);
+      });
+    });
+  }
+
+  // Mouse Parallax on Hero
+  const prefs = getUserPreferences();
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReduced && prefs.parallax_enabled && heroSection) {
+    heroSection.addEventListener('mousemove', (e) => {
+      const rect = heroSection.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+      if (parallaxBg) {
+        parallaxBg.style.transform = `translate(${x * 6}px, ${y * 4}px)`;
+      }
+      if (glow) {
+        glow.style.transform = `translate(${x * 16}px, ${y * 12}px)`;
+      }
+    }, { passive: true });
+
+    heroSection.addEventListener('mouseleave', () => {
+      if (parallaxBg) parallaxBg.style.transform = 'translate(0, 0)';
+      if (glow) glow.style.transform = 'translate(0, 0)';
+    });
+  }
+
+  // Progress and Favorites initialization
+  slides.forEach(slide => {
+    const courseId = slide.getAttribute('data-course-id');
+    if (!courseId) return;
+
+    // Progress
+    const stats = getCourseCompletionStats(courseId, 100);
+    const progressBox = slide.querySelector<HTMLElement>(`[data-progress-course-id="${courseId}"]`);
+    if (stats.percentage > 0 && progressBox) {
+      progressBox.style.display = 'block';
+      const pctEl = progressBox.querySelector('.hero-progress-percent');
+      const fill = progressBox.querySelector('.progress-fill') as HTMLElement;
+      if (pctEl) pctEl.textContent = `${stats.percentage}%`;
+      if (fill) fill.style.width = `${stats.percentage}%`;
+    }
+
+    // Favorite
+    const favBtn = slide.querySelector<HTMLButtonElement>(`[data-fav-id="${courseId}"]`);
+    if (favBtn) {
+      if (isCourseFavorite(courseId)) {
+        favBtn.classList.add('active');
+        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+      }
+
+      favBtn.addEventListener('click', async () => {
+        const isFav = await toggleFavorite(courseId);
+        if (isFav) {
+          favBtn.classList.add('active');
+          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+          showToast('Curso adicionado à Minha Lista', 'success');
+        } else {
+          favBtn.classList.remove('active');
+          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+          showToast('Curso removido da Minha Lista', 'info');
+        }
+      });
+    }
+
+    // Info / Modal Trigger
+    const infoBtn = slide.querySelector<HTMLButtonElement>('.btn-hero-info');
+    if (infoBtn) {
+      infoBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if ((window as any).openCourseModal) {
+          (window as any).openCourseModal(courseId);
+        } else {
+          document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId } }));
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .hero-section {
+    position: relative;
+    min-height: 540px;
+    display: flex;
+    align-items: center;
+    padding-top: 105px;
+    padding-bottom: 50px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .hero-parallax-bg {
+    position: absolute;
+    inset: -20px;
+    z-index: 0;
+    pointer-events: none;
+    transition: transform var(--motion-normal) var(--ease-out);
+    will-change: transform;
+  }
+
+  .backdrop-gradient {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 90% 80% at 75% 20%, rgba(0, 242, 254, 0.14) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 20% 40%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(7, 9, 14, 0.15) 0%, rgba(11, 13, 19, 0.65) 75%, transparent 100%);
+  }
+
+  .backdrop-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.5;
+  }
+
+  .hero-ambient-glow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    top: 10%;
+    right: 15%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+    transition: transform 0.4s var(--ease-out);
+  }
+
+  /* Video Backdrop Layer with Feathered Gradient Edges */
+  .hero-video-backdrop {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .hero-video-item {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 75%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.2s ease-in-out;
+    will-change: opacity;
+    /* Soft feathered edges with radial gradient mask */
+    mask-image: radial-gradient(ellipse 85% 85% at 70% 50%, black 45%, transparent 95%);
+    -webkit-mask-image: radial-gradient(ellipse 85% 85% at 70% 50%, black 45%, transparent 95%);
+  }
+
+  .hero-video-item.active {
+    opacity: 0.85;
+  }
+
+  .hero-bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 35%;
+    filter: saturate(1.12) brightness(0.96) contrast(1.04);
+  }
+
+  /* Softened Dark Overlay & Gradient Veils so the video is clearly visible while text remains legible */
+  .hero-video-veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: 
+      /* Solid protection on the far left for text readability, fading completely into the video */
+      linear-gradient(to right, rgba(7, 9, 14, 0.92) 0%, rgba(7, 9, 14, 0.72) 32%, rgba(7, 9, 14, 0.25) 55%, transparent 75%),
+      /* Soft bottom gradient to merge into the content rows */
+      linear-gradient(to top, rgba(7, 9, 14, 0.85) 0%, rgba(7, 9, 14, 0.2) 15%, transparent 35%);
+  }
+
+  .hero-content-wrapper {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+  }
+
+  .hero-slide {
+    display: none;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity var(--motion-slow) var(--ease-out), transform var(--motion-slow) var(--ease-out);
+  }
+
+  .hero-slide.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hero-meta {
+    max-width: 740px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    color: #ffffff;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.9);
+  }
+
+  .hero-description {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: rgba(241, 245, 249, 0.95);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
+  }
+
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag-pill {
+    font-size: 0.8125rem;
+    font-family: var(--font-display);
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .hero-progress-box {
+    max-width: 440px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    margin-top: 0.35rem;
+  }
+
+  .hero-progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+  }
+
+  .hero-progress-percent {
+    color: var(--accent-cyan);
+    font-weight: 700;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+
+  .btn-hero {
+    padding: 0.85rem 1.65rem;
+    font-size: 1rem;
+  }
+
+  .hero-fav-btn.active {
+    color: var(--accent-rose);
+    border-color: rgba(244, 63, 94, 0.4);
+    background: rgba(244, 63, 94, 0.1);
+  }
+
+  /* Slide Indicators */
+  .hero-indicators {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 2rem;
+  }
+
+  .indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    cursor: pointer;
+    transition: all var(--motion-normal) var(--ease-out);
+    padding: 0;
+  }
+
+  .indicator-dot.active {
+    width: 24px;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+  }
+
+  @media (max-width: 768px) {
+    .hero-video-item {
+      width: 100%;
+    }
+    .hero-video-item.active {
+      opacity: 0.32;
+    }
+    .hero-video-veil {
+      background: rgba(7, 9, 14, 0.88);
+    }
+  }
+</style>
