@@ -194,31 +194,9 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
     color: var(--accent-cyan);
   }
 
-  /* Global Theater and Focus Mode styles */
+  /* Global Focus Mode styles */
   :global(body.focus-mode-active #main-navbar),
   :global(body.focus-mode-active .app-footer) {
     display: none !important;
-  }
-
-  :global(.watch-layout.theater-mode) {
-    flex-direction: column !important;
-  }
-
-  :global(.watch-layout.theater-mode .watch-main-column) {
-    max-width: 100% !important;
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-
-  :global(.watch-layout.theater-mode .watch-video-section) {
-    max-width: 100% !important;
-  }
-
-  :global(.watch-layout.theater-mode .course-study-sidebar) {
-    width: 100% !important;
-    height: auto !important;
-    position: static !important;
-    border-left: none !important;
-    border-top: 1px solid var(--border-subtle) !important;
   }
 </style>

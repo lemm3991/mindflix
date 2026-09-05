@@ -81,14 +81,14 @@ export const POST: APIRoute = async ({ request }) => {
     if (catalog && catalog.courses) {
       const course = catalog.courses.find((c: any) => c.id === courseId);
       if (course) {
-        if (display_title) course.display_title = display_title.trim();
-        if (description) course.description = description.trim();
-        if (provider) course.provider = provider.trim();
-        if (categories) course.categories = categories;
-        if (tags) course.tags = tags;
+        if (display_title !== undefined) course.display_title = display_title.trim();
+        if (description !== undefined) course.description = description.trim();
+        if (provider !== undefined) course.provider = provider.trim();
+        if (categories !== undefined) course.categories = categories;
+        if (tags !== undefined) course.tags = tags;
         if (is_hidden !== undefined) course.is_hidden = Boolean(is_hidden);
         if (is_featured !== undefined) course.is_featured = Boolean(is_featured);
-        if (cover_image) course.cover_image = cover_image;
+        if (cover_image !== undefined) course.cover_image = cover_image;
         course.classification_source = 'manual';
         saveJsonSafe(PRIMARY_CATALOG_PATH, TMP_CATALOG_PATH, catalog);
       }

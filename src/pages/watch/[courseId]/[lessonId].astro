@@ -350,21 +350,23 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
     max-width: 100%;
     margin: 0 auto;
     align-items: center;
-    padding: 0.5rem 2rem 5rem;
+    padding: 0.5rem 1.5rem 5rem;
   }
 
-  /* Centralizar o vídeo horizontalmente na tela com largura expandida */
+  /* Centralizar o vídeo horizontalmente na tela e aumentar levemente a escala do vídeo */
   :global(body.focus-mode-active) .watch-video-section {
-    max-width: 1240px;
+    max-width: 1440px;
+    width: 92vw;
     margin: 0 auto;
-    box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.95);
+    box-shadow: 0 25px 75px -10px rgba(0, 0, 0, 0.95);
   }
 
   /* Detalhes da aula com opacidade reduzida no foco, restaurando ao hover */
   :global(body.focus-mode-active) .lesson-details-section {
-    max-width: 1240px;
+    max-width: 1440px;
+    width: 92vw;
     margin: 0 auto;
-    opacity: 0.4;
+    opacity: 0.35;
   }
 
   :global(body.focus-mode-active) .lesson-details-section:hover {

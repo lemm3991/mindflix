@@ -107,42 +107,40 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
   <div class="player-controls-bar">
     <div class="controls-left">
       {prevLessonHref ? (
-        <a href={prevLessonHref} class="btn btn-secondary btn-sm" title="Aula Anterior (Shift + P)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <a href={prevLessonHref} class="btn-nav-lesson" title="Aula Anterior (Shift + P)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
           <span class="btn-label-desktop">Anterior</span>
         </a>
       ) : (
-        <button class="btn btn-secondary btn-sm disabled" disabled>
+        <button class="btn-nav-lesson disabled" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
           <span class="btn-label-desktop">Anterior</span>
         </button>
       )}
 
       {nextLessonHref ? (
-        <a href={nextLessonHref} class="btn btn-secondary btn-sm" id="manual-next-link" title="Próxima Aula (Shift + N)">
+        <a href={nextLessonHref} class="btn-nav-lesson" id="manual-next-link" title="Próxima Aula (Shift + N)">
           <span class="btn-label-desktop">Próxima</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </a>
       ) : (
-        <button class="btn btn-secondary btn-sm disabled" disabled>
+        <button class="btn-nav-lesson disabled" disabled>
           <span class="btn-label-desktop">Próxima</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
         </button>
       )}
     </div>
 
     <div class="controls-center">
-      <!-- Mode Toggles: Theater & Focus -->
-      <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-theater-mode" title="Modo Teatro (T)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-          <line x1="2" y1="16" x2="22" y2="16"></line>
-        </svg>
-        <span class="btn-label-desktop">Teatro</span>
-      </button>
-
+      <!-- Mode Toggle: Focus -->
       <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
@@ -250,15 +248,6 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
       updateCompleteUI(isComplete);
       showToast(isComplete ? 'Aula marcada como concluída!' : 'Aula reaberta', 'success');
     });
-
-    // Theater Mode
-    btnTheater?.addEventListener('click', () => {
-      const watchLayout = document.querySelector('.watch-layout');
-      watchLayout?.classList.toggle('theater-mode');
-      btnTheater.classList.toggle('active');
-    });
-
-    // Focus Mode
     btnFocus?.addEventListener('click', () => {
       const isActive = document.body.classList.toggle('focus-mode-active');
       if (!isActive) {
@@ -734,9 +723,42 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
     gap: 0.6rem;
   }
 
+  /* Discreet & Modern Navigation Buttons */
+  .btn-nav-lesson {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all var(--motion-fast) var(--ease-out);
+    user-select: none;
+    cursor: pointer;
+  }
+
+  .btn-nav-lesson:hover:not(.disabled) {
+    background: rgba(var(--accent-primary-rgb), 0.12);
+    border-color: rgba(var(--accent-primary-rgb), 0.35);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .btn-nav-lesson.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: transparent;
+    border-color: transparent;
+  }
+
   .btn-mode.active {
     color: var(--accent-cyan);
-    background: rgba(0, 242, 254, 0.12);
+    background: rgba(var(--accent-primary-rgb), 0.12);
   }
 
   /* Speed Popover */

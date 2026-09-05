@@ -1,39 +1,133 @@
 import catalogData from '../data/catalog.json';
 import type { Course, Category, CatalogData } from '../types/catalog';
 
-const data = catalogData as CatalogData;
+function getNodeModule(name: string): any {
+  if (typeof window !== 'undefined') return null;
+  try {
+    const req = Function('return require')();
+    return req ? req(name) : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadMergedCatalog(): CatalogData {
+  const baseCatalog = catalogData as CatalogData;
+
+  // Check if we are running in Node.js server environment (SSR / API)
+  if (typeof window !== 'undefined') {
+    return baseCatalog;
+  }
+
+  try {
+    const fs = getNodeModule('node:fs');
+    const path = getNodeModule('node:path');
+    const os = getNodeModule('node:os');
+
+    if (!fs || !path) return baseCatalog;
+
+    const primaryCatalog = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
+    const tmpCatalog = path.join(os.tmpdir(), 'catalog.json');
+
+    const primaryOverrides = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
+    const tmpOverrides = path.join(os.tmpdir(), 'manual_overrides.json');
+
+    let catalogToUse = baseCatalog;
+
+    // Read updated catalog.json from disk if available
+    if (fs.existsSync(tmpCatalog)) {
+      try {
+        const tmpCatData = JSON.parse(fs.readFileSync(tmpCatalog, 'utf-8'));
+        if (tmpCatData && Array.isArray(tmpCatData.courses)) {
+          catalogToUse = tmpCatData;
+        }
+      } catch {}
+    } else if (fs.existsSync(primaryCatalog)) {
+      try {
+        const diskCatData = JSON.parse(fs.readFileSync(primaryCatalog, 'utf-8'));
+        if (diskCatData && Array.isArray(diskCatData.courses)) {
+          catalogToUse = diskCatData;
+        }
+      } catch {}
+    }
+
+    // Read manual overrides from disk
+    let overrides: Record<string, any> = {};
+    if (fs.existsSync(primaryOverrides)) {
+      try {
+        overrides = JSON.parse(fs.readFileSync(primaryOverrides, 'utf-8')) || {};
+      } catch {}
+    }
+    if (fs.existsSync(tmpOverrides)) {
+      try {
+        const tmpOv = JSON.parse(fs.readFileSync(tmpOverrides, 'utf-8')) || {};
+        overrides = { ...overrides, ...tmpOv };
+      } catch {}
+    }
+
+    if (Object.keys(overrides).length === 0) {
+      return catalogToUse;
+    }
+
+    // Apply manual overrides to courses
+    const mergedCourses = catalogToUse.courses.map((course: Course) => {
+      const ov = overrides[course.id];
+      if (!ov) return course;
+
+      return {
+        ...course,
+        ...(ov.display_title ? { display_title: ov.display_title } : {}),
+        ...(ov.description ? { description: ov.description } : {}),
+        ...(ov.provider ? { provider: ov.provider } : {}),
+        ...(Array.isArray(ov.categories) ? { categories: ov.categories } : {}),
+        ...(Array.isArray(ov.tags) ? { tags: ov.tags } : {}),
+        ...(ov.is_hidden !== undefined ? { is_hidden: Boolean(ov.is_hidden) } : {}),
+        ...(ov.is_featured !== undefined ? { is_featured: Boolean(ov.is_featured) } : {}),
+        ...(ov.cover_image ? { cover_image: ov.cover_image } : {})
+      };
+    });
+
+    return {
+      ...catalogToUse,
+      courses: mergedCourses
+    };
+  } catch (e) {
+    return baseCatalog;
+  }
+}
 
 export function getCatalog(): CatalogData {
-  return data;
+  return loadMergedCatalog();
 }
 
 export function getAllCourses(): Course[] {
-  return data.courses;
+  return getCatalog().courses;
 }
 
 export function getCourseById(id: string): Course | undefined {
-  return data.courses.find(c => c.id === id || c.slug === id);
+  return getCatalog().courses.find(c => c.id === id || c.slug === id);
 }
 
 export function getCategories(): Category[] {
-  return data.categories;
+  return getCatalog().categories;
 }
 
 export function getCategoryById(id: string): Category | undefined {
-  return data.categories.find(c => c.id === id);
+  return getCatalog().categories.find(c => c.id === id);
 }
 
 export function getCoursesByCategory(categoryId: string): Course[] {
-  return data.courses.filter(c => c.categories.includes(categoryId));
+  return getCatalog().courses.filter(c => c.categories.includes(categoryId));
 }
 
 export function getFeaturedCourse(): Course {
-  const featured = data.courses.find(c => c.is_featured);
-  return featured || data.courses[0];
+  const catalog = getCatalog();
+  const featured = catalog.courses.find(c => c.is_featured);
+  return featured || catalog.courses[0];
 }
 
 export function getAllProviders(): string[] {
-  const providers = new Set(data.courses.map(c => c.provider));
+  const providers = new Set(getCatalog().courses.map(c => c.provider));
   return Array.from(providers).sort();
 }
 
@@ -47,9 +141,10 @@ export function normalizeSearchText(text: string): string {
 
 export function searchCourses(query: string): Course[] {
   const q = normalizeSearchText(query);
-  if (!q) return data.courses;
+  const courses = getCatalog().courses;
+  if (!q) return courses;
   
-  return data.courses.filter(course => {
+  return courses.filter(course => {
     if (normalizeSearchText(course.display_title).includes(q)) return true;
     if (normalizeSearchText(course.provider).includes(q)) return true;
     if (course.tags.some(t => normalizeSearchText(t).includes(q))) return true;
@@ -64,3 +159,4 @@ export function searchCourses(query: string): Course[] {
     return false;
   });
 }
+

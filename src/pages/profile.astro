@@ -1,5 +1,5 @@
 ---
-// profile.astro - Perfil do Usuário e Estatísticas
+// profile.astro - Perfil do Usuário, Estatísticas e Atividade Real dos Últimos 7 Dias
 import Layout from '../layouts/Layout.astro';
 ---
 
@@ -73,7 +73,7 @@ import Layout from '../layouts/Layout.astro';
             </svg>
           </span>
           <div class="stat-meta">
-            <span class="stat-desc">Tempo Estimado Estudado</span>
+            <span class="stat-desc">Tempo Total Estudado</span>
             <strong class="stat-number" id="stat-time-studied">0h 00m</strong>
           </div>
         </div>
@@ -91,41 +91,20 @@ import Layout from '../layouts/Layout.astro';
         </div>
       </div>
 
-      <!-- Weekly Study Activity Chart (Section 62) -->
+      <!-- Real 7-Day Activity Chart -->
       <div class="activity-chart-card">
         <div class="chart-header">
-          <h3 class="chart-title">Atividade nos Últimos 7 Dias</h3>
-          <span class="chart-subtitle">Frequência e tempo dedicado aos estudos</span>
+          <div class="chart-title-group">
+            <h3 class="chart-title">Atividade nos Últimos 7 Dias</h3>
+            <span class="chart-subtitle" id="chart-subtitle-summary">Carregando histórico real de estudos...</span>
+          </div>
+          <div class="chart-total-badge">
+            <span id="chart-7days-total-time">0h 00m</span>
+            <span class="badge-sub">no período</span>
+          </div>
         </div>
         <div class="weekly-bars-container" id="weekly-bars-container">
-          <div class="day-col">
-            <div class="bar-fill" style="height: 35%;"></div>
-            <span class="day-label">Seg</span>
-          </div>
-          <div class="day-col">
-            <div class="bar-fill" style="height: 60%;"></div>
-            <span class="day-label">Ter</span>
-          </div>
-          <div class="day-col">
-            <div class="bar-fill" style="height: 45%;"></div>
-            <span class="day-label">Qua</span>
-          </div>
-          <div class="day-col">
-            <div class="bar-fill" style="height: 80%;"></div>
-            <span class="day-label">Qui</span>
-          </div>
-          <div class="day-col active-today">
-            <div class="bar-fill" style="height: 95%;"></div>
-            <span class="day-label">Sex</span>
-          </div>
-          <div class="day-col">
-            <div class="bar-fill" style="height: 30%;"></div>
-            <span class="day-label">Sáb</span>
-          </div>
-          <div class="day-col">
-            <div class="bar-fill" style="height: 20%;"></div>
-            <span class="day-label">Dom</span>
-          </div>
+          <!-- Populated dynamically with real activity per calendar day -->
         </div>
       </div>
     </div>
@@ -133,7 +112,7 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { getAllLocalProgress, getFavoriteCourseIds, getRecentCourseIds } from '../lib/progress';
+  import { getAllLocalProgress, getFavoriteCourseIds, getRecentCourseIds, syncProgressFromSupabase } from '../lib/progress';
   import { getLocalUser, setLocalUser } from '../lib/supabase';
 
   // Load user
@@ -151,27 +130,138 @@ import Layout from '../layouts/Layout.astro';
     if (avatarInitials) avatarInitials.textContent = displayName.substring(0, 2).toUpperCase();
   }
 
-  // Load stats
-  const allProgress = getAllLocalProgress();
-  const recentIds = getRecentCourseIds();
-  const favIds = getFavoriteCourseIds();
+  function renderProfileStatsAndActivity() {
+    const allProgress = getAllLocalProgress();
+    const recentIds = getRecentCourseIds();
+    const favIds = getFavoriteCourseIds();
 
-  const lessons = Object.values(allProgress);
-  const completedLessons = lessons.filter(l => l.completed);
-  const totalSeconds = lessons.reduce((acc, curr) => acc + (curr.position_seconds || 0), 0);
+    const lessons = Object.values(allProgress);
+    const completedLessons = lessons.filter(l => l.completed);
+    const totalSeconds = lessons.reduce((acc, curr) => acc + (curr.position_seconds || 0), 0);
 
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
 
-  const elStarted = document.getElementById('stat-courses-started');
-  const elCompleted = document.getElementById('stat-lessons-completed');
-  const elTime = document.getElementById('stat-time-studied');
-  const elFavs = document.getElementById('stat-favorites-count');
+    const elStarted = document.getElementById('stat-courses-started');
+    const elCompleted = document.getElementById('stat-lessons-completed');
+    const elTime = document.getElementById('stat-time-studied');
+    const elFavs = document.getElementById('stat-favorites-count');
 
-  if (elStarted) elStarted.textContent = recentIds.length.toString();
-  if (elCompleted) elCompleted.textContent = completedLessons.length.toString();
-  if (elTime) elTime.textContent = `${hours}h ${String(minutes).padStart(2, '0')}m`;
-  if (elFavs) elFavs.textContent = favIds.length.toString();
+    if (elStarted) elStarted.textContent = recentIds.length.toString();
+    if (elCompleted) elCompleted.textContent = completedLessons.length.toString();
+    if (elTime) elTime.textContent = `${hours}h ${String(minutes).padStart(2, '0')}m`;
+    if (elFavs) elFavs.textContent = favIds.length.toString();
+
+    // Render Real 7-Day Activity Chart
+    const container = document.getElementById('weekly-bars-container');
+    const summarySub = document.getElementById('chart-subtitle-summary');
+    const totalTimeEl = document.getElementById('chart-7days-total-time');
+
+    if (!container) return;
+
+    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const now = new Date();
+    const days: {
+      dateStr: string;
+      label: string;
+      formattedDate: string;
+      totalSeconds: number;
+      lessonsCount: number;
+      isToday: boolean;
+    }[] = [];
+
+    // Build array for past 6 calendar days + today
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      const formattedDate = `${day}/${month}`;
+      const label = dayNames[d.getDay()];
+
+      days.push({
+        dateStr,
+        label,
+        formattedDate,
+        totalSeconds: 0,
+        lessonsCount: 0,
+        isToday: i === 0
+      });
+    }
+
+    // Accumulate actual watched seconds & lessons per calendar day
+    lessons.forEach((item) => {
+      if (!item.last_watched_at) return;
+      try {
+        const watchedDate = new Date(item.last_watched_at);
+        const wYear = watchedDate.getFullYear();
+        const wMonth = String(watchedDate.getMonth() + 1).padStart(2, '0');
+        const wDay = String(watchedDate.getDate()).padStart(2, '0');
+        const watchedDateStr = `${wYear}-${wMonth}-${wDay}`;
+
+        const dayObj = days.find(d => d.dateStr === watchedDateStr);
+        if (dayObj) {
+          dayObj.totalSeconds += Math.min(item.position_seconds || 0, item.duration_seconds || 3600);
+          dayObj.lessonsCount += 1;
+        }
+      } catch (e) {}
+    });
+
+    const grandTotalSeconds = days.reduce((sum, d) => sum + d.totalSeconds, 0);
+    const grandHours = Math.floor(grandTotalSeconds / 3600);
+    const grandMins = Math.floor((grandTotalSeconds % 3600) / 60);
+
+    if (totalTimeEl) {
+      totalTimeEl.textContent = grandTotalSeconds > 0 ? `${grandHours}h ${String(grandMins).padStart(2, '0')}m` : '0h 00m';
+    }
+
+    if (summarySub) {
+      if (grandTotalSeconds > 0) {
+        summarySub.textContent = `Histórico real: ${grandHours > 0 ? `${grandHours}h ` : ''}${grandMins}m de estudos registrados nos últimos 7 dias.`;
+      } else {
+        summarySub.textContent = 'Sem atividade registrada nos últimos 7 dias. Assista a uma aula para contabilizar seu tempo!';
+      }
+    }
+
+    const maxDaySeconds = Math.max(...days.map(d => d.totalSeconds), 1);
+
+    container.innerHTML = days.map((day) => {
+      let heightPercent = 4; // subtle base dot height for 0 seconds
+      if (day.totalSeconds > 0) {
+        heightPercent = Math.max(12, Math.min(100, Math.round((day.totalSeconds / maxDaySeconds) * 100)));
+      }
+
+      const dMins = Math.floor(day.totalSeconds / 60);
+      const dHrs = Math.floor(dMins / 60);
+      const remMins = dMins % 60;
+      const timeFormatted = day.totalSeconds > 0 
+        ? (dHrs > 0 ? `${dHrs}h ${remMins}m` : `${dMins} min`)
+        : 'Sem atividade';
+
+      const tooltipText = `${day.label} (${day.formattedDate}): ${timeFormatted}${day.lessonsCount > 0 ? ` • ${day.lessonsCount} aula(s)` : ''}`;
+
+      return `
+        <div class="day-col ${day.isToday ? 'active-today' : ''}" title="${tooltipText}">
+          <div class="bar-wrapper">
+            <span class="bar-value-tooltip">${timeFormatted}</span>
+            <div class="bar-fill" style="height: ${heightPercent}%;"></div>
+          </div>
+          <span class="day-label">${day.isToday ? 'Hoje' : day.label}</span>
+          <span class="day-date">${day.formattedDate}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderProfileStatsAndActivity();
+
+  // Sync latest progress from Supabase if configured
+  syncProgressFromSupabase().then(() => {
+    renderProfileStatsAndActivity();
+  });
 
   // Logout button
   document.getElementById('btn-logout')?.addEventListener('click', () => {
@@ -310,32 +400,66 @@ import Layout from '../layouts/Layout.astro';
   .activity-chart-card {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    margin-top: 1.5rem;
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    margin-top: 1.75rem;
   }
 
   .chart-header {
-    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .chart-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
   }
 
   .chart-title {
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     font-weight: 700;
   }
 
   .chart-subtitle {
-    font-size: 0.8125rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
+  }
+
+  .chart-total-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    background: rgba(var(--accent-primary-rgb), 0.08);
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.25);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+  }
+
+  .chart-total-badge span:first-child {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--accent-cyan);
+  }
+
+  .badge-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .weekly-bars-container {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    height: 140px;
-    gap: 1rem;
-    padding-top: 1rem;
+    height: 160px;
+    gap: 0.85rem;
+    padding-top: 1.5rem;
   }
 
   .day-col {
@@ -345,30 +469,78 @@ import Layout from '../layouts/Layout.astro';
     align-items: center;
     height: 100%;
     justify-content: flex-end;
-    gap: 0.5rem;
+    gap: 0.35rem;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .bar-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
   }
 
   .bar-fill {
     width: 100%;
-    max-width: 32px;
-    background: rgba(255, 255, 255, 0.08);
+    max-width: 38px;
+    background: rgba(255, 255, 255, 0.07);
     border-radius: var(--radius-xs);
-    transition: height var(--motion-slow) var(--ease-out), background var(--motion-fast) ease;
+    transition: height var(--motion-slow) var(--ease-out), background var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  .day-col:hover .bar-fill,
+  .day-col:hover .bar-fill {
+    background: var(--grad-primary);
+    box-shadow: 0 0 16px rgba(var(--accent-primary-rgb), 0.45);
+    border-color: var(--accent-cyan);
+  }
+
   .day-col.active-today .bar-fill {
     background: var(--grad-primary);
-    box-shadow: 0 0 12px rgba(0, 242, 254, 0.35);
+    box-shadow: 0 0 14px rgba(var(--accent-primary-rgb), 0.35);
+  }
+
+  .bar-value-tooltip {
+    position: absolute;
+    top: -2.2rem;
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(18, 22, 32, 0.95);
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.3);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-xs);
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    pointer-events: none;
+    transition: all var(--motion-fast) var(--ease-out);
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  .day-col:hover .bar-value-tooltip {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .day-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    font-size: 0.775rem;
+    color: var(--text-secondary);
     font-weight: 600;
+    margin-top: 0.35rem;
+  }
+
+  .day-date {
+    font-size: 0.675rem;
+    color: var(--text-muted);
   }
 
   .active-today .day-label {
     color: var(--accent-cyan);
+    font-weight: 700;
   }
 </style>
