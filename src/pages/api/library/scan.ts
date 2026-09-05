@@ -19,7 +19,16 @@ export const POST: APIRoute = async ({ request }) => {
     const customRoot = body.root ? ` --root "${body.root}"` : '';
     const flag = dryRun ? '--dry-run' : '--apply';
 
-    const cmd = `python "${SCRIPT_PATH}" ${flag}${customRoot}`;
+    const venvPythonWin = path.resolve(process.cwd(), '.venv', 'Scripts', 'python.exe');
+    const venvPythonUnix = path.resolve(process.cwd(), '.venv', 'bin', 'python');
+    let pythonBin = 'python';
+    if (fs.existsSync(venvPythonWin)) {
+      pythonBin = `"${venvPythonWin}"`;
+    } else if (fs.existsSync(venvPythonUnix)) {
+      pythonBin = `"${venvPythonUnix}"`;
+    }
+
+    const cmd = `${pythonBin} "${SCRIPT_PATH}" ${flag}${customRoot}`;
 
     return new Promise((resolve) => {
       exec(cmd, { cwd: process.cwd() }, (error, stdout, stderr) => {

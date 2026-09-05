@@ -15,6 +15,11 @@ import subprocess
 import argparse
 from datetime import datetime
 
+try:
+    import drive_scanner
+except ImportError:
+    drive_scanner = None
+
 # Path resolution
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MINDFLIX_DIR = CURRENT_DIR
@@ -424,12 +429,14 @@ def classify_course(display_title, raw_name, rel_path):
 
     return matched_cats[:3], tags
 
-def scan_library(courses_root, dry_run=False, deep=False, verbose=False):
+def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_drive=True, drive_folder_id=None, drive_creds=None):
     print(f"=== MINDFLIX INTELLIGENT SCANNER ===")
     print(f"Courses Root: {courses_root}")
     print(f"Mode: {'DRY RUN (Simulação de Alterações)' if dry_run else 'APPLY (Atualização do Catálogo)'}")
     if deep:
         print("Deep Media Probing: ATIVADO (ffprobe completo)")
+    if scan_drive:
+        print("Google Drive Sync: ATIVADO")
 
     cache = load_cache()
     overrides = load_manual_overrides()
@@ -759,6 +766,89 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False):
         }
         scanned_courses.append(course_record)
 
+    # 4. Google Drive integration and synchronization
+    drive_courses = []
+    if scan_drive and drive_scanner:
+        creds_file = drive_scanner.resolve_credentials_path(drive_creds)
+        if creds_file:
+            service = drive_scanner.get_drive_service(creds_file)
+            if service:
+                f_id = drive_scanner.resolve_drive_folder_id(drive_folder_id)
+                if f_id:
+                    try:
+                        drive_courses = drive_scanner.scan_google_drive(
+                            service=service,
+                            root_folder_id=f_id,
+                            overrides=overrides,
+                            clean_display_title=clean_display_title,
+                            clean_module_title=clean_module_title,
+                            slugify=slugify,
+                            infer_provider=infer_provider,
+                            classify_course=classify_course,
+                            natural_sort_key=natural_sort_key,
+                            covers_dir=COVERS_DIR,
+                            verbose=verbose
+                        )
+                    except Exception as e:
+                        print(f"[Drive] Erro ao sincronizar com Google Drive: {e}")
+            else:
+                if verbose:
+                    print("[Drive] Não foi possível autenticar o serviço Google Drive.")
+        else:
+            if verbose:
+                print("[Drive] Arquivo de credenciais do Google Drive não encontrado. Ignorando sincronização com nuvem.")
+
+    # Merge Drive courses with local courses
+    if drive_courses:
+        print(f"\n[Drive] Sincronizando {len(drive_courses)} cursos do Google Drive com a biblioteca...")
+        local_courses_map = {c["id"]: c for c in scanned_courses}
+        final_scanned = []
+
+        for d_c in drive_courses:
+            c_id = d_c["id"]
+            if c_id in local_courses_map:
+                # Merge: enrich local course with Drive streaming links
+                loc_c = local_courses_map[c_id]
+                loc_c["drive_folder_id"] = d_c.get("drive_folder_id")
+                loc_c["source"] = "hybrid"
+
+                # Map drive lessons by slug and lower raw_title
+                d_lessons_map = {}
+                for dm in d_c.get("modules", []):
+                    for dl in dm.get("lessons", []):
+                        d_lessons_map[slugify(dl["raw_title"])] = dl
+                        d_lessons_map[dl["raw_title"].lower().strip()] = dl
+
+                for lm in loc_c.get("modules", []):
+                    for ll in lm.get("lessons", []):
+                        slug_k = slugify(ll["raw_title"])
+                        raw_k = ll["raw_title"].lower().strip()
+                        match_dl = d_lessons_map.get(slug_k) or d_lessons_map.get(raw_k)
+                        if match_dl:
+                            ll["drive_file_id"] = match_dl.get("drive_file_id")
+                            ll["drive_url"] = match_dl.get("drive_url")
+                            if not ll.get("duration_seconds") and match_dl.get("duration_seconds"):
+                                ll["duration_seconds"] = match_dl.get("duration_seconds")
+                                ll["duration_formatted"] = match_dl.get("duration_formatted")
+
+                final_scanned.append(loc_c)
+                del local_courses_map[c_id]
+            else:
+                # Course present exclusively on Google Drive
+                final_scanned.append(d_c)
+                if c_id not in old_courses_map:
+                    new_courses_count += 1
+                for dm in d_c.get("modules", []):
+                    for dl in dm.get("lessons", []):
+                        if dl["id"] not in old_lessons_set:
+                            new_lessons_count += 1
+
+        # Add remaining local-only courses
+        for rem_c in local_courses_map.values():
+            final_scanned.append(rem_c)
+
+        scanned_courses = final_scanned
+
     total_modules_all = sum(c["modules_count"] for c in scanned_courses)
     total_lessons_all = sum(c["lessons_count"] for c in scanned_courses)
 
@@ -826,12 +916,24 @@ def main():
     parser.add_argument("--root", type=str, help="Caminho personalizado da pasta raiz de cursos")
     parser.add_argument("--deep", action="store_true", help="Executa ffprobe completo para metadados de mídia")
     parser.add_argument("--verbose", action="store_true", help="Exibe logs detalhados de cada arquivo")
+    parser.add_argument("--drive", dest="drive", action="store_true", default=True, help="Habilita sincronização com Google Drive")
+    parser.add_argument("--no-drive", dest="drive", action="store_false", help="Desabilita sincronização com Google Drive")
+    parser.add_argument("--drive-id", type=str, help="ID da pasta raiz no Google Drive")
+    parser.add_argument("--drive-creds", type=str, help="Caminho do arquivo JSON de credenciais do Drive")
     args = parser.parse_args()
 
     root = os.path.abspath(args.root) if args.root else COURSES_ROOT
     dry_run = not args.apply if args.dry_run else False
 
-    scan_library(root, dry_run=dry_run, deep=args.deep, verbose=args.verbose)
+    scan_library(
+        root,
+        dry_run=dry_run,
+        deep=args.deep,
+        verbose=args.verbose,
+        scan_drive=args.drive,
+        drive_folder_id=args.drive_id,
+        drive_creds=args.drive_creds
+    )
 
 if __name__ == "__main__":
     main()
