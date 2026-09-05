@@ -65,23 +65,6 @@ import { THEME_PRESETS } from '../lib/theme';
 
         <div class="setting-row">
           <div class="setting-text">
-            <span class="setting-name">Velocidade Padrão do Player</span>
-            <span class="setting-hint">Define a velocidade com que todos os vídeos serão abertos inicialmente.</span>
-          </div>
-          <div class="setting-control">
-            <select id="pref-speed" class="form-select">
-              <option value="0.75">0.75x</option>
-              <option value="1.0" selected>1.0x (Normal)</option>
-              <option value="1.25">1.25x</option>
-              <option value="1.5">1.5x</option>
-              <option value="1.75">1.75x</option>
-              <option value="2.0">2.0x</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="setting-row">
-          <div class="setting-text">
             <span class="setting-name">Autoplay da Próxima Aula</span>
             <span class="setting-hint">Ao terminar o vídeo da aula atual, abre e reproduz a próxima aula automaticamente.</span>
           </div>
@@ -269,7 +252,6 @@ import { THEME_PRESETS } from '../lib/theme';
 
   let activeThemeId = getUserPreferences().theme_id || 'cyan-indigo';
 
-  const speed = document.getElementById('pref-speed') as HTMLSelectElement | null;
   const autoplay = document.getElementById('pref-autoplay') as HTMLInputElement | null;
   const autoResume = document.getElementById('pref-auto-resume') as HTMLInputElement | null;
   const autoPreview = document.getElementById('pref-auto-preview') as HTMLInputElement | null;
@@ -309,7 +291,6 @@ import { THEME_PRESETS } from '../lib/theme';
     applyTheme(activeThemeId);
     updateThemeCardsUI();
 
-    if (speed) speed.value = prefs.playback_speed.toString();
     if (autoplay) autoplay.checked = prefs.autoplay_next;
     if (autoResume) autoResume.checked = prefs.auto_resume;
     if (autoPreview) autoPreview.checked = prefs.auto_preview;
@@ -335,7 +316,6 @@ import { THEME_PRESETS } from '../lib/theme';
 
   const handleUpdate = async () => {
     await saveUserPreferences({
-      playback_speed: parseFloat(speed?.value || '1.0'),
       autoplay_next: autoplay?.checked ?? true,
       auto_resume: autoResume?.checked ?? true,
       auto_preview: autoPreview?.checked ?? false,
@@ -348,7 +328,6 @@ import { THEME_PRESETS } from '../lib/theme';
     showSaved();
   };
 
-  speed?.addEventListener('change', handleUpdate);
   autoplay?.addEventListener('change', handleUpdate);
   autoResume?.addEventListener('change', handleUpdate);
   autoPreview?.addEventListener('change', handleUpdate);

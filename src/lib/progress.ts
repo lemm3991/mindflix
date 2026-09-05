@@ -143,8 +143,8 @@ export async function saveLessonProgress(
     ? Math.min(100, Math.round((positionSeconds / durationSeconds) * 100))
     : 0;
   
-  // Rule: completed if >= 90% or manually completed
-  const completed = isManualComplete || percentage >= 90;
+  // Rule: completed if >= 85% or manually completed
+  const completed = isManualComplete || percentage >= 85;
   const now = new Date().toISOString();
 
   const progress: UserProgress = {

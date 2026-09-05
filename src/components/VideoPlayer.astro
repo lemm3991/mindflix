@@ -210,24 +210,6 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
       </div>
 
       <div class="controls-right">
-        <!-- Speed Popover Trigger -->
-        <div class="speed-popover-container" id="speed-popover-box">
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-speed-popover" aria-haspopup="true">
-            <span id="current-speed-label">1.0x</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-
-          <div class="speed-menu" id="speed-menu" style="display: none;">
-            {[0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5].map(s => (
-              <button type="button" class="speed-option" data-speed={s}>
-                {s.toFixed(2).replace(/\.00$/, '')}x
-              </button>
-            ))}
-          </div>
-        </div>
-
         <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-fullscreen-toggle" title="Tela Cheia (F)">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
@@ -251,9 +233,7 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
     getLessonProgress,
     saveLessonProgress,
     getUserPreferences,
-    saveUserPreferences,
-    getCoursePlaybackSpeed,
-    saveCoursePlaybackSpeed
+    saveUserPreferences
   } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
@@ -264,9 +244,6 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
   const countdownText = document.getElementById('next-countdown-text');
   const btnCancelNext = document.getElementById('btn-cancel-next');
   const savePill = document.getElementById('save-status-pill');
-  const speedBtn = document.getElementById('btn-speed-popover');
-  const speedMenu = document.getElementById('speed-menu');
-  const speedLabel = document.getElementById('current-speed-label');
   const btnComplete = document.getElementById('btn-toggle-complete');
   const completeText = document.getElementById('complete-btn-text');
   const btnTheater = document.getElementById('btn-theater-mode');
@@ -319,80 +296,6 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
     // Next lesson countdown cancel
     btnCancelNext?.addEventListener('click', () => {
       if (overlay) overlay.style.display = 'none';
-    });
-
-    // Speed Controls Initialization (Shared across HTML5 Video and Drive)
-    const updateSpeedUI = (targetSpeed: number) => {
-      if (speedLabel) speedLabel.textContent = `${targetSpeed}x`;
-      
-      speedMenu?.querySelectorAll<HTMLButtonElement>('.speed-option').forEach(opt => {
-        const rate = parseFloat(opt.getAttribute('data-speed') || '1.0');
-        if (Math.abs(rate - targetSpeed) < 0.01) {
-          opt.classList.add('active');
-        } else {
-          opt.classList.remove('active');
-        }
-      });
-
-      if (video) {
-        try {
-          video.playbackRate = targetSpeed;
-        } catch (e) {}
-      }
-
-      // Send speed command to Google Drive / YouTube HTML5 iframe player
-      const driveIframe = document.getElementById('drive-video-iframe') as HTMLIFrameElement | null;
-      if (driveIframe && driveIframe.contentWindow) {
-        try {
-          driveIframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'setPlaybackRate',
-            args: [targetSpeed]
-          }), '*');
-          driveIframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'setSpeed',
-            args: [targetSpeed]
-          }), '*');
-        } catch (e) {}
-      }
-    };
-
-    // Initialize speed UI immediately on load
-    const currentSpeed = getCoursePlaybackSpeed(courseId);
-    updateSpeedUI(currentSpeed);
-
-    // Apply speed preference on Drive iframe load
-    const driveIframe = document.getElementById('drive-video-iframe') as HTMLIFrameElement | null;
-    if (driveIframe) {
-      driveIframe.addEventListener('load', () => {
-        setTimeout(() => updateSpeedUI(currentSpeed), 800);
-      });
-    }
-
-    // Speed popover toggle (Works for ALL videos)
-    speedBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (speedMenu) {
-        speedMenu.style.display = speedMenu.style.display === 'block' ? 'none' : 'block';
-      }
-    });
-
-    document.addEventListener('click', () => {
-      if (speedMenu) speedMenu.style.display = 'none';
-    });
-
-    // Speed option selection
-    speedMenu?.querySelectorAll<HTMLButtonElement>('.speed-option').forEach(opt => {
-      opt.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const rate = parseFloat(opt.getAttribute('data-speed') || '1.0');
-        saveCoursePlaybackSpeed(courseId, rate);
-        saveUserPreferences({ playback_speed: rate });
-        updateSpeedUI(rate);
-        if (speedMenu) speedMenu.style.display = 'none';
-        showToast(`Velocidade: ${rate}x`, 'info', 1500);
-      });
     });
 
     // Fullscreen Toggle (Shared for ALL video types)
@@ -535,23 +438,6 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
         });
       }
 
-      const applyPlaybackSpeed = () => {
-        const targetSpeed = getCoursePlaybackSpeed(courseId);
-        updateSpeedUI(targetSpeed);
-      };
-
-      applyPlaybackSpeed();
-      video.addEventListener('loadedmetadata', applyPlaybackSpeed);
-      video.addEventListener('canplay', applyPlaybackSpeed);
-      video.addEventListener('play', applyPlaybackSpeed);
-      video.addEventListener('playing', applyPlaybackSpeed);
-      video.addEventListener('ratechange', () => {
-        const targetSpeed = getCoursePlaybackSpeed(courseId);
-        if (Math.abs(video.playbackRate - targetSpeed) > 0.01) {
-          try { video.playbackRate = targetSpeed; } catch (e) {}
-        }
-      });
-
       // Handle video load error gracefully
       video.addEventListener('error', () => {
         if (errorOverlay) errorOverlay.style.display = 'flex';
@@ -598,7 +484,7 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
       // Unload safety: save exact position on page exit/navigate
       const handleUnload = () => {
         if (video && !isNaN(video.currentTime) && video.duration) {
-          saveLessonProgress(courseId, lessonId, video.currentTime, video.duration, video.currentTime / video.duration >= 0.9);
+          saveLessonProgress(courseId, lessonId, video.currentTime, video.duration, video.currentTime / video.duration >= 0.85);
         }
       };
       window.addEventListener('beforeunload', handleUnload);
@@ -608,7 +494,7 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
         const now = Date.now();
         if (now - lastSave > 8000) triggerSave();
 
-        if (video.duration && video.currentTime / video.duration >= 0.9) {
+        if (video.duration && video.currentTime / video.duration >= 0.85) {
           if (!btnComplete?.classList.contains('btn-completed')) {
             triggerSave(true);
             updateCompleteUI(true);
@@ -730,10 +616,10 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
 
   .drive-player-frame {
     position: absolute;
-    top: -58px;
+    top: -48px;
     left: -2px;
     width: calc(100% + 4px);
-    height: calc(100% + 152px);
+    height: calc(100% + 48px);
     border: none;
     background: #000000;
     display: block;
