@@ -61,28 +61,6 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
   <div class="video-viewport" id="video-viewport">
     {isDrive && drivePreviewUrl ? (
       <div class="drive-video-wrapper">
-        <div class="drive-top-header">
-          <div class="drive-cloud-pill">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/>
-            </svg>
-            <span>Google Drive Stream HD</span>
-          </div>
-          <a
-            href={`https://drive.google.com/file/d/${driveId}/view`}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="drive-direct-link"
-            title="Abrir diretamente no Google Drive"
-          >
-            <span>Abrir no Drive</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-              <polyline points="15 3 21 3 21 9"></polyline>
-              <line x1="10" y1="14" x2="21" y2="3"></line>
-            </svg>
-          </a>
-        </div>
         <iframe
           id="drive-video-iframe"
           class="drive-player-frame"
@@ -91,6 +69,8 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
           allowfullscreen
           title={lesson.display_title}
         ></iframe>
+        <!-- Blocker to prevent clicking Google Drive's native pop-out button in the top right -->
+        <div class="drive-popout-blocker" title=""></div>
       </div>
     ) : (
       <video
@@ -488,6 +468,37 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
     width: 100%;
     aspect-ratio: 16 / 9;
     background: #000000;
+  }
+
+  .drive-video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    overflow: hidden;
+  }
+
+  .drive-player-frame {
+    position: absolute;
+    top: -54px;
+    left: 0;
+    width: 100%;
+    height: calc(100% + 54px);
+    border: none;
+    background: #000000;
+    display: block;
+  }
+
+  .drive-popout-blocker {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 54px;
+    z-index: 10;
+    background: transparent;
+    cursor: default;
+    pointer-events: auto;
   }
 
   .video-error-overlay {

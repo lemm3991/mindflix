@@ -69,14 +69,30 @@ const { placeholder = "Pesquisar cursos, módulos, aulas ou buscar por assunto..
       input.focus();
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
+
+    // Clicking the search input opens the global Command Palette
+    input.addEventListener('click', () => {
+      const q = input.value.trim();
+      if (typeof (window as any).openSearchModal === 'function') {
+        (window as any).openSearchModal('all', q);
+      } else {
+        window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+          detail: { type: 'all', query: q }
+        }));
+      }
+    });
   }
 
   // AI Modal Trigger Button in Input
   triggerAiBtn?.addEventListener('click', () => {
     const q = input?.value.trim() || '';
-    window.dispatchEvent(new CustomEvent('mindflix:open-search', {
-      detail: { type: 'ai', query: q }
-    }));
+    if (typeof (window as any).openSearchModal === 'function') {
+      (window as any).openSearchModal('ai', q);
+    } else {
+      window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+        detail: { type: 'ai', query: q }
+      }));
+    }
   });
 
   // Type Filter Chips click handling
@@ -89,15 +105,21 @@ const { placeholder = "Pesquisar cursos, módulos, aulas ou buscar por assunto..
       const q = input?.value.trim() || '';
 
       if (type === 'ai') {
-        // Open AI Subject Search Modal
-        window.dispatchEvent(new CustomEvent('mindflix:open-search', {
-          detail: { type: 'ai', query: q }
-        }));
+        if (typeof (window as any).openSearchModal === 'function') {
+          (window as any).openSearchModal('ai', q);
+        } else {
+          window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+            detail: { type: 'ai', query: q }
+          }));
+        }
       } else if (type === 'module' || type === 'lesson') {
-        // Open global palette filtered directly to modules or lessons
-        window.dispatchEvent(new CustomEvent('mindflix:open-search', {
-          detail: { type: type, query: q }
-        }));
+        if (typeof (window as any).openSearchModal === 'function') {
+          (window as any).openSearchModal(type, q);
+        } else {
+          window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+            detail: { type, query: q }
+          }));
+        }
       } else {
         // 'all' or 'course' filters on the current page grid
         window.dispatchEvent(new CustomEvent('mindflix:catalog-filter-type', {

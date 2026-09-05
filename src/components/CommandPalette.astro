@@ -117,13 +117,18 @@ allCourses.forEach(c => {
   const norm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
   function openPalette(initialFilter = 'all', initialQuery = '') {
-    if (!backdrop || !input) return;
-    backdrop.style.display = 'flex';
-    backdrop.classList.add('active');
+    const bd = document.getElementById('cmd-palette-backdrop');
+    const inp = document.getElementById('cmd-palette-input');
+    if (!bd || !inp) return;
+
+    bd.style.display = 'flex';
+    requestAnimationFrame(() => {
+      bd.classList.add('active');
+    });
     document.body.style.overflow = 'hidden';
     
     if (initialQuery) {
-      input.value = initialQuery;
+      inp.value = initialQuery;
     }
     
     setFilter(initialFilter, false);
@@ -131,20 +136,29 @@ allCourses.forEach(c => {
     if (initialFilter === 'ai' && initialQuery.trim()) {
       runAiSearch(initialQuery.trim());
     } else {
-      renderResults(input.value);
+      renderResults(inp.value);
     }
 
-    setTimeout(() => input.focus(), 50);
+    setTimeout(() => inp.focus(), 60);
   }
 
   function closePalette() {
-    if (!backdrop) return;
-    backdrop.classList.remove('active');
+    const bd = document.getElementById('cmd-palette-backdrop');
+    if (!bd) return;
+    bd.classList.remove('active');
     document.body.style.overflow = '';
     setTimeout(() => {
-      backdrop.style.display = 'none';
+      bd.style.display = 'none';
     }, 150);
   }
+
+  // Expose globally on window
+  window.openSearchModal = function(type = 'all', query = '') {
+    openPalette(type, query);
+  };
+  window.closeSearchModal = function() {
+    closePalette();
+  };
 
   function setFilter(type, shouldRender = true) {
     currentFilter = type;
@@ -530,11 +544,11 @@ allCourses.forEach(c => {
   .cmd-palette-backdrop {
     position: fixed;
     inset: 0;
-    z-index: var(--z-modal);
-    background: rgba(5, 7, 11, 0.75);
+    z-index: 2000;
+    background: rgba(5, 7, 11, 0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    display: flex;
+    display: none;
     align-items: flex-start;
     justify-content: center;
     padding-top: 10vh;
@@ -543,10 +557,13 @@ allCourses.forEach(c => {
     padding-bottom: 2rem;
     opacity: 0;
     transition: opacity var(--motion-fast) var(--ease-out);
+    pointer-events: none;
   }
 
   .cmd-palette-backdrop.active {
-    opacity: 1;
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
 
   .cmd-palette-dialog {

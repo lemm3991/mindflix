@@ -79,8 +79,13 @@ const navItems = [
   }, { passive: true });
 
   // Open Command Palette event
-  triggerSearchBtn?.addEventListener('click', () => {
-    window.dispatchEvent(new CustomEvent('mindflix:open-search'));
+  triggerSearchBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof (window as any).openSearchModal === 'function') {
+      (window as any).openSearchModal('all', '');
+    } else {
+      window.dispatchEvent(new CustomEvent('mindflix:open-search', { detail: { type: 'all' } }));
+    }
   });
 
   // Check logged user initials
