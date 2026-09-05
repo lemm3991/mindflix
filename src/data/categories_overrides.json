@@ -1,0 +1,77 @@
+{
+  "categories": [
+    {
+      "id": "ia",
+      "name": "Inteligência Artificial & LLMs",
+      "icon": "sparkles",
+      "description": "Modelos de linguagem, Claude, ChatGPT, Engenharia de Prompts e IA Generativa na prática."
+    },
+    {
+      "id": "automacao-agentes",
+      "name": "Automação & Agentes de IA",
+      "icon": "cpu",
+      "description": "Agentes autônomos, integrações com n8n, Make, Hermes Agent e automação de processos."
+    },
+    {
+      "id": "web-vibe-coding",
+      "name": "Web, Apps & Vibe Coding",
+      "icon": "layers",
+      "description": "Desenvolvimento web moderno, Lovable, front-end rápido e criação de web apps com IA."
+    },
+    {
+      "id": "programacao-dev",
+      "name": "Programação & Engenharia",
+      "icon": "terminal",
+      "description": "Fundamentos de programação, arquitetura de software, desenvolvimento fullstack e ferramentas."
+    },
+    {
+      "id": "backend-infra",
+      "name": "Backend, Bancos de Dados & Infra",
+      "icon": "database",
+      "description": "Supabase, PostgreSQL, APIs, serviços de banco de dados e infraestrutura moderna."
+    },
+    {
+      "id": "dados-datascience",
+      "name": "Dados & Data Science",
+      "icon": "bar-chart-2",
+      "description": "Análise de dados, Machine Learning, estatística, Dashboards interativos e ciência de dados."
+    },
+    {
+      "id": "python",
+      "name": "Ecossistema Python",
+      "icon": "code",
+      "description": "Aplicações práticas com Python, integração com Excel, automação e desenvolvimento."
+    },
+    {
+      "id": "trading",
+      "name": "Trading & Algoritmos Financeiros",
+      "icon": "trending-up",
+      "description": "Quantitative Trading, Algotrading, Backtesting e análise de mercado financeiro."
+    },
+    {
+      "id": "desenvolvimento-pessoal",
+      "name": "Desenvolvimento Pessoal & PNL",
+      "icon": "brain",
+      "description": "Programação Neurolinguística (PNL), soft skills, liderança, mindset e inteligência emocional."
+    },
+    {
+      "id": "saude-lifestyle",
+      "name": "Saúde, Fitness & Culinária",
+      "icon": "heart",
+      "description": "Nutrição prática, marmitas fit congeladas, massagem anti-stress e transformação de hábitos."
+    },
+    {
+      "id": "musica",
+      "name": "Música & Artes",
+      "icon": "music",
+      "description": "Violão, teoria musical, prática instrumental e expressão artística."
+    },
+    {
+      "id": "negocios",
+      "name": "Negócios & Oportunidades",
+      "icon": "briefcase",
+      "description": "Estratégias de negócios, leilões, oportunidades de mercado e gestão de carreira."
+    }
+  ],
+  "updated_at": "2026-09-05T12:44:00Z"
+}

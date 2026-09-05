@@ -104,10 +104,16 @@ const categoryMeta: Record<string, {
 };
 
 const categories = rawCategories.map(cat => {
-  const catCourses = allCourses.filter(c => c.categories.includes(cat.id));
+  const catCourses = allCourses.filter(c => (c.categories || []).includes(cat.id));
   const count = catCourses.length;
   const totalLessons = catCourses.reduce((acc, c) => acc + (c.lessons_count || 0), 0);
-  const sampleCourses = catCourses.slice(0, 4).map(c => c.display_title);
+  const sampleCourseObjects = catCourses.slice(0, 4).map(c => ({
+    id: c.id,
+    title: c.display_title,
+    cover: c.cover_image || `/covers/${c.id}.png`,
+    provider: c.provider,
+    lessonsCount: c.lessons_count || 0
+  }));
   const meta = categoryMeta[cat.id] || {
     accent: '#00f2fe',
     accentSoft: 'rgba(0, 242, 254, 0.12)',
@@ -120,7 +126,7 @@ const categories = rawCategories.map(cat => {
     ...cat,
     count,
     totalLessons,
-    sampleCourses,
+    sampleCourses: sampleCourseObjects,
     ...meta
   };
 });
@@ -220,7 +226,7 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
           class={`bento-cat-card ${cat.featured ? 'bento-featured' : ''}`}
           data-cat-id={cat.id}
           data-cat-group={cat.group}
-          data-search-content={`${cat.name} ${cat.description} ${cat.sampleCourses.join(' ')}`.toLowerCase()}
+          data-search-content={`${cat.name} ${cat.description} ${cat.sampleCourses.map(c => c.title).join(' ')}`.toLowerCase()}
           style={`--cat-accent: ${cat.accent}; --cat-accent-soft: ${cat.accentSoft}; --cat-grad: ${cat.grad};`}
         >
           <!-- Dynamic ambient spotlight inside card -->
@@ -310,7 +316,7 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
                     <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
                   </svg>
                 )}
-                {cat.icon === 'folder' && (
+                {(cat.icon === 'folder' || !['sparkles','bot','terminal','layers','database','chart','code','trending','briefcase','heart','music','compass'].includes(cat.icon)) && (
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
                   </svg>
@@ -335,21 +341,35 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
               <p class="cat-desc">{cat.description}</p>
             </div>
 
-            <!-- Sample Courses Chips / Topics Preview -->
+            <!-- Live Course Showcase Preview (Shown/Expanded on Hover) -->
             {cat.sampleCourses.length > 0 && (
-              <div class="cat-sample-courses parallax-layer-1">
-                <span class="sample-label">Cursos em destaque:</span>
-                <div class="sample-chips">
-                  {cat.sampleCourses.map(courseTitle => (
-                    <span class="course-chip" title={courseTitle}>
-                      {courseTitle}
-                    </span>
+              <div class="cat-hover-preview parallax-layer-1">
+                <div class="preview-header">
+                  <span class="preview-label">Cursos em destaque:</span>
+                  <span class="preview-badge" style={`color: ${cat.accent};`}>{cat.count} no total</span>
+                </div>
+                <div class="preview-courses-grid">
+                  {cat.sampleCourses.map(course => (
+                    <div class="preview-course-card" title={course.title}>
+                      <div class="preview-cover-box">
+                        <img 
+                          src={course.cover} 
+                          alt={course.title} 
+                          loading="lazy" 
+                          onerror="this.src='/covers/default.png'"
+                        />
+                        <div class="preview-play-btn">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="preview-info">
+                        <span class="preview-course-title">{course.title}</span>
+                        <span class="preview-course-meta">{course.provider}</span>
+                      </div>
+                    </div>
                   ))}
-                  {cat.count > cat.sampleCourses.length && (
-                    <span class="course-chip-more" style={`color: ${cat.accent};`}>
-                      +{cat.count - cat.sampleCourses.length} mais
-                    </span>
-                  )}
                 </div>
               </div>
             )}
@@ -794,55 +814,132 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
     font-size: 0.9375rem;
   }
 
-  /* --- Sample Courses Chips --- */
-  .cat-sample-courses {
+  /* --- Live Course Hover Preview Showcase --- */
+  .cat-hover-preview {
     margin-top: auto;
     margin-bottom: 1.25rem;
-    padding-top: 0.85rem;
-    border-top: 1px dashed rgba(255, 255, 255, 0.07);
+    background: rgba(11, 14, 20, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 0.85rem;
+    backdrop-filter: blur(12px);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .sample-label {
-    display: block;
-    font-size: 0.6875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+  .bento-cat-card:hover .cat-hover-preview {
+    background: rgba(15, 20, 32, 0.9);
+    border-color: rgba(var(--accent-primary-rgb, 0, 242, 254), 0.35);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   }
 
-  .sample-chips {
+  .preview-header {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
   }
 
-  .course-chip {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.04);
+  .preview-label {
+    font-size: 0.71875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .preview-badge {
+    font-size: 0.71875rem;
+    font-weight: 700;
+  }
+
+  .preview-courses-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+
+  .bento-cat-card.bento-featured .preview-courses-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .preview-course-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 0.2rem 0.55rem;
     border-radius: var(--radius-sm);
-    max-width: 180px;
+    padding: 0.4rem;
+    transition: all 0.25s ease;
+  }
+
+  .preview-course-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--cat-accent);
+    transform: translateY(-2px);
+  }
+
+  .preview-cover-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+    background: #000;
+  }
+
+  .preview-cover-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+  }
+
+  .preview-course-card:hover .preview-cover-box img {
+    transform: scale(1.08);
+  }
+
+  .preview-play-btn {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    color: #fff;
+  }
+
+  .preview-course-card:hover .preview-play-btn {
+    opacity: 1;
+  }
+
+  .preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    overflow: hidden;
+  }
+
+  .preview-course-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.2;
+  }
+
+  .preview-course-meta {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: all var(--motion-fast);
   }
-
-  .bento-cat-card:hover .course-chip {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-primary);
-  }
-
-  .course-chip-more {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.2rem 0.4rem;
-    display: inline-flex;
-    align-items: center;
   }
 
   /* --- Card Footer --- */

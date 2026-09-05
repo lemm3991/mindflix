@@ -7,75 +7,75 @@
   "categories": [
     {
       "id": "ia",
-      "name": "Inteligência Artificial",
+      "name": "Inteligência Artificial & LLMs",
       "icon": "sparkles",
-      "description": "Modelos de linguagem, visão computacional, LLMs, Claude, GPT e ferramentas assistidas por IA."
+      "description": "Modelos de linguagem, Claude, ChatGPT, Engenharia de Prompts e IA Generativa na prática."
     },
     {
       "id": "automacao-agentes",
-      "name": "Automação & Agentes",
+      "name": "Automação & Agentes de IA",
       "icon": "cpu",
-      "description": "Criação de agentes autônomos, integrações com n8n, Make, fluxos de automação e atendimento."
-    },
-    {
-      "id": "programacao-dev",
-      "name": "Programação & Desenvolvimento",
-      "icon": "terminal",
-      "description": "Fundamentos e práticas de desenvolvimento moderno de software, engenharia e ferramentas."
+      "description": "Agentes autônomos, integrações com n8n, Make, Hermes Agent e automação de processos."
     },
     {
       "id": "web-vibe-coding",
       "name": "Web, Apps & Vibe Coding",
-      "icon": "layout",
-      "description": "Criação de sites e aplicações modernas com Lovable, Astro, Three.js e front-end com IA."
+      "icon": "layers",
+      "description": "Desenvolvimento web moderno, Lovable, front-end rápido e criação de web apps com IA."
+    },
+    {
+      "id": "programacao-dev",
+      "name": "Programação & Engenharia",
+      "icon": "terminal",
+      "description": "Fundamentos de programação, arquitetura de software, desenvolvimento fullstack e ferramentas."
     },
     {
       "id": "backend-infra",
-      "name": "Backend, Banco de Dados & Infraestrutura",
+      "name": "Backend, Bancos de Dados & Infra",
       "icon": "database",
-      "description": "Supabase, PostgreSQL, APIs, Docker, Linux, pipelines e arquitetura de dados escalável."
+      "description": "Supabase, PostgreSQL, APIs, serviços de banco de dados e infraestrutura moderna."
     },
     {
       "id": "dados-datascience",
       "name": "Dados & Data Science",
       "icon": "bar-chart-2",
-      "description": "Análise de dados, dashboards, visualização analítica, machine learning e estatística aplicada."
+      "description": "Análise de dados, Machine Learning, estatística, Dashboards interativos e ciência de dados."
     },
     {
       "id": "python",
-      "name": "Python",
+      "name": "Ecossistema Python",
       "icon": "code",
-      "description": "Especialização completa em Python: automação, manipulação com Pandas, Streamlit e scripts."
+      "description": "Aplicações práticas com Python, integração com Excel, automação e desenvolvimento."
     },
     {
       "id": "trading",
-      "name": "Trading & Mercado Financeiro",
+      "name": "Trading & Algoritmos Financeiros",
       "icon": "trending-up",
-      "description": "Algotrading, backtesting quantitativo, bots financeiros e análise técnica com código."
+      "description": "Quantitative Trading, Algotrading, Backtesting e análise de mercado financeiro."
     },
     {
-      "id": "negocios",
-      "name": "Negócios & Empreendedorismo",
-      "icon": "briefcase",
-      "description": "Carreira tech, negociação, leilões, estratégias comerciais e soft skills para profissionais."
+      "id": "desenvolvimento-pessoal",
+      "name": "Desenvolvimento Pessoal & PNL",
+      "icon": "brain",
+      "description": "Programação Neurolinguística (PNL), soft skills, liderança, mindset e inteligência emocional."
     },
     {
       "id": "saude-lifestyle",
-      "name": "Saúde & Bem-Estar",
+      "name": "Saúde, Fitness & Culinária",
       "icon": "heart",
-      "description": "Nutrição funcional, marmitas saudáveis e massoterapia anti-stress."
+      "description": "Nutrição prática, marmitas fit congeladas, massagem anti-stress e transformação de hábitos."
     },
     {
       "id": "musica",
-      "name": "Música",
+      "name": "Música & Artes",
       "icon": "music",
-      "description": "Teoria e prática musical, harmonia funcional e método tríade para violão."
+      "description": "Violão, teoria musical, prática instrumental e expressão artística."
     },
     {
-      "id": "formacoes-trilhas",
-      "name": "Formações & Trilhas",
-      "icon": "compass",
-      "description": "Jornadas completas e trilhas multi-curso para formação profissional acelerada."
+      "id": "negocios",
+      "name": "Negócios & Oportunidades",
+      "icon": "briefcase",
+      "description": "Estratégias de negócios, leilões, oportunidades de mercado e gestão de carreira."
     }
   ],
   "courses": [
@@ -88,8 +88,8 @@
       "description": "Curso prático sobre Agentes de IA e n8n Impressionador, ministrado por Hashtag Treinamentos. Contém 24 módulos e 209 aulas (12h 43m).",
       "provider": "Hashtag Treinamentos",
       "categories": [
-        "ia",
-        "automacao-agentes"
+        "automacao-agentes",
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -3064,8 +3064,8 @@
       "description": "Curso prático sobre Agentes com GPT, ministrado por Asimov Academy. Contém 6 módulos e 29 aulas (1h 27m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
-        "automacao-agentes"
+        "automacao-agentes",
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -3536,7 +3536,6 @@
       "description": "Curso prático sobre Algotrading - Execução Automatizada, ministrado por Asimov Academy. Contém 2 módulos e 14 aulas (0h 42m).",
       "provider": "Asimov Academy",
       "categories": [
-        "automacao-agentes",
         "trading"
       ],
       "detected_categories": [
@@ -3777,8 +3776,8 @@
       "description": "Curso prático sobre Análise de Dados com IA, ministrado por Asimov Academy. Contém 5 módulos e 36 aulas (2h 18m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
-        "dados-datascience"
+        "dados-datascience",
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -6946,8 +6945,8 @@
       "description": "Curso prático sobre Aplicações de IA com Python, ministrado por Asimov Academy. Contém 15 módulos e 182 aulas (11h 18m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
-        "python"
+        "python",
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -9420,8 +9419,6 @@
       "description": "Curso prático sobre Backtesting - Avaliando Estratégias de Trading com Dados Históricos, ministrado por Asimov Academy. Contém 4 módulos e 7 aulas (0h 21m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
-        "dados-datascience",
         "trading"
       ],
       "detected_categories": [
@@ -9694,8 +9691,8 @@
       "description": "Curso prático sobre Construindo Base de Dados para Trading, ministrado por Asimov Academy. Contém 2 módulos e 10 aulas (0h 30m).",
       "provider": "Asimov Academy",
       "categories": [
-        "dados-datascience",
-        "trading"
+        "trading",
+        "dados-datascience"
       ],
       "detected_categories": [
         "dados-datascience",
@@ -9861,8 +9858,8 @@
       "description": "Curso prático sobre Construindo sites estáticos de alto nível com IA, ministrado por Asimov Academy. Contém 1 módulos e 2 aulas (0h 12m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
-        "web-vibe-coding"
+        "web-vibe-coding",
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -9931,8 +9928,8 @@
       "description": "Curso prático sobre Construindo Sites Profissionais com IA, ministrado por Asimov Academy. Contém 12 módulos e 150 aulas (8h 23m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
-        "web-vibe-coding"
+        "web-vibe-coding",
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -11728,7 +11725,6 @@
       "description": "Curso prático sobre Criando Agentes de Atendimento no n8n, ministrado por Asimov Academy. Contém 16 módulos e 86 aulas (4h 34m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
         "automacao-agentes"
       ],
       "detected_categories": [
@@ -12859,7 +12855,6 @@
       "description": "Curso prático sobre Criando Agentes Pessoais com Hermes Agent, ministrado por Asimov Academy. Contém 4 módulos e 19 aulas (1h 10m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
         "automacao-agentes"
       ],
       "detected_categories": [
@@ -13143,7 +13138,6 @@
       "description": "Curso prático sobre Criando Nosso Primeiro Agente com ChatGPT, ministrado por Asimov Academy. Contém 1 módulos e 1 aulas (0h 03m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
         "automacao-agentes"
       ],
       "detected_categories": [
@@ -20205,7 +20199,7 @@
       "description": "Curso prático sobre Engenharia de Dados com Python, ministrado por Asimov Academy. Contém 15 módulos e 232 aulas (11h 57m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
+        "backend-infra",
         "dados-datascience",
         "python"
       ],
@@ -24237,7 +24231,7 @@
       "description": "Curso prático sobre Integrando Python e Bancos de Dados, ministrado por Asimov Academy. Contém 6 módulos e 100 aulas (5h 28m).",
       "provider": "Asimov Academy",
       "categories": [
-        "dados-datascience",
+        "backend-infra",
         "python"
       ],
       "detected_categories": [
@@ -26547,9 +26541,8 @@
       "description": "Curso prático sobre Onboarding — Engenheiro de Agentes de IA, ministrado por Asimov Academy. Contém 1 módulos e 4 aulas (0h 12m).",
       "provider": "Asimov Academy",
       "categories": [
-        "ia",
         "automacao-agentes",
-        "formacoes-trilhas"
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -26641,9 +26634,9 @@
       "description": "Curso prático sobre Web Apps de Dados com Python, ministrado por Asimov Academy. Contém 20 módulos e 194 aulas (10h 26m).",
       "provider": "Asimov Academy",
       "categories": [
-        "web-vibe-coding",
         "dados-datascience",
-        "python"
+        "python",
+        "web-vibe-coding"
       ],
       "detected_categories": [
         "web-vibe-coding",
@@ -28994,9 +28987,8 @@
       "description": "Curso prático sobre Ciclo 1 - Carreira Tech Despertar, ministrado por SCTEC. Contém 1 módulos e 3 aulas (1h 13m).",
       "provider": "SCTEC",
       "categories": [
-        "programacao-dev",
-        "negocios",
-        "formacoes-trilhas"
+        "desenvolvimento-pessoal",
+        "programacao-dev"
       ],
       "detected_categories": [
         "programacao-dev",
@@ -29077,9 +29069,7 @@
       "description": "Curso prático sobre Ciclo 2 - Trilha Rápida de IA, ministrado por SCTEC. Contém 1 módulos e 5 aulas (2h 04m).",
       "provider": "SCTEC",
       "categories": [
-        "ia",
-        "programacao-dev",
-        "formacoes-trilhas"
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -30092,6 +30082,7 @@
       "description": "Curso prático sobre Programação Front-End e Back-End, ministrado por SCTEC. Contém 3 módulos e 49 aulas (3h 00m).",
       "provider": "SCTEC",
       "categories": [
+        "web-vibe-coding",
         "programacao-dev"
       ],
       "detected_categories": [
@@ -30695,8 +30686,6 @@
       "description": "🔗Hotmart: Carros de LeilãoDomine facilmente um método afiado de compra e venda de veículos em Leilões.\nVocê irá aprender como arrematar um veículo de forma segura e minimizando o risco de problemas futuros, selecionar quais veículos de um edital tem maiores chances da documentação sair sem demora, o que vende melhor e o que da maior margem lucrativ...",
       "provider": "Michael Alves Faria",
       "categories": [
-        "ia",
-        "trading",
         "negocios"
       ],
       "detected_categories": [
@@ -31532,8 +31521,7 @@
       "description": "Curso completo de Claude com prompts avançados, artifacts e integrações práticas.",
       "provider": "Hashtag Treinamentos",
       "categories": [
-        "ia",
-        "programacao-dev"
+        "ia"
       ],
       "detected_categories": [
         "ia"
@@ -35686,9 +35674,8 @@
       "description": "Curso prático sobre Especialização em Soft Skills & Liderança, ministrado por Especialista Mindflix. Contém 5 módulos e 202 aulas (16h 25m).",
       "provider": "Especialista Mindflix",
       "categories": [
-        "ia",
-        "negocios",
-        "formacoes-trilhas"
+        "desenvolvimento-pessoal",
+        "negocios"
       ],
       "detected_categories": [
         "ia",
@@ -38210,7 +38197,7 @@
       "total_duration_formatted": "0h 00m",
       "cover_image": null,
       "is_featured": false,
-      "is_hidden": false,
+      "is_hidden": true,
       "classification_source": "rule",
       "classification_confidence": 0.85,
       "discovered_at": "2026-09-04T20:59:03.784679-03:00",
@@ -41940,8 +41927,8 @@
       "description": "Curso prático sobre Lovable Impressionador — Apps com IA, ministrado por Hashtag Treinamentos. Contém 5 módulos e 70 aulas (3h 31m).",
       "provider": "Hashtag Treinamentos",
       "categories": [
-        "ia",
-        "web-vibe-coding"
+        "web-vibe-coding",
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -42909,7 +42896,6 @@
       "description": "Curso prático sobre Massagem Anti-Stress — Método Thiago Nishida, ministrado por Thiago Nishida. Contém 3 módulos e 47 aulas (3h 18m).",
       "provider": "Thiago Nishida",
       "categories": [
-        "ia",
         "saude-lifestyle"
       ],
       "detected_categories": [
@@ -43490,7 +43476,7 @@
       "description": "Curso prático sobre Practitioner em PNL — Otavio Castanho, ministrado por Otavio Castanho. Contém 18 módulos e 153 aulas (13h 11m).",
       "provider": "Otavio Castanho",
       "categories": [
-        "programacao-dev"
+        "desenvolvimento-pessoal"
       ],
       "detected_categories": [
         "programacao-dev"
@@ -45370,8 +45356,7 @@
       "description": "Curso prático sobre Projeto 60 Dias — Transformação Completa, ministrado por Especialista Mindflix. Contém 25 módulos e 154 aulas (12h 24m).",
       "provider": "Especialista Mindflix",
       "categories": [
-        "ia",
-        "formacoes-trilhas"
+        "saude-lifestyle"
       ],
       "detected_categories": [
         "ia",
@@ -48005,8 +47990,7 @@
       "description": "Curso prático sobre Trilha NoCode com Inteligência Artificial, ministrado por Especialista Mindflix. Contém 5 módulos e 449 aulas (32h 28m).",
       "provider": "Especialista Mindflix",
       "categories": [
-        "ia",
-        "formacoes-trilhas"
+        "ia"
       ],
       "detected_categories": [
         "ia",
@@ -53399,6 +53383,7 @@
       "description": "Curso prático sobre SCTEC — Formação em Data & Tech, ministrado por SCTEC. Conteúdo aprofundado com foco em aplicações reais, projetos práticos e desenvolvimento profissional.",
       "provider": "SCTEC",
       "categories": [
+        "dados-datascience",
         "programacao-dev"
       ],
       "tags": [],

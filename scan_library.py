@@ -180,8 +180,8 @@ CATEGORY_RULES = {
     "trading": [
         "trading", "algotrading", "backtesting", "financeiro", "leilão", "leilao", "lotes", "lucro"
     ],
-    "negocios": [
-        "carreira", "soft skills", "leilão", "leilao", "fipe", "anúncio", "vender"
+    "desenvolvimento-pessoal": [
+        "pnl", "neurolinguística", "neurolinguistica", "soft skills", "liderança", "mindset", "psicologia", "desenvolvimento pessoal"
     ],
     "saude-lifestyle": [
         "marmita", "marmitas", "fit", "nutri", "massagem", "stress", "saudável", "funcional"
