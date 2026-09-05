@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-04T12:29:42.772953-03:00",
+  "generated_at": "2026-09-04T21:00:01.795195-03:00",
   "courses_root": "D:\\Projetos Antigravity\\download synapse",
-  "total_courses": 45,
+  "total_courses": 47,
   "total_modules": 360,
   "total_lessons": 4094,
   "categories": [
@@ -111,10 +111,10 @@
       "cover_image": "/covers/course-agentes-com-gpt.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:01.880350-03:00",
-      "last_scanned_at": "2026-09-04T12:29:24.129322-03:00",
+      "last_scanned_at": "2026-09-04T20:59:55.495793-03:00",
       "modules": [
         {
           "id": "course-agentes-com-gpt-mod-modulo-01-comece-por-aqui-agentes-com-gpt",
@@ -523,10 +523,10 @@
       "cover_image": "/covers/course-algotrading-execucao-automatizada.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:01.933628-03:00",
-      "last_scanned_at": "2026-09-04T12:29:24.992537-03:00",
+      "last_scanned_at": "2026-09-04T20:59:55.849867-03:00",
       "modules": [
         {
           "id": "course-algotrading-execucao-automatizada-mod-1-conceitos-fundamentais-de-algotrading",
@@ -732,10 +732,10 @@
       "cover_image": "/covers/course-analise-de-dados-com-ia.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:02.177815-03:00",
-      "last_scanned_at": "2026-09-04T12:29:25.803533-03:00",
+      "last_scanned_at": "2026-09-04T20:59:55.900637-03:00",
       "modules": [
         {
           "id": "course-analise-de-dados-com-ia-mod-modulo-01-fundamentos-da-ia-generativa",
@@ -1210,10 +1210,10 @@
       "cover_image": "/covers/course-analise-de-dados-com-python.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:03.047383-03:00",
-      "last_scanned_at": "2026-09-04T12:29:26.896123-03:00",
+      "last_scanned_at": "2026-09-04T20:59:56.186034-03:00",
       "modules": [
         {
           "id": "course-analise-de-dados-com-python-mod-modulo-01-python-para-dados-do-zero-a-analise-completa",
@@ -3447,10 +3447,10 @@
       "cover_image": "/covers/course-aplicacoes-de-ia-com-python.png",
       "is_featured": true,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:03.738536-03:00",
-      "last_scanned_at": "2026-09-04T12:29:27.934944-03:00",
+      "last_scanned_at": "2026-09-04T20:59:56.525054-03:00",
       "modules": [
         {
           "id": "course-aplicacoes-de-ia-com-python-mod-modulo-01-comece-por-aqui-aplicacoes-ia-com-python",
@@ -5592,12 +5592,12 @@
       ]
     },
     {
-      "id": "course-aplicacoes-ia-comece-por-aqui",
-      "slug": "aplicacoes-ia-comece-por-aqui",
-      "raw_title": "Aplicações IA - Comece por aqui",
-      "display_title": "Aplicações IA - Comece por aqui",
-      "detected_title": "Aplicações IA - Comece por aqui",
-      "description": "Curso prático sobre Aplicações IA - Comece por aqui, ministrado por Asimov Academy. Contém 1 módulos e 4 aulas (0h 12m).",
+      "id": "course-aplicacoes-ia",
+      "slug": "aplicacoes-ia",
+      "raw_title": "Aplicações IA",
+      "display_title": "Aplicações IA",
+      "detected_title": "Aplicações IA",
+      "description": "Curso prático sobre Aplicações IA, ministrado por Asimov Academy. Contém 1 módulos e 4 aulas (0h 12m).",
       "provider": "Asimov Academy",
       "categories": [
         "ia"
@@ -5611,65 +5611,65 @@
       "detected_tags": [
         "IA"
       ],
-      "relative_path": "Asimov/Aplicações IA - Comece por aqui",
+      "relative_path": "Asimov/Aplicações IA",
       "modules_count": 1,
       "lessons_count": 4,
       "total_duration_seconds": 720,
       "total_duration_formatted": "0h 12m",
-      "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
+      "cover_image": "/covers/course-aplicacoes-ia.jpg",
       "is_featured": false,
       "is_hidden": false,
       "classification_source": "rule",
       "classification_confidence": 0.85,
-      "discovered_at": "2026-09-04T11:54:03.891348-03:00",
-      "last_scanned_at": "2026-09-04T12:29:27.970781-03:00",
+      "discovered_at": "2026-09-04T20:58:46.886936-03:00",
+      "last_scanned_at": "2026-09-04T20:59:56.549997-03:00",
       "modules": [
         {
-          "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui",
+          "id": "course-aplicacoes-ia-mod-modulo-01-aplicacoes-ia-comece-por-aqui",
           "order_index": 1,
           "raw_title": "Módulo 01 - Aplicações IA - Comece por aqui",
           "display_title": "Módulo 01 - Aplicações IA - Comece por aqui",
-          "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui",
+          "relative_path": "Asimov/Aplicações IA/Módulo 01 - Aplicações IA - Comece por aqui",
           "lessons": [
             {
-              "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-01-abertura-da-trilha",
+              "id": "course-aplicacoes-ia-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-01-abertura-da-trilha",
               "order_index": 1,
               "raw_title": "01 - Abertura da Trilha.mp4",
               "display_title": "01 - Abertura da Trilha",
-              "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui/01 - Abertura da Trilha.mp4",
+              "relative_path": "Asimov/Aplicações IA/Módulo 01 - Aplicações IA - Comece por aqui/01 - Abertura da Trilha.mp4",
               "type": "video",
               "duration_seconds": 180,
               "duration_formatted": "03:00",
               "materials": []
             },
             {
-              "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-02-assistentes-x-agentes",
+              "id": "course-aplicacoes-ia-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-02-assistentes-x-agentes",
               "order_index": 2,
               "raw_title": "02 - Assistentes X Agentes.mp4",
               "display_title": "02 - Assistentes X Agentes",
-              "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui/02 - Assistentes X Agentes.mp4",
+              "relative_path": "Asimov/Aplicações IA/Módulo 01 - Aplicações IA - Comece por aqui/02 - Assistentes X Agentes.mp4",
               "type": "video",
               "duration_seconds": 180,
               "duration_formatted": "03:00",
               "materials": []
             },
             {
-              "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-03-por-que-utilizar-python",
+              "id": "course-aplicacoes-ia-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-03-por-que-utilizar-python",
               "order_index": 3,
               "raw_title": "03 - Por que utilizar Python.mp4",
               "display_title": "03 - Por que utilizar Python",
-              "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui/03 - Por que utilizar Python.mp4",
+              "relative_path": "Asimov/Aplicações IA/Módulo 01 - Aplicações IA - Comece por aqui/03 - Por que utilizar Python.mp4",
               "type": "video",
               "duration_seconds": 180,
               "duration_formatted": "03:00",
               "materials": []
             },
             {
-              "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-04-como-essa-trilha-esta-organizada",
+              "id": "course-aplicacoes-ia-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-04-como-essa-trilha-esta-organizada",
               "order_index": 4,
               "raw_title": "04 - Como essa Trilha está organizada.mp4",
               "display_title": "04 - Como essa Trilha está organizada",
-              "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui/04 - Como essa Trilha está organizada.mp4",
+              "relative_path": "Asimov/Aplicações IA/Módulo 01 - Aplicações IA - Comece por aqui/04 - Como essa Trilha está organizada.mp4",
               "type": "video",
               "duration_seconds": 180,
               "duration_formatted": "03:00",
@@ -5715,10 +5715,10 @@
       "cover_image": "/covers/course-backtesting-avaliando-estrategias-de-trading-com-dados-historicos.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:03.933974-03:00",
-      "last_scanned_at": "2026-09-04T12:29:28.062016-03:00",
+      "last_scanned_at": "2026-09-04T20:59:56.780594-03:00",
       "modules": [
         {
           "id": "course-backtesting-avaliando-estrategias-de-trading-com-dados-historicos-mod-1-introducao",
@@ -5867,10 +5867,10 @@
       "cover_image": "/covers/course-como-migrar-de-carreira-para-analise-de-dados.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:04.100674-03:00",
-      "last_scanned_at": "2026-09-04T12:29:28.088215-03:00",
+      "last_scanned_at": "2026-09-04T20:59:56.790620-03:00",
       "modules": [
         {
           "id": "course-como-migrar-de-carreira-para-analise-de-dados-mod-modulo-01-como-migrar-de-carreira-para-analise-de-dados",
@@ -5979,10 +5979,10 @@
       "cover_image": "/covers/course-construindo-base-de-dados-para-trading.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:04.143066-03:00",
-      "last_scanned_at": "2026-09-04T12:29:28.177490-03:00",
+      "last_scanned_at": "2026-09-04T20:59:57.126478-03:00",
       "modules": [
         {
           "id": "course-construindo-base-de-dados-para-trading-mod-1-fonte-de-dados",
@@ -6144,10 +6144,10 @@
       "cover_image": "/covers/course-construindo-sites-estaticos-de-alto-nivel-com-ia.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:04.357050-03:00",
-      "last_scanned_at": "2026-09-04T12:29:28.178894-03:00",
+      "last_scanned_at": "2026-09-04T20:59:57.146795-03:00",
       "modules": [
         {
           "id": "course-construindo-sites-estaticos-de-alto-nivel-com-ia-mod-construindo-sites-estaticos-de-alto-nivel-com-ia",
@@ -6212,10 +6212,10 @@
       "cover_image": "/covers/course-construindo-sites-profissionais-com-ia.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:04.554251-03:00",
-      "last_scanned_at": "2026-09-04T12:29:28.987315-03:00",
+      "last_scanned_at": "2026-09-04T20:59:57.524841-03:00",
       "modules": [
         {
           "id": "course-construindo-sites-profissionais-com-ia-mod-modulo-01-comece-por-aqui-trilha-sites-profissionais-com-ia",
@@ -8011,10 +8011,10 @@
       "cover_image": "/covers/course-criando-agentes-de-atendimento-no-n8n.png",
       "is_featured": true,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:04.700483-03:00",
-      "last_scanned_at": "2026-09-04T12:29:29.401445-03:00",
+      "last_scanned_at": "2026-09-04T20:59:57.660911-03:00",
       "modules": [
         {
           "id": "course-criando-agentes-de-atendimento-no-n8n-mod-modulo-01-comece-aqui-nivel-intermediario-engenheiros-de-agentes-de-ia",
@@ -9140,10 +9140,10 @@
       "cover_image": "/covers/course-criando-agentes-pessoais-com-hermes-agent.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:04.832087-03:00",
-      "last_scanned_at": "2026-09-04T12:29:29.466737-03:00",
+      "last_scanned_at": "2026-09-04T20:59:57.695657-03:00",
       "modules": [
         {
           "id": "course-criando-agentes-pessoais-com-hermes-agent-mod-modulo-01-comece-por-aqui-criando-agentes-pessoais-com-hermes-agent",
@@ -9426,10 +9426,10 @@
       "cover_image": "/covers/course-criando-nosso-primeiro-agente-com-chatgpt.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:04.977390-03:00",
-      "last_scanned_at": "2026-09-04T12:29:29.478665-03:00",
+      "last_scanned_at": "2026-09-04T20:59:57.710356-03:00",
       "modules": [
         {
           "id": "course-criando-nosso-primeiro-agente-com-chatgpt-mod-modulo-01-criando-nosso-primeiro-agente-com-chatgpt",
@@ -9483,10 +9483,10 @@
       "cover_image": "/covers/course-dashboards-interativos-com-python.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:05.273324-03:00",
-      "last_scanned_at": "2026-09-04T12:29:30.217366-03:00",
+      "last_scanned_at": "2026-09-04T20:59:58.090248-03:00",
       "modules": [
         {
           "id": "course-dashboards-interativos-com-python-mod-modulo-01-python-para-dados-do-zero-a-analise-completa",
@@ -12552,10 +12552,10 @@
       "cover_image": "/covers/course-data-science-e-machine-learning.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:05.496234-03:00",
-      "last_scanned_at": "2026-09-04T12:29:31.259603-03:00",
+      "last_scanned_at": "2026-09-04T20:59:58.957747-03:00",
       "modules": [
         {
           "id": "course-data-science-e-machine-learning-mod-modulo-01-introducao-a-logica-de-programacao",
@@ -15342,10 +15342,10 @@
       "cover_image": "/covers/course-dominando-o-ecossistema-claude.png",
       "is_featured": true,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:05.643418-03:00",
-      "last_scanned_at": "2026-09-04T12:29:31.841870-03:00",
+      "last_scanned_at": "2026-09-04T20:59:59.194893-03:00",
       "modules": [
         {
           "id": "course-dominando-o-ecossistema-claude-mod-modulo-01-comece-por-aqui-dominando-o-ecossistema-claude",
@@ -16123,10 +16123,10 @@
       "cover_image": "/covers/course-dominando-openclaw.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:05.807083-03:00",
-      "last_scanned_at": "2026-09-04T12:29:32.114380-03:00",
+      "last_scanned_at": "2026-09-04T20:59:59.279236-03:00",
       "modules": [
         {
           "id": "course-dominando-openclaw-mod-modulo-01-fundamentos-da-ia-generativa",
@@ -16488,10 +16488,10 @@
       "cover_image": "/covers/course-engenharia-de-dados-com-python.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:06.040845-03:00",
-      "last_scanned_at": "2026-09-04T12:29:33.766205-03:00",
+      "last_scanned_at": "2026-09-04T21:00:00.566559-03:00",
       "modules": [
         {
           "id": "course-engenharia-de-dados-com-python-mod-modulo-01-conceitos-de-engenharia-de-dados",
@@ -19210,10 +19210,10 @@
       "cover_image": "/covers/course-ferramentas-de-ia-para-desenvolvedores.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:06.209994-03:00",
-      "last_scanned_at": "2026-09-04T12:29:34.160002-03:00",
+      "last_scanned_at": "2026-09-04T21:00:00.643682-03:00",
       "modules": [
         {
           "id": "course-ferramentas-de-ia-para-desenvolvedores-mod-modulo-01-comece-por-aqui-ferramentas-de-ai-para-desenvolvedores",
@@ -20516,10 +20516,10 @@
       "cover_image": "/covers/course-integrando-python-e-bancos-de-dados.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:06.483604-03:00",
-      "last_scanned_at": "2026-09-04T12:29:34.739432-03:00",
+      "last_scanned_at": "2026-09-04T21:00:00.716998-03:00",
       "modules": [
         {
           "id": "course-integrando-python-e-bancos-de-dados-mod-modulo-01-python-para-dados-do-zero-a-analise-completa",
@@ -21707,10 +21707,10 @@
       "cover_image": "/covers/course-integrando-python-e-excel.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:06.742842-03:00",
-      "last_scanned_at": "2026-09-04T12:29:35.147847-03:00",
+      "last_scanned_at": "2026-09-04T21:00:00.765623-03:00",
       "modules": [
         {
           "id": "course-integrando-python-e-excel-mod-modulo-01-python-para-dados-do-zero-a-analise-completa",
@@ -22830,10 +22830,10 @@
       "cover_image": "/covers/course-onboarding-engenheiro-de-agentes-de-ia.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:06.854755-03:00",
-      "last_scanned_at": "2026-09-04T12:29:35.166171-03:00",
+      "last_scanned_at": "2026-09-04T21:00:00.768135-03:00",
       "modules": [
         {
           "id": "course-onboarding-engenheiro-de-agentes-de-ia-mod-modulo-01-onboarding-engenheiro-de-agentes-de-ia",
@@ -22922,10 +22922,10 @@
       "cover_image": "/covers/course-web-apps-de-dados-com-python.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:07.126121-03:00",
-      "last_scanned_at": "2026-09-04T12:29:35.892330-03:00",
+      "last_scanned_at": "2026-09-04T21:00:00.856373-03:00",
       "modules": [
         {
           "id": "course-web-apps-de-dados-com-python-mod-modulo-01-criando-seu-setup-para-programacao-python",
@@ -25280,7 +25280,7 @@
       "classification_source": "rule",
       "classification_confidence": 0.85,
       "discovered_at": "2026-09-04T11:54:07.542494-03:00",
-      "last_scanned_at": "2026-09-04T12:29:35.908321-03:00",
+      "last_scanned_at": "2026-09-04T21:00:00.858181-03:00",
       "modules": [
         {
           "id": "course-ciclo-1-carreira-tech-despertar-mod-modulo-01-trilhas-de-despertar",
@@ -25361,7 +25361,7 @@
       "classification_source": "rule",
       "classification_confidence": 0.85,
       "discovered_at": "2026-09-04T11:54:07.676464-03:00",
-      "last_scanned_at": "2026-09-04T12:29:36.055107-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.000604-03:00",
       "modules": [
         {
           "id": "course-ciclo-2-trilha-rapida-de-ia-mod-modulo-01-aulas-praticas-de-ia",
@@ -25460,7 +25460,7 @@
       "classification_source": "rule",
       "classification_confidence": 0.85,
       "discovered_at": "2026-09-04T11:54:07.806022-03:00",
-      "last_scanned_at": "2026-09-04T12:29:36.307981-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.163581-03:00",
       "modules": [
         {
           "id": "course-ia-na-pratica-fundamentos-mod-modulo-01-seja-bem-vindo-ao-sctec-e-ia-na-pratica",
@@ -25612,7 +25612,7 @@
       "classification_source": "rule",
       "classification_confidence": 0.85,
       "discovered_at": "2026-09-04T11:54:07.940047-03:00",
-      "last_scanned_at": "2026-09-04T12:29:36.391198-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.183093-03:00",
       "modules": [
         {
           "id": "course-introducao-ao-data-science-mod-modulo-01-seja-bem-vindo-ao-carreira-tech",
@@ -26004,7 +26004,7 @@
       "classification_source": "rule",
       "classification_confidence": 0.85,
       "discovered_at": "2026-09-04T11:54:08.078745-03:00",
-      "last_scanned_at": "2026-09-04T12:29:36.645731-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.348800-03:00",
       "modules": [
         {
           "id": "course-introducao-a-inteligencia-artificial-mod-modulo-01-seja-bem-vindo-ao-carreira-tech",
@@ -26374,7 +26374,7 @@
       "classification_source": "rule",
       "classification_confidence": 0.85,
       "discovered_at": "2026-09-04T11:54:08.215662-03:00",
-      "last_scanned_at": "2026-09-04T12:29:36.823013-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.367483-03:00",
       "modules": [
         {
           "id": "course-programacao-front-end-e-back-end-mod-modulo-01-modulo-1-introducao-a-front-end",
@@ -26978,10 +26978,10 @@
       "cover_image": "/covers/course-agentes-de-ia-e-n8n-impressionador.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:08.367730-03:00",
-      "last_scanned_at": "2026-09-04T12:29:36.864112-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.380496-03:00",
       "modules": [
         {
           "id": "course-agentes-de-ia-e-n8n-impressionador-mod-01-boas-vindas",
@@ -27469,10 +27469,10 @@
       "cover_image": "/covers/course-carros-de-leilao-expert-2023.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:08.380514-03:00",
-      "last_scanned_at": "2026-09-04T12:29:36.961302-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.397543-03:00",
       "modules": [
         {
           "id": "course-carros-de-leilao-expert-2023-mod-1-modulo-1-apresentacao",
@@ -28307,7 +28307,7 @@
       "classification_source": "manual",
       "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:08.532572-03:00",
-      "last_scanned_at": "2026-09-04T12:29:37.378907-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.434919-03:00",
       "modules": [
         {
           "id": "course-claude-impressionador-mod-01-comece-por-aqui",
@@ -29669,7 +29669,7 @@
               "id": "course-claude-impressionador-mod-03-cowork-les-03-cowork-avancado-com-dados-011-apresentacao-do-modulo-e-do-projeto-financas_pessoais_2024",
               "order_index": 76,
               "raw_title": "01.1 Apresentação do módulo e do projeto - financas_pessoais_2024.xlsx",
-              "display_title": "1 Apresentação do módulo e do projeto - financas_pessoais_2024x",
+              "display_title": "1 Apresentação do módulo e do projeto - financas_pessoais_2024",
               "relative_path": "Claude Impressionador/03. Cowork/03. Cowork Avançado com Dados/01.1 Apresentação do módulo e do projeto - financas_pessoais_2024.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -32316,7 +32316,7 @@
               "id": "course-claude-impressionador-mod-05-features-ferramentas-les-01-excel-com-claude-041-automacao-de-tarefas-repetitivas-parte-1-vendas-por-regiao-aula-1",
               "order_index": 8,
               "raw_title": "04.1 Automação de Tarefas Repetitivas - parte 1 - Vendas por Região – Aula 1.xlsx",
-              "display_title": "1 Automação de Tarefas Repetitivas - parte 1 - Vendas por Região – Aula 1x",
+              "display_title": "1 Automação de Tarefas Repetitivas - parte 1 - Vendas por Região – Aula 1",
               "relative_path": "Claude Impressionador/05. Features-Ferramentas/01. Excel com Claude/04.1 Automação de Tarefas Repetitivas - parte 1 - Vendas por Região – Aula 1.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -32349,7 +32349,7 @@
               "id": "course-claude-impressionador-mod-05-features-ferramentas-les-01-excel-com-claude-061-analise-de-dados-com-linguagem-natural-dados_banguncados",
               "order_index": 11,
               "raw_title": "06.1 Análise de Dados com Linguagem Natural - Dados_banguncados.xlsx",
-              "display_title": "1 Análise de Dados com Linguagem Natural - Dados_banguncadosx",
+              "display_title": "1 Análise de Dados com Linguagem Natural - Dados_banguncados",
               "relative_path": "Claude Impressionador/05. Features-Ferramentas/01. Excel com Claude/06.1 Análise de Dados com Linguagem Natural - Dados_banguncados.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -32460,10 +32460,10 @@
       "cover_image": "/covers/course-especializacao-em-soft-skills-lideranca.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:08.665606-03:00",
-      "last_scanned_at": "2026-09-04T12:29:39.329615-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.468266-03:00",
       "modules": [
         {
           "id": "course-especializacao-em-soft-skills-lideranca-mod-01-introducao",
@@ -33079,7 +33079,7 @@
               "id": "course-especializacao-em-soft-skills-lideranca-mod-02-fundamentos-de-alta-performance-pessoal-les-07-produtividade-de-precisao-031-abrindo-as-algemas-de-ouro-roda-da-vida_",
               "order_index": 51,
               "raw_title": "03.1 Abrindo as algemas de ouro - Roda da vida_.xlsx",
-              "display_title": "1 Abrindo as algemas de ouro - Roda da vida_x",
+              "display_title": "1 Abrindo as algemas de ouro - Roda da vida_",
               "relative_path": "Especialização Soft Skills/02. Fundamentos de Alta Performance Pessoal/07. Produtividade de Precisão/03.1 Abrindo as algemas de ouro - Roda da vida_.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -33222,7 +33222,7 @@
               "id": "course-especializacao-em-soft-skills-lideranca-mod-02-fundamentos-de-alta-performance-pessoal-les-08-organizando-a-sua-semana-imbativel-011-introducao-e-retrospectiva-semanal-introducao-semana-imbativel",
               "order_index": 64,
               "raw_title": "01.1 Introdução e Retrospectiva Semanal - Introdução Semana Imbatível.xlsx",
-              "display_title": "1 Introdução e Retrospectiva Semanal - Introdução Semana Imbatívelx",
+              "display_title": "1 Introdução e Retrospectiva Semanal - Introdução Semana Imbatível",
               "relative_path": "Especialização Soft Skills/02. Fundamentos de Alta Performance Pessoal/08. Organizando a Sua Semana Imbatível/01.1 Introdução e Retrospectiva Semanal - Introdução Semana Imbatível.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -33495,7 +33495,7 @@
               "id": "course-especializacao-em-soft-skills-lideranca-mod-03-autoconhecimento-e-conexao-com-o-outro-les-01-perfis-comportamentais-061-qual-o-melhor-perfil-e-conclusao-disc-simplificado",
               "order_index": 8,
               "raw_title": "06.1 Qual o melhor perfil e conclusão - DISC Simplificado.xlsx",
-              "display_title": "1 Qual o melhor perfil e conclusão - DISC Simplificadox",
+              "display_title": "1 Qual o melhor perfil e conclusão - DISC Simplificado",
               "relative_path": "Especialização Soft Skills/03. Autoconhecimento e Conexão com o Outro/01. Perfis Comportamentais/06.1 Qual o melhor perfil e conclusão - DISC Simplificado.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -34426,7 +34426,7 @@
               "id": "course-especializacao-em-soft-skills-lideranca-mod-05-lideranca-e-inteligencia-emocional-les-03-empoderamento-e-delegacao-012-aula-1-introducao-guia-de-delegacao-2",
               "order_index": 22,
               "raw_title": "01.2 Aula 1 - Introdução - GUIA DE DELEGAÇÃO (2).xlsx",
-              "display_title": "2 Aula 1 - Introdução - GUIA DE DELEGAÇÃO (2)x",
+              "display_title": "2 Aula 1 - Introdução - GUIA DE DELEGAÇÃO (2)",
               "relative_path": "Especialização Soft Skills/05. Liderança e Inteligência Emocional/03. Empoderamento e Delegação/01.2 Aula 1 - Introdução - GUIA DE DELEGAÇÃO (2).xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -34470,7 +34470,7 @@
               "id": "course-especializacao-em-soft-skills-lideranca-mod-05-lideranca-e-inteligencia-emocional-les-03-empoderamento-e-delegacao-041-aula-4-delegando-tarefas-guia-de-delegacao-2",
               "order_index": 26,
               "raw_title": "04.1 Aula 4 - Delegando tarefas - GUIA DE DELEGAÇÃO (2).xlsx",
-              "display_title": "1 Aula 4 - Delegando tarefas - GUIA DE DELEGAÇÃO (2)x",
+              "display_title": "1 Aula 4 - Delegando tarefas - GUIA DE DELEGAÇÃO (2)",
               "relative_path": "Especialização Soft Skills/05. Liderança e Inteligência Emocional/03. Empoderamento e Delegação/04.1 Aula 4 - Delegando tarefas - GUIA DE DELEGAÇÃO (2).xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -34762,10 +34762,10 @@
       "cover_image": "/covers/course-fit-da-nutri-10-marmitas-fit-e-funcionais.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:08.778273-03:00",
-      "last_scanned_at": "2026-09-04T12:29:39.512460-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.473637-03:00",
       "modules": [
         {
           "id": "course-fit-da-nutri-10-marmitas-fit-e-funcionais-mod-1-apresentacao",
@@ -34931,6 +34931,42 @@
       ]
     },
     {
+      "id": "course-imagens-cursos",
+      "slug": "imagens-cursos",
+      "raw_title": "imagens cursos",
+      "display_title": "imagens cursos",
+      "detected_title": "imagens cursos",
+      "description": "Curso prático sobre imagens cursos, ministrado por Especialista Mindflix. Contém 0 módulos e 0 aulas (0h 00m).",
+      "provider": "Especialista Mindflix",
+      "categories": [
+        "programacao-dev"
+      ],
+      "detected_categories": [
+        "programacao-dev"
+      ],
+      "tags": [
+        "Treinamento",
+        "Prático"
+      ],
+      "detected_tags": [
+        "Treinamento",
+        "Prático"
+      ],
+      "relative_path": "imagens cursos",
+      "modules_count": 0,
+      "lessons_count": 0,
+      "total_duration_seconds": 0,
+      "total_duration_formatted": "0h 00m",
+      "cover_image": null,
+      "is_featured": false,
+      "is_hidden": false,
+      "classification_source": "rule",
+      "classification_confidence": 0.85,
+      "discovered_at": "2026-09-04T20:59:03.784679-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.476184-03:00",
+      "modules": []
+    },
+    {
       "id": "course-inteligencia-artificial-impressionador",
       "slug": "inteligencia-artificial-impressionador",
       "raw_title": "Inteligência Artificial Impressionador",
@@ -34958,10 +34994,10 @@
       "cover_image": "/covers/course-inteligencia-artificial-impressionador.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:08.992191-03:00",
-      "last_scanned_at": "2026-09-04T12:29:40.363472-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.562084-03:00",
       "modules": [
         {
           "id": "course-inteligencia-artificial-impressionador-mod-01-introducao-assista-antes-de-comecar",
@@ -38676,10 +38712,10 @@
       "cover_image": "/covers/course-lovable-impressionador-apps-com-ia.png",
       "is_featured": true,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:09.116122-03:00",
-      "last_scanned_at": "2026-09-04T12:29:40.653059-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.581173-03:00",
       "modules": [
         {
           "id": "course-lovable-impressionador-apps-com-ia-mod-01-introducao",
@@ -39526,10 +39562,10 @@
       "cover_image": "/covers/course-marmitas-fit-congeladas-pratica-e-sabor.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:09.125969-03:00",
-      "last_scanned_at": "2026-09-04T12:29:40.880332-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.591736-03:00",
       "modules": [
         {
           "id": "course-marmitas-fit-congeladas-pratica-e-sabor-mod-13-como-regularizar-seu-negocio",
@@ -39643,10 +39679,10 @@
       "cover_image": "/covers/course-massagem-anti-stress-metodo-thiago-nishida.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:09.391277-03:00",
-      "last_scanned_at": "2026-09-04T12:29:41.036811-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.608737-03:00",
       "modules": [
         {
           "id": "course-massagem-anti-stress-metodo-thiago-nishida-mod-1-teoria",
@@ -40222,10 +40258,10 @@
       "cover_image": "/covers/course-practitioner-em-pnl-otavio-castanho.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:09.544914-03:00",
-      "last_scanned_at": "2026-09-04T12:29:41.390779-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.645178-03:00",
       "modules": [
         {
           "id": "course-practitioner-em-pnl-otavio-castanho-mod-01-introducao",
@@ -42104,10 +42140,10 @@
       "cover_image": "/covers/course-projeto-60-dias-transformacao-completa.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:09.742944-03:00",
-      "last_scanned_at": "2026-09-04T12:29:41.882858-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.672043-03:00",
       "modules": [
         {
           "id": "course-projeto-60-dias-transformacao-completa-mod-modulo-22-tableas-e-sugestoes-alimentares",
@@ -44058,10 +44094,10 @@
       "cover_image": "/covers/course-supabase-impressionador-backend-moderno.png",
       "is_featured": true,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:09.868571-03:00",
-      "last_scanned_at": "2026-09-04T12:29:42.063692-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.687210-03:00",
       "modules": [
         {
           "id": "course-supabase-impressionador-backend-moderno-mod-01-bem-vindo-e-setup",
@@ -44739,10 +44775,10 @@
       "cover_image": "/covers/course-trilha-nocode-com-inteligencia-artificial.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:10.029424-03:00",
-      "last_scanned_at": "2026-09-04T12:29:42.656250-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.741356-03:00",
       "modules": [
         {
           "id": "course-trilha-nocode-com-inteligencia-artificial-mod-01-assista-antes-de-comecar",
@@ -45345,7 +45381,7 @@
               "id": "course-trilha-nocode-com-inteligencia-artificial-mod-04-trilha-automacoes-les-01-opcional-criacao-automatica-de-conteudo-com-tavily-e-gemini-011-apresentando-a-automacao-conteudoparalinkedin",
               "order_index": 1,
               "raw_title": "01.1 Apresentando a automação - ConteúdoParaLinkedin.xlsx",
-              "display_title": "1 Apresentando a automação - ConteúdoParaLinkedinx",
+              "display_title": "1 Apresentando a automação - ConteúdoParaLinkedin",
               "relative_path": "TRILHA NOCODE - IA/04. Trilha - Automações/01. (Opcional) Criação Automática de Conteúdo com Tavily e Gemini/01.1 Apresentando a automação - ConteúdoParaLinkedin.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -45378,7 +45414,7 @@
               "id": "course-trilha-nocode-com-inteligencia-artificial-mod-04-trilha-automacoes-les-01-opcional-criacao-automatica-de-conteudo-com-tavily-e-gemini-021-criando-conta-no-tavily-conteudoparalinkedin",
               "order_index": 4,
               "raw_title": "02.1 Criando conta no Tavily - ConteúdoParaLinkedin.xlsx",
-              "display_title": "1 Criando conta no Tavily - ConteúdoParaLinkedinx",
+              "display_title": "1 Criando conta no Tavily - ConteúdoParaLinkedin",
               "relative_path": "TRILHA NOCODE - IA/04. Trilha - Automações/01. (Opcional) Criação Automática de Conteúdo com Tavily e Gemini/02.1 Criando conta no Tavily - ConteúdoParaLinkedin.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -48256,7 +48292,7 @@
               "id": "course-trilha-nocode-com-inteligencia-artificial-mod-06-trilha-agentes-de-ia-les-01-automatizando-o-registro-de-despesas-031-criando-a-planilha-no-google-sheets-e-solicitando-o-codigo-para-o-chatgpt-despesas_pessoais-1",
               "order_index": 4,
               "raw_title": "03.1 Criando a planilha no Google Sheets e solicitando o código para o ChatGPT - Despesas_Pessoais (1).xlsx",
-              "display_title": "1 Criando a planilha no Google Sheets e solicitando o código para o ChatGPT - Despesas_Pessoais (1)x",
+              "display_title": "1 Criando a planilha no Google Sheets e solicitando o código para o ChatGPT - Despesas_Pessoais (1)",
               "relative_path": "TRILHA NOCODE - IA/06. Trilha - Agentes de IA/01. Automatizando o Registro de Despesas/03.1 Criando a planilha no Google Sheets e solicitando o código para o ChatGPT - Despesas_Pessoais (1).xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -48267,7 +48303,7 @@
               "id": "course-trilha-nocode-com-inteligencia-artificial-mod-06-trilha-agentes-de-ia-les-01-automatizando-o-registro-de-despesas-032-criando-a-planilha-no-google-sheets-e-solicitando-o-codigo-para-o-chatgpt-despesas_pessoais",
               "order_index": 5,
               "raw_title": "03.2 Criando a planilha no Google Sheets e solicitando o código para o ChatGPT - Despesas_Pessoais.xlsx",
-              "display_title": "2 Criando a planilha no Google Sheets e solicitando o código para o ChatGPT - Despesas_Pessoaisx",
+              "display_title": "2 Criando a planilha no Google Sheets e solicitando o código para o ChatGPT - Despesas_Pessoais",
               "relative_path": "TRILHA NOCODE - IA/06. Trilha - Agentes de IA/01. Automatizando o Registro de Despesas/03.2 Criando a planilha no Google Sheets e solicitando o código para o ChatGPT - Despesas_Pessoais.xlsx",
               "type": "article",
               "duration_seconds": 300,
@@ -49760,10 +49796,10 @@
       "cover_image": "/covers/course-violao-metodo-triade-heitor-castro.png",
       "is_featured": false,
       "is_hidden": false,
-      "classification_source": "rule",
-      "classification_confidence": 0.85,
+      "classification_source": "manual",
+      "classification_confidence": 0.95,
       "discovered_at": "2026-09-04T11:54:10.033395-03:00",
-      "last_scanned_at": "2026-09-04T12:29:42.702581-03:00",
+      "last_scanned_at": "2026-09-04T21:00:01.745945-03:00",
       "modules": [
         {
           "id": "course-violao-metodo-triade-heitor-castro-mod-mes-1",
@@ -50014,6 +50050,95 @@
           ]
         }
       ]
+    },
+    {
+      "id": "course-aplicacoes-ia-comece-por-aqui",
+      "slug": "aplicacoes-ia-comece-por-aqui",
+      "raw_title": "Aplicações IA - Comece por aqui",
+      "display_title": "Aplicações IA - Comece por aqui",
+      "detected_title": "Aplicações IA - Comece por aqui",
+      "description": "Curso prático sobre Aplicações IA - Comece por aqui, ministrado por Asimov Academy. Contém 1 módulos e 4 aulas (0h 12m).",
+      "provider": "Asimov Academy",
+      "categories": [
+        "ia"
+      ],
+      "detected_categories": [
+        "ia"
+      ],
+      "tags": [
+        "IA"
+      ],
+      "detected_tags": [
+        "IA"
+      ],
+      "relative_path": "Asimov/Aplicações IA - Comece por aqui",
+      "modules_count": 1,
+      "lessons_count": 4,
+      "total_duration_seconds": 720,
+      "total_duration_formatted": "0h 12m",
+      "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
+      "is_featured": false,
+      "is_hidden": false,
+      "classification_source": "rule",
+      "classification_confidence": 0.85,
+      "discovered_at": "2026-09-04T11:54:03.891348-03:00",
+      "last_scanned_at": "2026-09-04T12:29:27.970781-03:00",
+      "modules": [
+        {
+          "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui",
+          "order_index": 1,
+          "raw_title": "Módulo 01 - Aplicações IA - Comece por aqui",
+          "display_title": "Módulo 01 - Aplicações IA - Comece por aqui",
+          "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui",
+          "lessons": [
+            {
+              "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-01-abertura-da-trilha",
+              "order_index": 1,
+              "raw_title": "01 - Abertura da Trilha.mp4",
+              "display_title": "01 - Abertura da Trilha",
+              "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui/01 - Abertura da Trilha.mp4",
+              "type": "video",
+              "duration_seconds": 180,
+              "duration_formatted": "03:00",
+              "materials": []
+            },
+            {
+              "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-02-assistentes-x-agentes",
+              "order_index": 2,
+              "raw_title": "02 - Assistentes X Agentes.mp4",
+              "display_title": "02 - Assistentes X Agentes",
+              "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui/02 - Assistentes X Agentes.mp4",
+              "type": "video",
+              "duration_seconds": 180,
+              "duration_formatted": "03:00",
+              "materials": []
+            },
+            {
+              "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-03-por-que-utilizar-python",
+              "order_index": 3,
+              "raw_title": "03 - Por que utilizar Python.mp4",
+              "display_title": "03 - Por que utilizar Python",
+              "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui/03 - Por que utilizar Python.mp4",
+              "type": "video",
+              "duration_seconds": 180,
+              "duration_formatted": "03:00",
+              "materials": []
+            },
+            {
+              "id": "course-aplicacoes-ia-comece-por-aqui-mod-modulo-01-aplicacoes-ia-comece-por-aqui-les-04-como-essa-trilha-esta-organizada",
+              "order_index": 4,
+              "raw_title": "04 - Como essa Trilha está organizada.mp4",
+              "display_title": "04 - Como essa Trilha está organizada",
+              "relative_path": "Asimov/Aplicações IA - Comece por aqui/Módulo 01 - Aplicações IA - Comece por aqui/04 - Como essa Trilha está organizada.mp4",
+              "type": "video",
+              "duration_seconds": 180,
+              "duration_formatted": "03:00",
+              "materials": []
+            }
+          ]
+        }
+      ],
+      "missing": true
     },
     {
       "id": "course-sctec-formacao-em-data-tech",

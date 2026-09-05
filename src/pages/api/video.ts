@@ -10,12 +10,24 @@ const COURSES_ROOT = path.resolve(
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const relPath = url.searchParams.get('path');
+  const driveId = url.searchParams.get('drive_id');
+
+  // If a Google Drive ID is provided directly
+  if (driveId) {
+    return Response.redirect(`https://drive.google.com/file/d/${driveId}/preview`, 302);
+  }
 
   if (!relPath) {
-    return new Response(JSON.stringify({ error: 'Parâmetro "path" é obrigatório.' }), {
+    return new Response(JSON.stringify({ error: 'Parâmetro "path" ou "drive_id" é obrigatório.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  // If relPath is a full Google Drive URL
+  if (relPath.includes('drive.google.com') || relPath.startsWith('drive:')) {
+    const cleanId = relPath.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
+    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
   }
 
   // Resolve safe path without directory traversal
