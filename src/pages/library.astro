@@ -1,5 +1,5 @@
 ---
-// library.astro - Painel de Administração e Scanner da Biblioteca Mindflix
+// library.astro - Painel de Administração da Biblioteca & Categorias Mindflix
 import Layout from '../layouts/Layout.astro';
 import { getAllCourses, getCategories, getAllProviders } from '../lib/catalog';
 import fs from 'node:fs';
@@ -8,6 +8,11 @@ import path from 'node:path';
 const courses = getAllCourses();
 const categories = getCategories();
 const providers = getAllProviders();
+
+const catCourseCounts = categories.map(cat => {
+  const count = courses.filter(c => (c.categories || []).includes(cat.id)).length;
+  return { ...cat, courseCount: count };
+});
 
 let summary = {
   last_scan_at: new Date().toISOString(),
@@ -32,7 +37,7 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 });
 ---
 
-<Layout title="Administração da Biblioteca — Mindflix">
+<Layout title="Administração da Biblioteca & Categorias — Mindflix">
   <script is:inline>
     (function() {
       try {
@@ -62,8 +67,8 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
   <div class="container library-admin-page">
     <header class="page-header">
       <div class="header-content">
-        <h1 class="page-title">Administração da Biblioteca</h1>
-        <p class="page-subtitle">Gerencie o scanner inteligente, visualize a estrutura física, audite alterações e edite metadados sem tocar nos arquivos originais.</p>
+        <h1 class="page-title">Administração do Acervo</h1>
+        <p class="page-subtitle">Gerencie o scanner inteligente, administre o acervo de cursos e realize o CRUD completo das categorias do sistema.</p>
       </div>
 
       <div class="header-actions">
@@ -114,14 +119,35 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
       </div>
 
       <div class="admin-stat-card">
-        <span class="stat-label">Total de Aulas</span>
-        <strong class="stat-val accent-emerald">{summary.total_lessons} Aulas</strong>
-        <span class="stat-hint">{summary.missing_courses > 0 ? `${summary.missing_courses} ausentes` : 'Todos os arquivos íntegros'}</span>
+        <span class="stat-label">Categorias Ativas</span>
+        <strong class="stat-val accent-emerald">{categories.length} Categorias</strong>
+        <span class="stat-hint">Gerenciáveis via CRUD em tempo real</span>
       </div>
     </div>
 
-    <!-- Courses Management Table -->
-    <section class="admin-section">
+    <!-- Navigation Tabs -->
+    <div class="admin-nav-tabs">
+      <button type="button" class="tab-btn active" id="tab-btn-courses" data-tab="courses">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <span>Cursos Catalogados ({courses.length})</span>
+      </button>
+
+      <button type="button" class="tab-btn" id="tab-btn-categories" data-tab="categories">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+        </svg>
+        <span>Gerenciar Categorias ({categories.length})</span>
+      </button>
+    </div>
+
+    <!-- Section 1: Courses Management Table -->
+    <section class="admin-section tab-section active" id="section-courses">
       <div class="section-toolbar">
         <div class="toolbar-search">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -211,6 +237,85 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
       </div>
     </section>
 
+    <!-- Section 2: Categories Management CRUD -->
+    <section class="admin-section tab-section" id="section-categories">
+      <div class="section-toolbar">
+        <div class="toolbar-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="filter-cat-input" placeholder="Filtrar categorias por nome, ID ou descrição..." />
+        </div>
+
+        <button type="button" class="btn btn-primary" id="btn-create-category">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Nova Categoria</span>
+        </button>
+      </div>
+
+      <div class="courses-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Ícone</th>
+              <th>Nome da Categoria</th>
+              <th>ID (Slug)</th>
+              <th>Descrição</th>
+              <th>Cursos Vinculados</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="admin-categories-tbody">
+            {catCourseCounts.map(cat => (
+              <tr class="cat-row-item" data-id={cat.id} data-name={cat.name.toLowerCase()} data-desc={(cat.description || '').toLowerCase()}>
+                <td class="cell-icon">
+                  <div class="cat-icon-chip">
+                    <span>{cat.icon || 'folder'}</span>
+                  </div>
+                </td>
+                <td class="cell-title">
+                  <strong class="cat-display-name">{cat.name}</strong>
+                </td>
+                <td>
+                  <code class="cat-slug-badge">{cat.id}</code>
+                </td>
+                <td class="cell-desc">
+                  <span class="cat-desc-text">{cat.description || 'Sem descrição cadastrada'}</span>
+                </td>
+                <td>
+                  <span class="badge badge-provider">{cat.courseCount} cursos</span>
+                </td>
+                <td>
+                  <div class="action-buttons-group">
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm btn-edit-category"
+                      data-category={JSON.stringify(cat)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-sm btn-delete-category"
+                      data-id={cat.id}
+                      data-name={cat.name}
+                      data-count={cat.courseCount}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- Modal: Dry Run Report -->
     <div id="dryrun-modal" class="admin-modal-backdrop" style="display: none;">
       <div class="admin-modal-dialog">
@@ -288,11 +393,100 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
         </div>
       </div>
     </div>
+
+    <!-- Modal: Category CRUD Editor -->
+    <div id="cat-modal" class="admin-modal-backdrop" style="display: none;">
+      <div class="admin-modal-dialog">
+        <div class="modal-header">
+          <h2 class="modal-title" id="cat-modal-title">Nova Categoria</h2>
+          <button type="button" class="btn-close-modal" id="btn-close-cat-modal">×</button>
+        </div>
+        <form id="cat-form" class="modal-body form-grid">
+          <input type="hidden" id="cat-form-action" value="create" />
+          <input type="hidden" id="cat-form-original-id" />
+
+          <div class="form-group full-width">
+            <label for="cat-form-name">Nome da Categoria</label>
+            <input type="text" id="cat-form-name" class="form-input" placeholder="Ex: Engenharia de Prompts" required />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="cat-form-id">ID / Slug de Identificação</label>
+            <input type="text" id="cat-form-id" class="form-input" placeholder="Ex: engenharia-prompts (gerado automaticamente)" />
+            <span class="field-hint">Usado como identificador único nas URLs e rotas.</span>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="cat-form-icon">Ícone da Categoria</label>
+            <select id="cat-form-icon" class="form-input form-select">
+              <option value="sparkles">✨ sparkles — Inteligência Artificial</option>
+              <option value="cpu">⚡ cpu — Automação & Agentes</option>
+              <option value="terminal">💻 terminal — Programação & Dev</option>
+              <option value="layers">📐 layers — Web & Vibe Coding</option>
+              <option value="database">🗄️ database — Backend & Infra</option>
+              <option value="bar-chart-2">📊 bar-chart-2 — Dados & Science</option>
+              <option value="trending-up">📈 trending-up — Trading & Mercado</option>
+              <option value="smile">🧘 smile — Desenvolvimento Pessoal</option>
+              <option value="code">⌨️ code — Algoritmos</option>
+              <option value="brain">🧠 brain — Machine Learning</option>
+              <option value="palette">🎨 palette — Design & UX</option>
+              <option value="book-open">📚 book-open — Estudos & Teoria</option>
+              <option value="video">🎥 video — Audiovisual</option>
+              <option value="zap">⚡ zap — Performance</option>
+              <option value="folder">📁 folder — Padrão</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="cat-form-desc">Descrição Detalhada</label>
+            <textarea id="cat-form-desc" class="form-textarea" rows="3" placeholder="Resumo prático sobre o conteúdo contido nesta categoria..."></textarea>
+          </div>
+        </form>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="btn-cancel-cat-modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-save-category">Salvar Categoria</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Category Delete Confirmation -->
+    <div id="delete-cat-modal" class="admin-modal-backdrop" style="display: none;">
+      <div class="admin-modal-dialog">
+        <div class="modal-header">
+          <h2 class="modal-title text-danger">Excluir Categoria</h2>
+          <button type="button" class="btn-close-modal" id="btn-close-delete-cat">×</button>
+        </div>
+        <div class="modal-body">
+          <p>Tem certeza de que deseja remover a categoria <strong id="delete-cat-name-display" class="accent-cyan"></strong> (<code id="delete-cat-id-display"></code>)?</p>
+          <p class="field-hint text-warning mt-2" id="delete-cat-warning-text">Esta ação removerá a categoria das listagens e filtros do sistema.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="btn-cancel-delete-cat">Cancelar</button>
+          <button type="button" class="btn btn-danger" id="btn-confirm-delete-cat">Sim, Excluir Categoria</button>
+        </div>
+      </div>
+    </div>
   </div>
 </Layout>
 
 <script>
   import { showToast } from '../lib/toast';
+
+  // Navigation Tabs Logic
+  const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
+  const tabSections = document.querySelectorAll<HTMLElement>('.tab-section');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.getAttribute('data-tab');
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabSections.forEach(s => s.classList.remove('active'));
+
+      btn.classList.add('active');
+      const targetSec = document.getElementById(`section-${targetTab}`);
+      if (targetSec) targetSec.classList.add('active');
+    });
+  });
 
   const btnDryRun = document.getElementById('btn-dry-run-scan');
   const btnApply = document.getElementById('btn-apply-scan');
@@ -315,7 +509,7 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
   const editHidden = document.getElementById('edit-is-hidden') as HTMLInputElement | null;
   const editFeatured = document.getElementById('edit-is-featured') as HTMLInputElement | null;
 
-  // Filter Table
+  // Filter Course Table
   const filterInput = document.getElementById('filter-course-input') as HTMLInputElement | null;
   const filterProvider = document.getElementById('filter-provider-select') as HTMLSelectElement | null;
   const rows = Array.from(document.querySelectorAll<HTMLElement>('.course-row-item'));
@@ -338,6 +532,24 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 
   filterInput?.addEventListener('input', filterTable);
   filterProvider?.addEventListener('change', filterTable);
+
+  // Filter Category Table
+  const filterCatInput = document.getElementById('filter-cat-input') as HTMLInputElement | null;
+  const catRows = Array.from(document.querySelectorAll<HTMLElement>('.cat-row-item'));
+
+  function filterCategoryTable() {
+    const q = (filterCatInput?.value || '').toLowerCase().trim();
+    catRows.forEach(r => {
+      const name = r.getAttribute('data-name') || '';
+      const id = r.getAttribute('data-id') || '';
+      const desc = r.getAttribute('data-desc') || '';
+
+      const matches = !q || name.includes(q) || id.includes(q) || desc.includes(q);
+      r.style.display = matches ? '' : 'none';
+    });
+  }
+
+  filterCatInput?.addEventListener('input', filterCategoryTable);
 
   // Trigger Dry Run Scan
   async function triggerScan(dryRun = true) {
@@ -369,7 +581,7 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 
   btnDryRun?.addEventListener('click', () => triggerScan(true));
   btnApply?.addEventListener('click', () => {
-    if (confirm('Deseja atualizar a biblioteca com os arquivos detectados? Seus metadados manuais e progresso serão 100% preservados.')) {
+    if (confirm('Deseja atualizar a biblioteca com os arquivos detectados? Seus metadados manuais e categorias serão 100% preservados.')) {
       triggerScan(false);
     }
   });
@@ -447,6 +659,182 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
       btnSaveEdit.textContent = 'Salvar Metadados';
     }
   });
+
+  // Category CRUD Logic
+  const catModal = document.getElementById('cat-modal');
+  const catModalTitle = document.getElementById('cat-modal-title');
+  const btnCloseCatModal = document.getElementById('btn-close-cat-modal');
+  const btnCancelCatModal = document.getElementById('btn-cancel-cat-modal');
+  const btnCreateCat = document.getElementById('btn-create-category');
+  const btnSaveCat = document.getElementById('btn-save-category');
+
+  const catFormAction = document.getElementById('cat-form-action') as HTMLInputElement | null;
+  const catFormOriginalId = document.getElementById('cat-form-original-id') as HTMLInputElement | null;
+  const catFormName = document.getElementById('cat-form-name') as HTMLInputElement | null;
+  const catFormId = document.getElementById('cat-form-id') as HTMLInputElement | null;
+  const catFormIcon = document.getElementById('cat-form-icon') as HTMLSelectElement | null;
+  const catFormDesc = document.getElementById('cat-form-desc') as HTMLTextAreaElement | null;
+
+  // Delete Category Modal Elements
+  const deleteCatModal = document.getElementById('delete-cat-modal');
+  const btnCloseDeleteCat = document.getElementById('btn-close-delete-cat');
+  const btnCancelDeleteCat = document.getElementById('btn-cancel-delete-cat');
+  const btnConfirmDeleteCat = document.getElementById('btn-confirm-delete-cat');
+  const deleteCatNameDisplay = document.getElementById('delete-cat-name-display');
+  const deleteCatIdDisplay = document.getElementById('delete-cat-id-display');
+  const deleteCatWarningText = document.getElementById('delete-cat-warning-text');
+  let categoryToDeleteId: string | null = null;
+
+  // Open Create Category Modal
+  btnCreateCat?.addEventListener('click', () => {
+    if (!catModal) return;
+    if (catModalTitle) catModalTitle.textContent = 'Nova Categoria';
+    if (catFormAction) catFormAction.value = 'create';
+    if (catFormOriginalId) catFormOriginalId.value = '';
+    if (catFormName) catFormName.value = '';
+    if (catFormId) {
+      catFormId.value = '';
+      catFormId.readOnly = false;
+    }
+    if (catFormIcon) catFormIcon.value = 'sparkles';
+    if (catFormDesc) catFormDesc.value = '';
+
+    catModal.style.display = 'flex';
+  });
+
+  // Open Edit Category Modal
+  document.querySelectorAll<HTMLButtonElement>('.btn-edit-category').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const raw = btn.getAttribute('data-category');
+      if (!raw || !catModal) return;
+      const cat = JSON.parse(raw);
+
+      if (catModalTitle) catModalTitle.textContent = 'Editar Categoria';
+      if (catFormAction) catFormAction.value = 'update';
+      if (catFormOriginalId) catFormOriginalId.value = cat.id;
+      if (catFormName) catFormName.value = cat.name;
+      if (catFormId) {
+        catFormId.value = cat.id;
+        catFormId.readOnly = true;
+      }
+      if (catFormIcon) catFormIcon.value = cat.icon || 'folder';
+      if (catFormDesc) catFormDesc.value = cat.description || '';
+
+      catModal.style.display = 'flex';
+    });
+  });
+
+  // Auto slug generator on Category Name input (only when creating)
+  catFormName?.addEventListener('input', () => {
+    if (catFormAction?.value === 'create' && catFormId) {
+      const slug = catFormName.value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+      catFormId.value = slug;
+    }
+  });
+
+  btnCloseCatModal?.addEventListener('click', () => catModal && (catModal.style.display = 'none'));
+  btnCancelCatModal?.addEventListener('click', () => catModal && (catModal.style.display = 'none'));
+
+  // Save Category (Create or Update)
+  btnSaveCat?.addEventListener('click', async () => {
+    const action = catFormAction?.value || 'create';
+    const name = catFormName?.value?.trim();
+    const id = catFormId?.value?.trim() || catFormOriginalId?.value;
+    const icon = catFormIcon?.value;
+    const description = catFormDesc?.value?.trim();
+
+    if (!name) {
+      showToast('O nome da categoria é obrigatório.', 'error');
+      return;
+    }
+
+    try {
+      btnSaveCat.textContent = 'Salvando...';
+      const res = await fetch('/api/library/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          id,
+          name,
+          icon,
+          description
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast(action === 'create' ? 'Categoria criada com sucesso!' : 'Categoria atualizada!', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showToast(data.error || 'Erro ao salvar categoria.', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Erro de conexão.', 'error');
+    } finally {
+      btnSaveCat.textContent = 'Salvar Categoria';
+    }
+  });
+
+  // Open Delete Category Modal
+  document.querySelectorAll<HTMLButtonElement>('.btn-delete-category').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const name = btn.getAttribute('data-name');
+      const count = parseInt(btn.getAttribute('data-count') || '0', 10);
+      if (!id || !deleteCatModal) return;
+
+      categoryToDeleteId = id;
+      if (deleteCatNameDisplay) deleteCatNameDisplay.textContent = name || id;
+      if (deleteCatIdDisplay) deleteCatIdDisplay.textContent = id;
+      if (deleteCatWarningText) {
+        deleteCatWarningText.textContent = count > 0 
+          ? `Atenção: Há ${count} curso(s) vinculado(s) a esta categoria. A exclusão removerá o filtro da categoria.`
+          : 'Esta categoria não possui nenhum curso vinculado no momento.';
+      }
+
+      deleteCatModal.style.display = 'flex';
+    });
+  });
+
+  btnCloseDeleteCat?.addEventListener('click', () => deleteCatModal && (deleteCatModal.style.display = 'none'));
+  btnCancelDeleteCat?.addEventListener('click', () => deleteCatModal && (deleteCatModal.style.display = 'none'));
+
+  // Confirm Delete Category
+  btnConfirmDeleteCat?.addEventListener('click', async () => {
+    if (!categoryToDeleteId) return;
+
+    try {
+      btnConfirmDeleteCat.textContent = 'Excluindo...';
+      const res = await fetch('/api/library/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete',
+          id: categoryToDeleteId
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast('Categoria removida com sucesso!', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showToast(data.error || 'Erro ao excluir categoria.', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Erro de conexão.', 'error');
+    } finally {
+      btnConfirmDeleteCat.textContent = 'Sim, Excluir Categoria';
+    }
+  });
 </script>
 
 <style>
@@ -492,7 +880,7 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.25rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
 
   .admin-stat-card {
@@ -530,6 +918,50 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
   .stat-hint {
     font-size: 0.75rem;
     color: var(--text-muted);
+  }
+
+  /* Navigation Tabs */
+  .admin-nav-tabs {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.75rem;
+  }
+
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+  }
+
+  .tab-btn.active {
+    background: rgba(var(--accent-primary-rgb, 0, 242, 254), 0.12);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb, 0, 242, 254), 0.15);
+  }
+
+  .tab-section {
+    display: none;
+  }
+
+  .tab-section.active {
+    display: block;
   }
 
   .admin-section {
@@ -605,6 +1037,58 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 
   .admin-table tr:hover td {
     background: rgba(255, 255, 255, 0.02);
+  }
+
+  .cat-icon-chip {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    background: rgba(var(--accent-primary-rgb, 0, 242, 254), 0.1);
+    border: 1px solid rgba(var(--accent-primary-rgb, 0, 242, 254), 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--accent-cyan);
+  }
+
+  .cat-slug-badge {
+    font-family: monospace;
+    font-size: 0.78125rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-xs);
+    color: var(--text-muted);
+  }
+
+  .cell-desc {
+    max-width: 320px;
+  }
+
+  .cat-desc-text {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .action-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-danger {
+    background: rgba(244, 63, 94, 0.15);
+    color: #f43f5e;
+    border: 1px solid rgba(244, 63, 94, 0.3);
+  }
+
+  .btn-danger:hover {
+    background: rgba(244, 63, 94, 0.28);
+    color: #fff;
   }
 
   .course-meta-box {

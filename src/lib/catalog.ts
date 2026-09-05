@@ -51,6 +51,30 @@ function loadMergedCatalog(): CatalogData {
       } catch {}
     }
 
+    const primaryCatOverrides = path.resolve(process.cwd(), 'src', 'data', 'categories_overrides.json');
+    const tmpCatOverrides = path.join(os.tmpdir(), 'categories_overrides.json');
+
+    // Read categories overrides from disk if available
+    let customCategories: any[] | null = null;
+    if (fs.existsSync(tmpCatOverrides)) {
+      try {
+        const catOv = JSON.parse(fs.readFileSync(tmpCatOverrides, 'utf-8'));
+        customCategories = Array.isArray(catOv) ? catOv : (catOv && Array.isArray(catOv.categories)) ? catOv.categories : null;
+      } catch {}
+    } else if (fs.existsSync(primaryCatOverrides)) {
+      try {
+        const catOv = JSON.parse(fs.readFileSync(primaryCatOverrides, 'utf-8'));
+        customCategories = Array.isArray(catOv) ? catOv : (catOv && Array.isArray(catOv.categories)) ? catOv.categories : null;
+      } catch {}
+    }
+
+    if (customCategories) {
+      catalogToUse = {
+        ...catalogToUse,
+        categories: customCategories
+      };
+    }
+
     // Read manual overrides from disk
     let overrides: Record<string, any> = {};
     if (fs.existsSync(primaryOverrides)) {

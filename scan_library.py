@@ -47,9 +47,21 @@ def resolve_courses_root():
 COURSES_ROOT = resolve_courses_root()
 OUTPUT_CATALOG = os.path.join(MINDFLIX_DIR, "src", "data", "catalog.json")
 OVERRIDES_PATH = os.path.join(MINDFLIX_DIR, "src", "data", "manual_overrides.json")
+CATEGORIES_OVERRIDES_PATH = os.path.join(MINDFLIX_DIR, "src", "data", "categories_overrides.json")
 CACHE_PATH = os.path.join(MINDFLIX_DIR, "scanner_cache.json")
 SUMMARY_PATH = os.path.join(MINDFLIX_DIR, "src", "data", "catalog_summary.json")
 COVERS_DIR = os.path.join(MINDFLIX_DIR, "public", "covers")
+
+def load_categories_overrides():
+    if os.path.isfile(CATEGORIES_OVERRIDES_PATH):
+        try:
+            with open(CATEGORIES_OVERRIDES_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list): return data
+                if isinstance(data, dict) and "categories" in data: return data["categories"]
+        except Exception as e:
+            print(f"Warning: could not load categories overrides: {e}")
+    return None
 
 # Supported extensions
 VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v"}
@@ -893,7 +905,7 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
             "total_courses": len(all_courses_result),
             "total_modules": total_modules_all,
             "total_lessons": total_lessons_all,
-            "categories": CATEGORIES,
+            "categories": load_categories_overrides() or CATEGORIES,
             "courses": all_courses_result
         }
 
