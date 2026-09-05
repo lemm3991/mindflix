@@ -1,0 +1,32 @@
+import{t as e}from"./catalog.Dmm0uSBS.js";import{l as t,n,o as r,p as i}from"./progress.BUkmvJhn.js";import{t as a}from"./toast.db1DsUwS.js";var o=e(),s=document.getElementById(`course-detail-modal-backdrop`),c=document.getElementById(`modal-close-btn`),l=document.getElementById(`modal-fav-btn`),u=document.getElementById(`modal-play-btn`),d=document.getElementById(`modal-play-btn-text`),f=document.getElementById(`modal-next-lesson-hint`),p=document.getElementById(`modal-course-title`),m=document.getElementById(`modal-course-desc`),h=document.getElementById(`modal-provider`),g=document.getElementById(`modal-modules-count`),_=document.getElementById(`modal-lessons-count`),v=document.getElementById(`modal-tags-row`),y=document.getElementById(`modal-cover-img`),b=document.getElementById(`modal-cover-gradient`),x=document.getElementById(`modal-modules-list`),S=document.getElementById(`modal-progress-card`),C=document.getElementById(`modal-progress-pct`),w=document.getElementById(`modal-progress-fill`),T=null,E=[`linear-gradient(135deg, #0f2027, #203a43, #2c5364)`,`linear-gradient(135deg, #1f1c2c, #4a475a)`,`linear-gradient(135deg, #141e30, #243b55)`,`linear-gradient(135deg, #0f0c29, #302b63, #24243e)`,`linear-gradient(135deg, #16222f, #1a365d)`,`linear-gradient(135deg, #1a1c29, #2d3748)`,`linear-gradient(135deg, #1e1b4b, #312e81)`,`linear-gradient(135deg, #064e3b, #047857)`,`linear-gradient(135deg, #4a0e2e, #831843)`];function D(e){let i=o.find(t=>t.id===e||t.slug===e);if(!i||!s)return;if(T=i.id,p&&(p.textContent=i.display_title),m&&(m.textContent=i.description),h&&(h.textContent=i.provider),g&&(g.textContent=`${i.modules_count} ${i.modules_count===1?`Módulo`:`Módulos`}`),_&&(_.textContent=`${i.lessons_count} ${i.lessons_count===1?`Aula`:`Aulas`}`),i.cover_image&&y)y.src=i.cover_image,y.style.display=`block`,b&&(b.style.display=`none`);else if(y&&(y.style.display=`none`),b){let e=0;for(let t=0;t<i.id.length;t++)e=i.id.charCodeAt(t)+((e<<5)-e);let t=E[Math.abs(e)%E.length];b.style.background=t,b.style.display=`block`}v&&(v.innerHTML=``,i.tags.forEach(e=>{let t=document.createElement(`span`);t.className=`modal-tag-pill`,t.textContent=`#${e}`,v.appendChild(t)}));let a=n(i.id,i.lessons_count);a.percentage>0?(S&&(S.style.display=`block`),C&&(C.textContent=`${a.percentage}% concluído (${a.completedCount}/${i.lessons_count} aulas)`),w&&(w.style.width=`${a.percentage}%`)):S&&(S.style.display=`none`);let c=r(i);if(u&&(u.href=c.watchUrl),d&&(d.textContent=c.label),f&&(f.textContent=c.isResume&&c.lesson?`Próximo: ${c.lesson.display_title}`:``),l&&(t(i.id)?(l.classList.add(`active`),l.querySelector(`.heart-icon`)?.setAttribute(`fill`,`currentColor`)):(l.classList.remove(`active`),l.querySelector(`.heart-icon`)?.setAttribute(`fill`,`none`))),x){x.innerHTML=``;let e=JSON.parse(localStorage.getItem(`mindflix_progress`)||`{}`);i.modules.forEach((t,n)=>{let r=document.createElement(`div`);r.className=`modal-module-card ${n===0?`open`:``}`;let a=t.lessons.filter(t=>e[t.id]?.completed).length;r.innerHTML=`
+          <div class="modal-module-header">
+            <div class="modal-module-title-group">
+              <span class="modal-module-num">${n+1}</span>
+              <h4 class="modal-module-title">${t.display_title}</h4>
+            </div>
+            <div class="modal-module-right">
+              <span class="modal-module-count">${a>0?`${a}/`:``}${t.lessons.length} aulas</span>
+              <svg class="modal-module-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="modal-lessons-list">
+            ${t.lessons.map(t=>{let n=!!e[t.id]?.completed;return`
+                <a href="${`/watch/${i.id}/${t.id}`}" class="modal-lesson-item ${n?`completed`:``}">
+                  <div class="modal-lesson-left">
+                    <svg class="modal-lesson-icon" width="16" height="16" viewBox="0 0 24 24" fill="${n?`currentColor`:`none`}" stroke="currentColor" stroke-width="2">
+                      ${n?`<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>`:`<polygon points="5 3 19 12 5 21 5 3"></polygon>`}
+                    </svg>
+                    <span class="modal-lesson-title">${t.display_title}</span>
+                  </div>
+                  <div class="modal-lesson-right">
+                    ${t.duration_formatted?`<span class="modal-lesson-duration">${t.duration_formatted}</span>`:``}
+                    <svg class="modal-lesson-play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                  </div>
+                </a>
+              `}).join(``)}
+          </div>
+        `,r.querySelector(`.modal-module-header`)?.addEventListener(`click`,()=>{r.classList.toggle(`open`)}),x.appendChild(r)})}s.style.display=`flex`,requestAnimationFrame(()=>{s.classList.add(`active`),document.body.style.overflow=`hidden`})}function O(){s&&(s.classList.remove(`active`),setTimeout(()=>{s.style.display=`none`,document.body.style.overflow=``,T=null},250))}window.openCourseModal=D,window.closeCourseModal=O,document.addEventListener(`open-course-modal`,e=>{e.detail?.courseId&&D(e.detail.courseId)}),c?.addEventListener(`click`,O),s?.addEventListener(`click`,e=>{e.target===s&&O()}),document.addEventListener(`keydown`,e=>{e.key===`Escape`&&s?.classList.contains(`active`)&&O()}),l?.addEventListener(`click`,async e=>{if(e.preventDefault(),!T)return;let t=await i(T);t?(l.classList.add(`active`),l.querySelector(`.heart-icon`)?.setAttribute(`fill`,`currentColor`),a(`Curso adicionado à Minha Lista`,`success`)):(l.classList.remove(`active`),l.querySelector(`.heart-icon`)?.setAttribute(`fill`,`none`),a(`Curso removido da Minha Lista`,`info`));let n=document.querySelector(`[data-fav-id="${T}"]`);n&&(t?(n.classList.add(`active`),n.querySelector(`.heart-icon`)?.setAttribute(`fill`,`currentColor`)):(n.classList.remove(`active`),n.querySelector(`.heart-icon`)?.setAttribute(`fill`,`none`)))});
