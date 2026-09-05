@@ -260,9 +260,12 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
 
     // Focus Mode
     btnFocus?.addEventListener('click', () => {
-      document.body.classList.toggle('focus-mode-active');
-      btnFocus.classList.toggle('active');
-      showToast('Modo Foco ativado. Pressione C ou ESC para sair.', 'info', 3000);
+      const isActive = document.body.classList.toggle('focus-mode-active');
+      if (!isActive) {
+        document.body.classList.remove('focus-sidebar-open');
+      }
+      btnFocus.classList.toggle('active', isActive);
+      showToast(isActive ? 'Modo Foco Zen ativado. Pressione C ou ESC para sair.' : 'Modo Foco desativado', 'info', 3000);
     });
 
     // Next lesson countdown cancel
@@ -445,6 +448,9 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
         e.preventDefault();
         btnTheater?.click();
       } else if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        btnFocus?.click();
+      } else if (e.key === 'Escape' && document.body.classList.contains('focus-mode-active')) {
         e.preventDefault();
         btnFocus?.click();
       }

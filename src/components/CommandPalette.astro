@@ -473,12 +473,12 @@ allCourses.forEach(c => {
     }
   });
 
-  function executeItem(item: any) {
+  function executeItem(item) {
     if (!item) return;
     if (item.type === 'course' && item.courseId) {
       closePalette();
-      if ((window as any).openCourseModal) {
-        (window as any).openCourseModal(item.courseId);
+      if (window.openCourseModal) {
+        window.openCourseModal(item.courseId);
       } else {
         document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId: item.courseId } }));
       }
@@ -488,7 +488,8 @@ allCourses.forEach(c => {
   }
 
   resultsContainer?.addEventListener('click', (e) => {
-    const link = (e.target as HTMLElement).closest('.cmd-result-item');
+    const target = e.target;
+    const link = target && target.closest ? target.closest('.cmd-result-item') : null;
     if (link) {
       const idx = parseInt(link.getAttribute('data-index') || '-1', 10);
       if (idx >= 0 && currentResults[idx]) {

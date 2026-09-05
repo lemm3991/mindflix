@@ -46,6 +46,37 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
 ---
 
 <Layout title={`${currentLesson.display_title} — ${course.display_title}`} hideNavbar={false}>
+  <!-- Background Overlay for Focus Mode (60% dark) -->
+  <div class="focus-backdrop" id="focus-backdrop" aria-hidden="true"></div>
+
+  <!-- Focus Mode Floating Bar -->
+  <div class="focus-mode-bar" id="focus-mode-bar">
+    <div class="focus-pill">
+      <span class="focus-pulse-dot"></span>
+      <span>Modo Foco Zen</span>
+    </div>
+    <div class="focus-actions">
+      <button type="button" class="focus-action-btn" id="btn-focus-toggle-sidebar" title="Alternar Playlist de Aulas">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        <span>Playlist</span>
+      </button>
+      <button type="button" class="focus-action-btn focus-action-exit" id="btn-exit-focus" title="Sair do Modo Foco (ESC)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        <span>Sair do Foco (ESC)</span>
+      </button>
+    </div>
+  </div>
+
   <div class="watch-layout">
     <!-- Main Content Area: Video and Details -->
     <div class="watch-main-column">
@@ -143,13 +174,139 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
       }
     });
   }
+
+  // Focus Mode Controls
+  const backdrop = document.getElementById('focus-backdrop');
+  const btnExitFocus = document.getElementById('btn-exit-focus');
+  const btnToggleSidebar = document.getElementById('btn-focus-toggle-sidebar');
+  const btnPlayerFocus = document.getElementById('btn-focus-mode');
+
+  const exitFocusMode = () => {
+    document.body.classList.remove('focus-mode-active');
+    document.body.classList.remove('focus-sidebar-open');
+    btnPlayerFocus?.classList.remove('active');
+  };
+
+  backdrop?.addEventListener('click', exitFocusMode);
+  btnExitFocus?.addEventListener('click', exitFocusMode);
+
+  btnToggleSidebar?.addEventListener('click', () => {
+    document.body.classList.toggle('focus-sidebar-open');
+  });
 </script>
 
 <style>
+  /* Focus Mode Backdrop (60% dark overlay) */
+  .focus-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 0.35s ease;
+  }
+
+  :global(body.focus-mode-active) .focus-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Floating Focus Bar */
+  .focus-mode-bar {
+    position: fixed;
+    top: 1.25rem;
+    left: 50%;
+    transform: translate(-50%, -120%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.45rem 1rem;
+    background: rgba(18, 22, 32, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: var(--radius-full);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  }
+
+  :global(body.focus-mode-active) .focus-mode-bar {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .focus-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #f8fafc;
+    letter-spacing: -0.01em;
+  }
+
+  .focus-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 10px var(--accent-cyan);
+    animation: pulse-dot 2s infinite ease-in-out;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .focus-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    padding-left: 0.75rem;
+  }
+
+  .focus-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .focus-action-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+  }
+
+  .focus-action-exit:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+  }
+
   .watch-layout {
     display: flex;
     padding-top: 72px;
     min-height: calc(100vh - 72px);
+    position: relative;
+    overflow-x: hidden;
+    transition: padding-top 0.35s ease;
   }
 
   .watch-main-column {
@@ -159,12 +316,16 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
     display: flex;
     flex-direction: column;
     gap: 1.75rem;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .watch-video-section {
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
+    position: relative;
+    z-index: 20;
+    transition: max-width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .lesson-details-section {
@@ -174,6 +335,64 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    position: relative;
+    z-index: 20;
+    transition: all 0.35s ease;
+  }
+
+  /* === MODO FOCO ATIVO === */
+  :global(body.focus-mode-active) .watch-layout {
+    padding-top: 4.5rem;
+  }
+
+  :global(body.focus-mode-active) .watch-main-column {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    align-items: center;
+    padding: 0.5rem 2rem 5rem;
+  }
+
+  /* Centralizar o vídeo horizontalmente na tela com largura expandida */
+  :global(body.focus-mode-active) .watch-video-section {
+    max-width: 1240px;
+    margin: 0 auto;
+    box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.95);
+  }
+
+  /* Detalhes da aula com opacidade reduzida no foco, restaurando ao hover */
+  :global(body.focus-mode-active) .lesson-details-section {
+    max-width: 1240px;
+    margin: 0 auto;
+    opacity: 0.4;
+  }
+
+  :global(body.focus-mode-active) .lesson-details-section:hover {
+    opacity: 1;
+  }
+
+  /* Recolher a playlist para a direita */
+  :global(body.focus-mode-active) :global(.course-study-sidebar) {
+    transform: translateX(100%);
+    margin-right: -380px;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  /* Caso o aluno abra a playlist durante o modo foco */
+  :global(body.focus-mode-active.focus-sidebar-open) :global(.course-study-sidebar) {
+    transform: translateX(0);
+    margin-right: 0;
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    z-index: 50;
+    box-shadow: -20px 0 50px rgba(0, 0, 0, 0.85);
   }
 
   .lesson-header-row {

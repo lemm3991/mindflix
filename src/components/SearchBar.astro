@@ -70,8 +70,8 @@ const { placeholder = "Pesquisar cursos, módulos, aulas ou buscar por assunto..
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    // Clicking the search input opens the global Command Palette
-    input.addEventListener('click', () => {
+    // Clicking or focusing the search bar opens the global Command Palette
+    const openModal = () => {
       const q = input.value.trim();
       if (typeof (window as any).openSearchModal === 'function') {
         (window as any).openSearchModal('all', q);
@@ -80,6 +80,16 @@ const { placeholder = "Pesquisar cursos, módulos, aulas ou buscar por assunto..
           detail: { type: 'all', query: q }
         }));
       }
+    };
+
+    input.addEventListener('click', openModal);
+    input.addEventListener('focus', openModal);
+
+    const wrapper = document.querySelector('.search-input-wrapper');
+    wrapper?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target?.closest('#clear-search-btn') || target?.closest('#trigger-ai-modal-btn')) return;
+      openModal();
     });
   }
 
