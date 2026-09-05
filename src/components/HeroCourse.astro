@@ -129,7 +129,8 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
 </section>
 
 <script>
-  import { getCourseCompletionStats, isCourseFavorite, toggleFavorite, getUserPreferences } from '../lib/progress';
+  import { getAllCourses } from '../lib/catalog';
+  import { getCourseCompletionStats, isCourseFavorite, toggleFavorite, getUserPreferences, getNextLessonToWatch } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
   const heroSection = document.getElementById('home-hero-section');
@@ -137,6 +138,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
   const glow = document.getElementById('hero-glow');
   const slides = document.querySelectorAll<HTMLElement>('.hero-slide');
   const dots = document.querySelectorAll<HTMLElement>('.indicator-dot');
+  const allCourses = getAllCourses();
 
   const videoItems = document.querySelectorAll<HTMLElement>('.hero-video-item');
 
@@ -225,6 +227,17 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
   slides.forEach(slide => {
     const courseId = slide.getAttribute('data-course-id');
     if (!courseId) return;
+
+    const courseObj = allCourses.find(c => c.id === courseId);
+    if (courseObj) {
+      const heroWatchBtn = slide.querySelector<HTMLAnchorElement>('.btn-primary.btn-hero');
+      if (heroWatchBtn) {
+        const nextWatch = getNextLessonToWatch(courseObj);
+        heroWatchBtn.href = nextWatch.watchUrl;
+        const btnSpan = heroWatchBtn.querySelector('span');
+        if (btnSpan) btnSpan.textContent = nextWatch.isResume ? 'Continuar Assistindo' : 'Assistir Agora';
+      }
+    }
 
     // Progress
     const stats = getCourseCompletionStats(courseId, 100);

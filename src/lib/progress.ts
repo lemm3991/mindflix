@@ -69,34 +69,30 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
     };
   }
   
-  // 2. Check the last completed lesson and pick the NEXT one
-  let lastCompletedIndex = -1;
+  // 2. Find the FIRST uncompleted lesson in course order
   for (let i = 0; i < flatLessons.length; i++) {
-    const prog = allProgress[flatLessons[i].lesson.id];
-    if (prog && prog.completed) {
-      lastCompletedIndex = i;
+    const item = flatLessons[i];
+    const prog = allProgress[item.lesson.id];
+    if (!prog || !prog.completed) {
+      const isFirst = i === 0;
+      return {
+        lesson: item.lesson,
+        module: item.module,
+        isResume: !isFirst,
+        watchUrl: `/watch/${course.id}/${item.lesson.id}`,
+        label: isFirst ? 'Assistir Agora' : `Próxima: ${item.lesson.display_title}`
+      };
     }
   }
   
-  if (lastCompletedIndex >= 0 && lastCompletedIndex < flatLessons.length - 1) {
-    const nextItem = flatLessons[lastCompletedIndex + 1];
-    return {
-      lesson: nextItem.lesson,
-      module: nextItem.module,
-      isResume: true,
-      watchUrl: `/watch/${course.id}/${nextItem.lesson.id}`,
-      label: `Próxima: ${nextItem.lesson.display_title}`
-    };
-  }
-  
-  // 3. If all completed or none started, start at first lesson
+  // 3. If all lessons are completed, default to first lesson for rewatching
   const first = flatLessons[0];
   return {
     lesson: first.lesson,
     module: first.module,
-    isResume: lastCompletedIndex >= 0,
+    isResume: true,
     watchUrl: `/watch/${course.id}/${first.lesson.id}`,
-    label: lastCompletedIndex >= 0 ? 'Reassistir Curso' : 'Assistir Agora'
+    label: 'Reassistir Curso'
   };
 }
 
@@ -104,13 +100,22 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
 export function getCoursePlaybackSpeed(courseId: string): number {
   if (typeof window === 'undefined') return 1.0;
   const prefs = getUserPreferences();
-  if (!prefs.remember_speed_per_course) return prefs.playback_speed || 1.0;
+  const defaultSpeed = typeof prefs.playback_speed === 'number'
+    ? prefs.playback_speed
+    : (parseFloat(prefs.playback_speed as any) || 1.0);
+
+  if (!prefs.remember_speed_per_course) return defaultSpeed;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.COURSE_SPEEDS);
     const map = raw ? JSON.parse(raw) : {};
-    return map[courseId] || prefs.playback_speed || 1.0;
+    const courseSpeed = map[courseId];
+    if (courseSpeed) {
+      const parsed = parseFloat(courseSpeed);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    return defaultSpeed;
   } catch {
-    return prefs.playback_speed || 1.0;
+    return defaultSpeed;
   }
 }
 

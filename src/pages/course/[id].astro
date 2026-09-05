@@ -1,5 +1,6 @@
 ---
-// course/[id].astro - Redirecionamento Automático para o Player
+// course/[id].astro - Smart Redirection to Next Uncompleted Lesson
+import Layout from '../../layouts/Layout.astro';
 import { getCourseById } from '../../lib/catalog';
 
 const { id } = Astro.params;
@@ -9,10 +10,98 @@ if (!course) {
   return Astro.redirect('/courses');
 }
 
-const firstLesson = course.modules[0]?.lessons[0];
-const targetUrl = firstLesson 
-  ? `/watch/${course.id}/${firstLesson.id}` 
+const defaultFirstLesson = course.modules[0]?.lessons[0];
+const fallbackUrl = defaultFirstLesson 
+  ? `/watch/${course.id}/${defaultFirstLesson.id}` 
   : `/courses`;
-
-return Astro.redirect(targetUrl);
 ---
+
+<Layout title={`Carregando ${course.display_title} | MindFlix`}>
+  <meta http-equiv="refresh" content={`2;url=${fallbackUrl}`} />
+
+  <div class="course-redirect-container" data-course-id={course.id}>
+    <div class="redirect-card">
+      <div class="spinner-ring"></div>
+      <h2 class="redirect-title">{course.display_title}</h2>
+      <p class="redirect-subtitle">Carregando a sua próxima aula...</p>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { getCourseById } from '../../lib/catalog';
+  import { getNextLessonToWatch, syncProgressFromSupabase } from '../../lib/progress';
+
+  const container = document.querySelector<HTMLElement>('.course-redirect-container');
+  const courseId = container?.getAttribute('data-course-id');
+
+  if (courseId) {
+    const course = getCourseById(courseId);
+    if (course) {
+      // Sync progress in background if online, then compute target lesson
+      const redirect = () => {
+        const nextWatch = getNextLessonToWatch(course);
+        window.location.replace(nextWatch.watchUrl);
+      };
+
+      // Immediate redirect using local storage
+      redirect();
+
+      // Background sync backup
+      syncProgressFromSupabase().then(() => {
+        redirect();
+      }).catch(() => {});
+    } else {
+      window.location.replace('/courses');
+    }
+  }
+</script>
+
+<style>
+  .course-redirect-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .redirect-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: 3rem 2.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    max-width: 460px;
+    box-shadow: var(--shadow-xl);
+    backdrop-filter: blur(16px);
+  }
+
+  .spinner-ring {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(0, 242, 254, 0.15);
+    border-top-color: var(--accent-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .redirect-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .redirect-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+</style>

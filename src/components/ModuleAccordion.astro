@@ -65,32 +65,39 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
 <script>
   import { getAllLocalProgress } from '../lib/progress';
 
-  document.querySelectorAll<HTMLElement>('.module-accordion-item').forEach(item => {
-    const btn = item.querySelector<HTMLButtonElement>('.module-header-btn');
-    const content = item.querySelector<HTMLElement>('.module-content');
-    const totalLessons = parseInt(item.getAttribute('data-total-lessons') || '0', 10);
-    const countEl = item.querySelector('.module-completed-count');
-    const fillEl = item.querySelector<HTMLElement>('.module-progress-mini-fill');
-
-    // Calculate completed lessons in this module
+  function updateModules() {
     const allProgress = getAllLocalProgress();
-    const lessonItems = item.querySelectorAll('.lesson-item');
-    let completedInModule = 0;
 
-    lessonItems.forEach(l => {
-      const lId = l.getAttribute('data-lesson-id');
-      if (lId && allProgress[lId]?.completed) {
-        completedInModule++;
+    document.querySelectorAll<HTMLElement>('.module-accordion-item').forEach(item => {
+      const totalLessons = parseInt(item.getAttribute('data-total-lessons') || '0', 10);
+      const countEl = item.querySelector('.module-completed-count');
+      const fillEl = item.querySelector<HTMLElement>('.module-progress-mini-fill');
+      const lessonItems = item.querySelectorAll('.lesson-item');
+
+      let completedInModule = 0;
+      lessonItems.forEach(l => {
+        const lId = l.getAttribute('data-lesson-id');
+        if (lId && allProgress[lId]?.completed) {
+          completedInModule++;
+        }
+      });
+
+      if (countEl) countEl.textContent = completedInModule.toString();
+      if (fillEl && totalLessons > 0) {
+        const pct = Math.round((completedInModule / totalLessons) * 100);
+        fillEl.style.width = `${pct}%`;
       }
     });
+  }
 
-    if (countEl) countEl.textContent = completedInModule.toString();
-    if (fillEl && totalLessons > 0) {
-      const pct = Math.round((completedInModule / totalLessons) * 100);
-      fillEl.style.width = `${pct}%`;
-    }
+  // Setup click listeners once
+  document.querySelectorAll<HTMLElement>('.module-accordion-item').forEach(item => {
+    if (item.dataset.accordionInit === 'true') return;
+    item.dataset.accordionInit = 'true';
 
-    // Toggle collapse
+    const btn = item.querySelector<HTMLButtonElement>('.module-header-btn');
+    const content = item.querySelector<HTMLElement>('.module-content');
+
     btn?.addEventListener('click', () => {
       const isExpanded = btn.getAttribute('aria-expanded') === 'true';
       if (isExpanded) {
@@ -104,6 +111,10 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
       }
     });
   });
+
+  updateModules();
+  window.addEventListener('mindflix:progress-updated', updateModules);
+  window.addEventListener('storage', updateModules);
 </script>
 
 <style>

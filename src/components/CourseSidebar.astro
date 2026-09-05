@@ -55,22 +55,28 @@ const { course, currentLessonId } = Astro.props;
 <script>
   import { getCourseCompletionStats } from '../lib/progress';
 
-  const sidebar = document.getElementById('course-study-sidebar');
-  const courseId = sidebar?.getAttribute('data-course-id') || '';
-  const totalLessons = parseInt(sidebar?.getAttribute('data-total-lessons') || '0', 10);
+  function updateSidebarStats() {
+    const sidebar = document.getElementById('course-study-sidebar');
+    const courseId = sidebar?.getAttribute('data-course-id') || '';
+    const totalLessons = parseInt(sidebar?.getAttribute('data-total-lessons') || '0', 10);
 
-  if (sidebar && courseId) {
-    const stats = getCourseCompletionStats(courseId, totalLessons);
-    const numEl = document.getElementById('sidebar-progress-num');
-    const fillEl = document.getElementById('sidebar-progress-bar-fill');
-    if (numEl) numEl.textContent = `${stats.percentage}%`;
-    if (fillEl) fillEl.style.width = `${stats.percentage}%`;
+    if (sidebar && courseId) {
+      const stats = getCourseCompletionStats(courseId, totalLessons);
+      const numEl = document.getElementById('sidebar-progress-num');
+      const fillEl = document.getElementById('sidebar-progress-bar-fill');
+      if (numEl) numEl.textContent = `${stats.percentage}%`;
+      if (fillEl) fillEl.style.width = `${stats.percentage}%`;
+    }
   }
+
+  updateSidebarStats();
+  window.addEventListener('mindflix:progress-updated', updateSidebarStats);
+  window.addEventListener('storage', updateSidebarStats);
 </script>
 
 <style>
   .course-study-sidebar {
-    width: 380px;
+    width: 420px;
     height: calc(100vh - 72px);
     background: var(--bg-card);
     border-left: 1px solid var(--border-subtle);
