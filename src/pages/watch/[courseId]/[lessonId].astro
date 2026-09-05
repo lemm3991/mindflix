@@ -3,6 +3,7 @@
 import Layout from '../../../layouts/Layout.astro';
 import VideoPlayer from '../../../components/VideoPlayer.astro';
 import CourseSidebar from '../../../components/CourseSidebar.astro';
+import ChallengeModal from '../../../components/ChallengeModal.astro';
 import { getCourseById } from '../../../lib/catalog';
 
 const { courseId, lessonId } = Astro.params;
@@ -43,6 +44,13 @@ const nextLesson = currentIdx < allLessonsInCourse.length - 1 ? allLessonsInCour
 
 const prevLessonHref = prevLesson ? `/watch/${course.id}/${prevLesson.id}` : undefined;
 const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : undefined;
+
+// Check if current lesson is the last lesson of its module
+const isLastLessonInModule = Boolean(
+  currentModule?.lessons &&
+  currentModule.lessons.length > 0 &&
+  currentModule.lessons[currentModule.lessons.length - 1].id === currentLesson.id
+);
 ---
 
 <Layout title={`${currentLesson.display_title} — ${course.display_title}`} hideNavbar={false}>
@@ -100,14 +108,57 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
             <h1 class="lesson-main-title">{currentLesson.display_title}</h1>
           </div>
 
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-watch-grade-modal" data-course-id={course.id}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
-            <span>Grade Completa</span>
-          </button>
+          <div class="lesson-actions-group">
+            <!-- Desafio da Aula Button (Always Present) -->
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm btn-challenge-trigger"
+              data-challenge-mode="lesson"
+              data-course-id={course.id}
+              data-lesson-id={currentLesson.id}
+              data-lesson-title={currentLesson.display_title}
+              title="Iniciar teste interativo desta aula com IA"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>Desafio da Aula</span>
+            </button>
+
+            <!-- Desafio do Módulo Button (Present on Last Lesson of Module) -->
+            {isLastLessonInModule && (
+              <button
+                type="button"
+                class="btn btn-primary btn-sm btn-challenge-trigger btn-challenge-module"
+                data-challenge-mode="module"
+                data-course-id={course.id}
+                data-module-id={currentModule?.id}
+                data-module-title={currentModule?.display_title}
+                title="Iniciar avaliação completa de todas as aulas deste módulo com IA"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                  <path d="M4 22h16"></path>
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+                </svg>
+                <span>Desafio do Módulo</span>
+              </button>
+            )}
+
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-watch-grade-modal" data-course-id={course.id}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+              <span>Grade Completa</span>
+            </button>
+          </div>
         </div>
 
         <!-- Complementary Materials & Documents (Excluding articles and transcripts) -->
@@ -162,6 +213,9 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
       currentLessonId={currentLesson.id}
     />
   </div>
+
+  <!-- AI Challenge Engine Modal -->
+  <ChallengeModal />
 </Layout>
 
 <script>
@@ -174,6 +228,29 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
       }
     });
   }
+
+  // Challenge Trigger Listeners
+  document.querySelectorAll<HTMLButtonElement>('.btn-challenge-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = (btn.getAttribute('data-challenge-mode') || 'lesson') as 'lesson' | 'module';
+      const cId = btn.getAttribute('data-course-id') || '';
+      const lId = btn.getAttribute('data-lesson-id') || undefined;
+      const mId = btn.getAttribute('data-module-id') || undefined;
+      const lTitle = btn.getAttribute('data-lesson-title') || undefined;
+      const mTitle = btn.getAttribute('data-module-title') || undefined;
+
+      window.dispatchEvent(new CustomEvent('mindflix:open-challenge', {
+        detail: {
+          mode,
+          courseId: cId,
+          lessonId: lId,
+          moduleId: mId,
+          lessonTitle: lTitle,
+          moduleTitle: mTitle
+        }
+      }));
+    });
+  });
 
   // Focus Mode Controls
   const backdrop = document.getElementById('focus-backdrop');
@@ -196,6 +273,24 @@ const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : und
 </script>
 
 <style>
+  .lesson-actions-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .btn-challenge-module {
+    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35) !important;
+    border: none !important;
+  }
+
+  .btn-challenge-module:hover {
+    box-shadow: 0 6px 24px rgba(168, 85, 247, 0.55) !important;
+    transform: translateY(-1px) !important;
+  }
   /* Focus Mode Backdrop (60% dark overlay) */
   .focus-backdrop {
     position: fixed;

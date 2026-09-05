@@ -339,11 +339,36 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
           video.playbackRate = targetSpeed;
         } catch (e) {}
       }
+
+      // Send speed command to Google Drive / YouTube HTML5 iframe player
+      const driveIframe = document.getElementById('drive-video-iframe') as HTMLIFrameElement | null;
+      if (driveIframe && driveIframe.contentWindow) {
+        try {
+          driveIframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setPlaybackRate',
+            args: [targetSpeed]
+          }), '*');
+          driveIframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setSpeed',
+            args: [targetSpeed]
+          }), '*');
+        } catch (e) {}
+      }
     };
 
     // Initialize speed UI immediately on load
     const currentSpeed = getCoursePlaybackSpeed(courseId);
     updateSpeedUI(currentSpeed);
+
+    // Apply speed preference on Drive iframe load
+    const driveIframe = document.getElementById('drive-video-iframe') as HTMLIFrameElement | null;
+    if (driveIframe) {
+      driveIframe.addEventListener('load', () => {
+        setTimeout(() => updateSpeedUI(currentSpeed), 800);
+      });
+    }
 
     // Speed popover toggle (Works for ALL videos)
     speedBtn?.addEventListener('click', (e) => {
@@ -369,6 +394,54 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
         showToast(`Velocidade: ${rate}x`, 'info', 1500);
       });
     });
+
+    // Fullscreen Toggle (Shared for ALL video types)
+    const btnFullscreen = document.getElementById('btn-fullscreen-toggle');
+    btnFullscreen?.addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else {
+        if (wrapper?.requestFullscreen) {
+          wrapper.requestFullscreen().catch(() => {});
+        } else if ((wrapper as any)?.webkitRequestFullscreen) {
+          (wrapper as any).webkitRequestFullscreen();
+        }
+      }
+    });
+
+    // Picture-in-Picture Mode (Native + Floating Mini Player Fallback)
+    const togglePiP = async () => {
+      if (video && document.pictureInPictureEnabled && typeof video.requestPictureInPicture === 'function') {
+        try {
+          if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+            if (btnPip) btnPip.classList.remove('active');
+            showToast('Saindo do Picture-in-Picture', 'info', 1500);
+            return;
+          } else {
+            await video.requestPictureInPicture();
+            if (btnPip) btnPip.classList.add('active');
+            showToast('Picture-in-Picture ativado', 'success', 1500);
+            return;
+          }
+        } catch (e) {
+          console.warn('Native PiP failed, switching to Floating Mini Player:', e);
+        }
+      }
+
+      if (wrapper) {
+        const isFloating = wrapper.classList.toggle('pip-floating-mini-player');
+        if (btnPip) btnPip.classList.toggle('active', isFloating);
+
+        if (isFloating) {
+          showToast('Mini Player flutuante ativado', 'success', 2500);
+        } else {
+          showToast('Mini Player desativado', 'info', 1500);
+        }
+      }
+    };
+
+    btnPip?.addEventListener('click', togglePiP);
 
     // Native HTML5 Video Specific Controls
     if (video) {
@@ -569,55 +642,9 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
         }
       });
 
-      // Fullscreen Toggle
-      const btnFullscreen = document.getElementById('btn-fullscreen-toggle');
-      btnFullscreen?.addEventListener('click', () => {
-        if (document.fullscreenElement) {
-          document.exitFullscreen().catch(() => {});
-        } else {
-          wrapper?.requestFullscreen().catch(() => {});
-        }
+      video.addEventListener('leavepictureinpicture', () => {
+        if (btnPip) btnPip.classList.remove('active');
       });
-
-      // Picture-in-Picture Mode (Native + Floating Mini Player Fallback)
-      const togglePiP = async () => {
-        if (video && document.pictureInPictureEnabled && typeof video.requestPictureInPicture === 'function') {
-          try {
-            if (document.pictureInPictureElement) {
-              await document.exitPictureInPicture();
-              if (btnPip) btnPip.classList.remove('active');
-              showToast('Saindo do Picture-in-Picture', 'info', 1500);
-              return;
-            } else {
-              await video.requestPictureInPicture();
-              if (btnPip) btnPip.classList.add('active');
-              showToast('Picture-in-Picture ativado', 'success', 1500);
-              return;
-            }
-          } catch (e) {
-            console.warn('Native PiP failed, switching to Floating Mini Player:', e);
-          }
-        }
-
-        if (wrapper) {
-          const isFloating = wrapper.classList.toggle('pip-floating-mini-player');
-          if (btnPip) btnPip.classList.toggle('active', isFloating);
-
-          if (isFloating) {
-            showToast('Mini Player flutuante ativado', 'success', 2500);
-          } else {
-            showToast('Mini Player desativado', 'info', 1500);
-          }
-        }
-      };
-
-      btnPip?.addEventListener('click', togglePiP);
-
-      if (video) {
-        video.addEventListener('leavepictureinpicture', () => {
-          if (btnPip) btnPip.classList.remove('active');
-        });
-      }
 
       // Keyboard Shortcuts for video
       window.addEventListener('keydown', (e) => {
@@ -916,8 +943,8 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
   .player-controls-bar {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.65rem 1rem;
+    gap: 0.3rem;
+    padding: 0.35rem 0.65rem;
     background: var(--bg-card);
     border-top: 1px solid var(--border-subtle);
   }
@@ -927,20 +954,20 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.45rem;
     width: 100%;
   }
 
   .controls-left, .controls-center, .controls-right {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
   }
 
   /* Timeline Scrubber Bar */
   .player-timeline-container {
     width: 100%;
-    padding: 0.15rem 0;
+    padding: 0.1rem 0;
     cursor: pointer;
   }
 
@@ -955,7 +982,7 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
   }
 
   .player-timeline-container:hover .timeline-track-bar {
-    height: 6px;
+    height: 5px;
   }
 
   .timeline-fill-bar {
@@ -972,8 +999,8 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%) scale(0);
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
     background: #ffffff;
     border: 2px solid var(--accent-cyan);
     border-radius: 50%;
@@ -1012,16 +1039,17 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
   .btn-control-icon {
     display: inline-flex;
     align-items: center;
-    gap: 0.2rem;
-    font-size: 0.7rem;
+    gap: 0.15rem;
+    font-size: 0.68rem;
     font-weight: 600;
     color: var(--text-secondary);
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 0.25rem 0.5rem;
+    padding: 0.2rem 0.45rem;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all var(--motion-fast) var(--ease-out);
+    height: 24px;
   }
 
   .btn-control-icon:hover {
@@ -1034,12 +1062,12 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
   .video-time-counter {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    font-size: 0.75rem;
+    gap: 0.2rem;
+    font-size: 0.72rem;
     font-variant-numeric: tabular-nums;
     color: var(--text-secondary);
     font-weight: 500;
-    margin: 0 0.25rem;
+    margin: 0 0.15rem;
   }
 
   .time-sep {
@@ -1050,10 +1078,10 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
   .btn-nav-lesson {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    font-size: 0.75rem;
+    gap: 0.25rem;
+    font-size: 0.72rem;
     font-weight: 500;
-    padding: 0.35rem 0.75rem;
+    padding: 0.22rem 0.55rem;
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1062,6 +1090,7 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
     transition: all var(--motion-fast) var(--ease-out);
     user-select: none;
     cursor: pointer;
+    height: 24px;
   }
 
   .btn-nav-lesson:hover:not(.disabled) {

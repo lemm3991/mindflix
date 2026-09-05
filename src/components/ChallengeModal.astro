@@ -1,0 +1,1020 @@
+---
+// src/components/ChallengeModal.astro - AI Challenge Engine Modal Component
+---
+
+<div class="challenge-modal-backdrop" id="challenge-modal-backdrop" style="display: none;" aria-hidden="true">
+  <div class="challenge-modal-card" id="challenge-modal-card">
+    <button type="button" class="modal-close-btn" id="btn-close-challenge-modal" aria-label="Fechar desafio">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- STEP 1: CONFIGURATION SCREEN -->
+    <div class="challenge-step-view" id="challenge-step-config">
+      <div class="config-header">
+        <span class="challenge-mode-badge" id="config-mode-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="12 8 8 12 12 16 12 8"></polygon>
+          </svg>
+          <span id="config-badge-text">Desafio da Aula</span>
+        </span>
+        <h2 class="config-title" id="config-title">Configurar Desafio</h2>
+        <p class="config-subtitle" id="config-subtitle">Escolha a quantidade de perguntas para iniciar sua avaliação com IA.</p>
+      </div>
+
+      <div class="config-options-box">
+        <label class="config-label">Quantidade de Perguntas:</label>
+        <div class="count-selector-grid" id="count-selector-grid">
+          <!-- Populated dynamically via JS based on mode -->
+        </div>
+      </div>
+
+      <div class="config-actions">
+        <button type="button" class="btn btn-primary btn-lg" id="btn-start-challenge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+          </svg>
+          <span>Gerar Desafio com IA</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: LOADING SCREEN -->
+    <div class="challenge-step-view" id="challenge-step-loading" style="display: none;">
+      <div class="loading-state-content">
+        <div class="ai-pulse-spinner">
+          <div class="pulse-ring"></div>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ai-sparkle-icon">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path>
+          </svg>
+        </div>
+        <h3 class="loading-title">Gerando Perguntas com IA...</h3>
+        <p class="loading-desc">Analisando o conteúdo didático da aula para criar perguntas relevantes de múltipla escolha.</p>
+      </div>
+    </div>
+
+    <!-- STEP 3: ACTIVE QUIZ QUESTION SCREEN -->
+    <div class="challenge-step-view" id="challenge-step-active" style="display: none;">
+      <div class="quiz-top-bar">
+        <div class="quiz-meta-info">
+          <span class="challenge-mode-badge sm" id="active-mode-badge">Desafio</span>
+          <span class="question-tracker" id="question-tracker">Pergunta 1 de 5</span>
+        </div>
+        <div class="quiz-progress-track">
+          <div class="quiz-progress-fill" id="quiz-progress-fill" style="width: 20%;"></div>
+        </div>
+      </div>
+
+      <div class="question-statement-card">
+        <h3 class="question-text" id="question-statement-text">Carregando pergunta...</h3>
+      </div>
+
+      <div class="options-list-grid" id="options-container">
+        <!-- 4 Option Cards rendered dynamically -->
+      </div>
+
+      <div class="quiz-footer-actions">
+        <button type="button" class="btn btn-primary btn-next-question" id="btn-next-question" disabled>
+          <span>Responder e Avançar</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 4: RESULTS SCREEN -->
+    <div class="challenge-step-view" id="challenge-step-results" style="display: none;">
+      <div class="results-header">
+        <div class="score-badge-circle" id="score-badge-circle">
+          <span class="score-percent" id="results-percent-text">0%</span>
+        </div>
+        <h2 class="results-title" id="results-headline">Resultado do Desafio</h2>
+        <p class="results-subtitle" id="results-subtitle">Confira seu aproveitamento no teste de conhecimentos.</p>
+      </div>
+
+      <div class="results-metrics-grid">
+        <div class="metric-card">
+          <span class="metric-value" id="metric-total">0</span>
+          <span class="metric-label">Total de Perguntas</span>
+        </div>
+        <div class="metric-card success">
+          <span class="metric-value" id="metric-correct">0</span>
+          <span class="metric-label">Acertos</span>
+        </div>
+        <div class="metric-card danger">
+          <span class="metric-value" id="metric-wrong">0</span>
+          <span class="metric-label">Erros</span>
+        </div>
+        <div class="metric-card highlight">
+          <span class="metric-value" id="metric-percentage">0%</span>
+          <span class="metric-label">Aproveitamento</span>
+        </div>
+      </div>
+
+      <div class="review-accordion-box">
+        <h4 class="review-section-title">Revisão Detalhada das Questões</h4>
+        <div class="review-list" id="review-list-container">
+          <!-- Questions review items rendered here -->
+        </div>
+      </div>
+
+      <div class="results-actions">
+        <button type="button" class="btn btn-secondary" id="btn-retry-challenge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span>Refazer o Desafio</span>
+        </button>
+
+        <button type="button" class="btn btn-primary" id="btn-finish-challenge">
+          <span>Voltar às Aulas</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import type { ChallengeData, ChallengeQuestion } from '../lib/challenges';
+  import { showToast } from '../lib/toast';
+
+  let currentChallenge: ChallengeData | null = null;
+  let currentQuestionIndex = 0;
+  let selectedOptionIndex: number | null = null;
+  let userAnswers: number[] = [];
+  let currentCourseId = '';
+  let currentLessonId = '';
+  let currentModuleId = '';
+  let currentMode: 'lesson' | 'module' = 'lesson';
+  let selectedCount = 3;
+
+  const backdrop = document.getElementById('challenge-modal-backdrop');
+  const btnClose = document.getElementById('btn-close-challenge-modal');
+
+  // Views
+  const stepConfig = document.getElementById('challenge-step-config');
+  const stepLoading = document.getElementById('challenge-step-loading');
+  const stepActive = document.getElementById('challenge-step-active');
+  const stepResults = document.getElementById('challenge-step-results');
+
+  // Config Elements
+  const configModeBadge = document.getElementById('config-mode-badge');
+  const configBadgeText = document.getElementById('config-badge-text');
+  const configTitle = document.getElementById('config-title');
+  const configSubtitle = document.getElementById('config-subtitle');
+  const countGrid = document.getElementById('count-selector-grid');
+  const btnStart = document.getElementById('btn-start-challenge');
+
+  // Active Elements
+  const activeModeBadge = document.getElementById('active-mode-badge');
+  const questionTracker = document.getElementById('question-tracker');
+  const progressFill = document.getElementById('quiz-progress-fill');
+  const statementText = document.getElementById('question-statement-text');
+  const optionsContainer = document.getElementById('options-container');
+  const btnNext = document.getElementById('btn-next-question');
+
+  // Results Elements
+  const scoreCircle = document.getElementById('score-badge-circle');
+  const percentText = document.getElementById('results-percent-text');
+  const headline = document.getElementById('results-headline');
+  const resultsSubtitle = document.getElementById('results-subtitle');
+  const metricTotal = document.getElementById('metric-total');
+  const metricCorrect = document.getElementById('metric-correct');
+  const metricWrong = document.getElementById('metric-wrong');
+  const metricPercentage = document.getElementById('metric-percentage');
+  const reviewContainer = document.getElementById('review-list-container');
+  const btnRetry = document.getElementById('btn-retry-challenge');
+  const btnFinish = document.getElementById('btn-finish-challenge');
+
+  function openChallengeModal(params: {
+    mode: 'lesson' | 'module';
+    courseId: string;
+    lessonId?: string;
+    moduleId?: string;
+    lessonTitle?: string;
+    moduleTitle?: string;
+  }) {
+    currentMode = params.mode;
+    currentCourseId = params.courseId;
+    currentLessonId = params.lessonId || '';
+    currentModuleId = params.moduleId || '';
+
+    // Reset view states
+    showView('config');
+
+    if (currentMode === 'module') {
+      if (configModeBadge) configModeBadge.className = 'challenge-mode-badge module-mode';
+      if (configBadgeText) configBadgeText.textContent = 'Desafio do Módulo';
+      if (configTitle) configTitle.textContent = `Desafio do Módulo`;
+      if (configSubtitle) configSubtitle.textContent = `Teste abrangente cobrindo o conteúdo de todas as aulas do módulo.`;
+      
+      // Module options: 7, 10, 15
+      renderCountSelector([
+        { count: 7, label: '7 perguntas', desc: 'Essencial • ~5 min' },
+        { count: 10, label: '10 perguntas', desc: 'Recomendado • ~8 min' },
+        { count: 15, label: '15 perguntas', desc: 'Mastery • ~12 min' }
+      ], 10);
+    } else {
+      if (configModeBadge) configModeBadge.className = 'challenge-mode-badge lesson-mode';
+      if (configBadgeText) configBadgeText.textContent = 'Desafio da Aula';
+      if (configTitle) configTitle.textContent = `Desafio da Aula`;
+      if (configSubtitle) configSubtitle.textContent = `Avalie sua compreensão do conteúdo ensinado nesta aula.`;
+
+      // Lesson options: 3, 5, 7
+      renderCountSelector([
+        { count: 3, label: '3 perguntas', desc: 'Rápido • ~2 min' },
+        { count: 5, label: '5 perguntas', desc: 'Recomendado • ~4 min' },
+        { count: 7, label: '7 perguntas', desc: 'Completo • ~6 min' }
+      ], 5);
+    }
+
+    if (backdrop) backdrop.style.display = 'flex';
+  }
+
+  function closeChallengeModal() {
+    if (backdrop) backdrop.style.display = 'none';
+  }
+
+  function showView(view: 'config' | 'loading' | 'active' | 'results') {
+    if (stepConfig) stepConfig.style.display = view === 'config' ? 'block' : 'none';
+    if (stepLoading) stepLoading.style.display = view === 'loading' ? 'block' : 'none';
+    if (stepActive) stepActive.style.display = view === 'active' ? 'block' : 'none';
+    if (stepResults) stepResults.style.display = view === 'results' ? 'block' : 'none';
+  }
+
+  function renderCountSelector(items: Array<{ count: number; label: string; desc: string }>, defaultCount: number) {
+    if (!countGrid) return;
+    selectedCount = defaultCount;
+
+    countGrid.innerHTML = items.map(item => `
+      <button type="button" class="count-opt-btn ${item.count === defaultCount ? 'selected' : ''}" data-count="${item.count}">
+        <span class="count-num">${item.label}</span>
+        <span class="count-desc">${item.desc}</span>
+      </button>
+    `).join('');
+
+    countGrid.querySelectorAll<HTMLButtonElement>('.count-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        countGrid.querySelectorAll('.count-opt-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedCount = parseInt(btn.getAttribute('data-count') || String(defaultCount), 10);
+      });
+    });
+  }
+
+  async function fetchAndStartChallenge() {
+    showView('loading');
+
+    try {
+      const res = await fetch('/api/challenges/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: currentCourseId,
+          lessonId: currentLessonId,
+          moduleId: currentModuleId,
+          mode: currentMode,
+          count: selectedCount
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error('Não foi possível carregar as perguntas.');
+      }
+
+      const data: ChallengeData = await res.json();
+      if (!data.questions || data.questions.length === 0) {
+        throw new Error('Nenhuma pergunta foi gerada para esta aula.');
+      }
+
+      currentChallenge = data;
+      currentQuestionIndex = 0;
+      userAnswers = [];
+      selectedOptionIndex = null;
+
+      startQuizActiveState();
+    } catch (err: any) {
+      showToast(err?.message || 'Erro ao gerar o desafio.', 'error');
+      showView('config');
+    }
+  }
+
+  function startQuizActiveState() {
+    if (!currentChallenge) return;
+    showView('active');
+    renderQuestion(currentQuestionIndex);
+  }
+
+  function renderQuestion(index: number) {
+    if (!currentChallenge || !currentChallenge.questions[index]) return;
+    const q: ChallengeQuestion = currentChallenge.questions[index];
+    const total = currentChallenge.questions.length;
+
+    if (activeModeBadge) {
+      activeModeBadge.textContent = currentMode === 'module' ? 'Desafio do Módulo' : 'Desafio da Aula';
+    }
+    if (questionTracker) {
+      questionTracker.textContent = `Pergunta ${index + 1} de ${total}`;
+    }
+    if (progressFill) {
+      progressFill.style.width = `${((index + 1) / total) * 100}%`;
+    }
+    if (statementText) {
+      statementText.textContent = q.question;
+    }
+
+    selectedOptionIndex = null;
+    if (btnNext) {
+      btnNext.disabled = true;
+      const span = btnNext.querySelector('span');
+      if (span) span.textContent = index === total - 1 ? 'Finalizar Desafio' : 'Responder e Avançar';
+    }
+
+    const optionLetters = ['A', 'B', 'C', 'D'];
+    if (optionsContainer) {
+      optionsContainer.innerHTML = q.options.map((optText, optIdx) => `
+        <button type="button" class="option-card-btn" data-option-index="${optIdx}">
+          <span class="option-letter">${optionLetters[optIdx]}</span>
+          <span class="option-text">${optText}</span>
+        </button>
+      `).join('');
+
+      optionsContainer.querySelectorAll<HTMLButtonElement>('.option-card-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          optionsContainer.querySelectorAll('.option-card-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedOptionIndex = parseInt(btn.getAttribute('data-option-index') || '0', 10);
+          if (btnNext) btnNext.disabled = false;
+        });
+      });
+    }
+  }
+
+  function advanceQuestion() {
+    if (selectedOptionIndex === null || !currentChallenge) return;
+
+    userAnswers.push(selectedOptionIndex);
+
+    if (currentQuestionIndex < currentChallenge.questions.length - 1) {
+      currentQuestionIndex++;
+      renderQuestion(currentQuestionIndex);
+    } else {
+      renderResults();
+    }
+  }
+
+  function renderResults() {
+    if (!currentChallenge) return;
+    showView('results');
+
+    const total = currentChallenge.questions.length;
+    let correctCount = 0;
+
+    userAnswers.forEach((ans, idx) => {
+      if (ans === currentChallenge?.questions[idx].correctIndex) {
+        correctCount++;
+      }
+    });
+
+    const wrongCount = total - correctCount;
+    const percentage = Math.round((correctCount / total) * 100);
+
+    if (metricTotal) metricTotal.textContent = String(total);
+    if (metricCorrect) metricCorrect.textContent = String(correctCount);
+    if (metricWrong) metricWrong.textContent = String(wrongCount);
+    if (metricPercentage) metricPercentage.textContent = `${percentage}%`;
+    if (percentText) percentText.textContent = `${percentage}%`;
+
+    // Apply color gradient to score circle
+    if (scoreCircle) {
+      if (percentage === 100) {
+        scoreCircle.className = 'score-badge-circle perfect';
+      } else if (percentage >= 70) {
+        scoreCircle.className = 'score-badge-circle high';
+      } else {
+        scoreCircle.className = 'score-badge-circle retry';
+      }
+    }
+
+    if (headline) {
+      if (percentage === 100) headline.textContent = 'Desempenho Perfeito! 🎉';
+      else if (percentage >= 70) headline.textContent = 'Excelente Aproveitamento! 🚀';
+      else headline.textContent = 'Bom Esforço! 📚';
+    }
+
+    if (resultsSubtitle) {
+      resultsSubtitle.textContent = `Você acertou ${correctCount} de ${total} perguntas (${percentage}% de acerto).`;
+    }
+
+    // Render detailed review list
+    const optionLetters = ['A', 'B', 'C', 'D'];
+    if (reviewContainer) {
+      reviewContainer.innerHTML = currentChallenge.questions.map((q, idx) => {
+        const userChoice = userAnswers[idx];
+        const isCorrect = userChoice === q.correctIndex;
+
+        return `
+          <div class="review-item-card ${isCorrect ? 'correct' : 'incorrect'}">
+            <div class="review-item-header">
+              <span class="review-status-pill ${isCorrect ? 'correct' : 'incorrect'}">
+                ${isCorrect ? '✓ Correta' : '✗ Incorreta'}
+              </span>
+              <strong class="review-q-num">Questão ${idx + 1}</strong>
+            </div>
+
+            <p class="review-q-statement">${q.question}</p>
+
+            <div class="review-options-summary">
+              <div class="review-user-ans ${isCorrect ? 'correct' : 'wrong'}">
+                <span class="ans-label">Sua resposta:</span>
+                <span class="ans-val">${optionLetters[userChoice] || '-'}: ${q.options[userChoice] || 'Não respondida'}</span>
+              </div>
+              ${!isCorrect ? `
+                <div class="review-correct-ans">
+                  <span class="ans-label">Resposta correta:</span>
+                  <span class="ans-val">${optionLetters[q.correctIndex]}: ${q.options[q.correctIndex]}</span>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="review-explanation-box">
+              <span class="exp-icon">💡</span>
+              <p class="exp-text"><strong>Explicação:</strong> ${q.explanation}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // Event Listeners
+  btnClose?.addEventListener('click', closeChallengeModal);
+  backdrop?.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeChallengeModal();
+  });
+
+  btnStart?.addEventListener('click', fetchAndStartChallenge);
+  btnNext?.addEventListener('click', advanceQuestion);
+
+  btnRetry?.addEventListener('click', fetchAndStartChallenge);
+  btnFinish?.addEventListener('click', closeChallengeModal);
+
+  // Global Dispatcher Listener
+  window.addEventListener('mindflix:open-challenge', (e: any) => {
+    const detail = e.detail;
+    if (detail && detail.courseId) {
+      openChallengeModal(detail);
+    }
+  });
+
+  (window as any).openChallengeModal = openChallengeModal;
+</script>
+
+<style>
+  .challenge-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(7, 9, 14, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  .challenge-modal-card {
+    position: relative;
+    width: 100%;
+    max-width: 680px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 242, 254, 0.15);
+    padding: 2.25rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: popIn 0.3s var(--ease-spring);
+  }
+
+  .modal-close-btn {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--motion-fast) var(--ease-out);
+  }
+
+  .modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+  }
+
+  /* Mode Badges */
+  .challenge-mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-full);
+  }
+
+  .challenge-mode-badge.lesson-mode {
+    background: rgba(0, 242, 254, 0.12);
+    border: 1px solid rgba(0, 242, 254, 0.35);
+    color: var(--accent-cyan);
+  }
+
+  .challenge-mode-badge.module-mode {
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    color: #c084fc;
+  }
+
+  .challenge-mode-badge.sm {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+  }
+
+  /* Config Screen */
+  .config-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .config-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .config-subtitle {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .config-options-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 2rem;
+  }
+
+  .config-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .count-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.85rem;
+  }
+
+  .count-opt-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 1.1rem 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--motion-fast) var(--ease-out);
+  }
+
+  .count-opt-btn:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--border-medium);
+    color: #ffffff;
+  }
+
+  .count-opt-btn.selected {
+    background: rgba(0, 242, 254, 0.12);
+    border-color: var(--accent-cyan);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+  }
+
+  .count-num {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .count-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .config-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* Loading Screen */
+  .loading-state-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    gap: 1.25rem;
+  }
+
+  .ai-pulse-spinner {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-cyan);
+  }
+
+  .pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--accent-cyan);
+    animation: pulseGlow 1.6s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+
+  @keyframes pulseGlow {
+    0% { transform: scale(0.7); opacity: 0.8; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+
+  .loading-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .loading-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 440px;
+    line-height: 1.5;
+  }
+
+  /* Active Quiz Screen */
+  .quiz-top-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .quiz-meta-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .question-tracker {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .quiz-progress-track {
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .quiz-progress-fill {
+    height: 100%;
+    background: var(--grad-primary);
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+  }
+
+  .question-statement-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+  }
+
+  .question-text {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.55;
+  }
+
+  .options-list-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .option-card-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.95rem 1.2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    text-align: left;
+    cursor: pointer;
+    transition: all var(--motion-fast) var(--ease-out);
+  }
+
+  .option-card-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--border-medium);
+  }
+
+  .option-card-btn.selected {
+    background: rgba(0, 242, 254, 0.1);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.2);
+  }
+
+  .option-letter {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .option-card-btn.selected .option-letter {
+    background: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+    color: #07090e;
+  }
+
+  .option-text {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    line-height: 1.45;
+  }
+
+  .quiz-footer-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* Results Screen */
+  .results-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .score-badge-circle {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 242, 254, 0.15);
+    border: 3px solid var(--accent-cyan);
+    box-shadow: 0 0 30px rgba(0, 242, 254, 0.35);
+  }
+
+  .score-badge-circle.perfect {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: var(--accent-emerald);
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.4);
+  }
+
+  .score-badge-circle.high {
+    background: rgba(0, 242, 254, 0.15);
+    border-color: var(--accent-cyan);
+  }
+
+  .score-badge-circle.retry {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--accent-amber);
+  }
+
+  .score-percent {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .results-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .results-subtitle {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+  }
+
+  .results-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .metric-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .metric-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .metric-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .metric-card.success .metric-value { color: var(--accent-emerald); }
+  .metric-card.danger .metric-value { color: #f87171; }
+  .metric-card.highlight .metric-value { color: var(--accent-cyan); }
+
+  .review-accordion-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 2rem;
+  }
+
+  .review-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 0.35rem;
+  }
+
+  .review-item-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .review-item-card.correct {
+    border-left: 3px solid var(--accent-emerald);
+  }
+
+  .review-item-card.incorrect {
+    border-left: 3px solid #f87171;
+  }
+
+  .review-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .review-status-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-full);
+  }
+
+  .review-status-pill.correct {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-emerald);
+  }
+
+  .review-status-pill.incorrect {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+  }
+
+  .review-q-num {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .review-q-statement {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .review-options-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.8125rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.65rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .ans-label {
+    color: var(--text-muted);
+    margin-right: 0.35rem;
+  }
+
+  .review-user-ans.correct .ans-val { color: var(--accent-emerald); font-weight: 600; }
+  .review-user-ans.wrong .ans-val { color: #f87171; font-weight: 600; }
+  .review-correct-ans .ans-val { color: var(--accent-cyan); font-weight: 600; }
+
+  .review-explanation-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.65rem;
+    border-radius: var(--radius-sm);
+    line-height: 1.45;
+  }
+
+  .results-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    .count-selector-grid {
+      grid-template-columns: 1fr;
+    }
+    .results-metrics-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .results-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+    .results-actions button {
+      width: 100%;
+    }
+  }
+</style>
