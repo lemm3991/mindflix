@@ -1,1 +1,0 @@
-function e(e,t=`success`,n=3e3){if(typeof window>`u`)return;let r=new CustomEvent(`mindflix:toast`,{detail:{message:e,type:t,duration:n}});window.dispatchEvent(r)}export{e as t};
