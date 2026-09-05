@@ -19,6 +19,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   parallax_enabled: true,
   interactive_bg_enabled: true,
   reduce_motion: false,
+  theme_id: 'cyan-indigo',
   gemini_api_key: ''
 };
 
@@ -317,11 +318,17 @@ export function isCourseFavorite(courseId: string): boolean {
   return getFavoriteCourseIds().includes(courseId);
 }
 
+function getPrefStorageKey(): string {
+  const user = getLocalUser();
+  return user ? `${STORAGE_KEYS.PREFERENCES}_${user.id}` : STORAGE_KEYS.PREFERENCES;
+}
+
 // PREFERENCES
 export function getUserPreferences(): UserPreferences {
   if (typeof window === 'undefined') return DEFAULT_PREFERENCES;
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.PREFERENCES);
+    const key = getPrefStorageKey();
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.PREFERENCES);
     return raw ? { ...DEFAULT_PREFERENCES, ...JSON.parse(raw) } : DEFAULT_PREFERENCES;
   } catch {
     return DEFAULT_PREFERENCES;
@@ -332,6 +339,8 @@ export async function saveUserPreferences(prefs: Partial<UserPreferences>): Prom
   if (typeof window === 'undefined') return DEFAULT_PREFERENCES;
   const current = getUserPreferences();
   const updated = { ...current, ...prefs };
+  const key = getPrefStorageKey();
+  localStorage.setItem(key, JSON.stringify(updated));
   localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(updated));
 
   const user = getLocalUser();
@@ -350,6 +359,31 @@ export async function saveUserPreferences(prefs: Partial<UserPreferences>): Prom
   return updated;
 }
 
+export async function syncPreferencesFromSupabase(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const user = getLocalUser();
+  if (!isSupabaseConfigured || !supabase || !user) return;
+
+  try {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data && !error) {
+      const { user_id, created_at, updated_at, ...remotePrefs } = data;
+      const key = getPrefStorageKey();
+      const current = getUserPreferences();
+      const merged = { ...current, ...remotePrefs };
+      localStorage.setItem(key, JSON.stringify(merged));
+      localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(merged));
+    }
+  } catch (err) {
+    console.warn('Failed syncing remote preferences:', err);
+  }
+}
+
 // SYNC ALL DATA FROM SUPABASE WITH CONFLICT RESOLUTION
 export async function syncProgressFromSupabase(): Promise<void> {
   if (typeof window === 'undefined') return;
@@ -357,6 +391,9 @@ export async function syncProgressFromSupabase(): Promise<void> {
   if (!isSupabaseConfigured || !supabase || !user) return;
 
   try {
+    // Sync preferences first
+    await syncPreferencesFromSupabase();
+
     // Flush any offline changes first
     await flushPendingSync();
 

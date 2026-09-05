@@ -156,7 +156,7 @@ const sampleVideoPath = firstLesson?.relative_path || '';
 
   .course-card:focus-visible {
     border-color: var(--accent-cyan);
-    box-shadow: 0 0 0 2px rgba(0, 242, 254, 0.4);
+    box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.4);
   }
 
   /* Dynamic Spotlight Glowing Border */
@@ -168,9 +168,9 @@ const sampleVideoPath = firstLesson?.relative_path || '';
     padding: 2px;
     background: radial-gradient(
       320px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
-      #00f2fe 0%,
-      rgba(0, 242, 254, 0.9) 25%,
-      rgba(79, 172, 254, 0.4) 45%,
+      var(--accent-cyan) 0%,
+      rgba(var(--accent-primary-rgb), 0.9) 25%,
+      rgba(var(--accent-secondary-rgb), 0.45) 45%,
       transparent 70%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -187,8 +187,8 @@ const sampleVideoPath = firstLesson?.relative_path || '';
   }
 
   .course-card-wrapper:hover .course-card {
-    border-color: rgba(0, 242, 254, 0.4);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 25px rgba(0, 242, 254, 0.15);
+    border-color: rgba(var(--accent-primary-rgb), 0.45);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 25px rgba(var(--accent-primary-rgb), 0.18);
     background: var(--bg-card-hover, #181e2b);
   }
 
@@ -705,7 +705,8 @@ const sampleVideoPath = firstLesson?.relative_path || '';
       const item = parallaxItems[i];
       if (!item.isVisible) continue;
 
-      if (globalMouse.active && isDesktop) {
+      const prefs = getUserPreferences();
+      if (globalMouse.active && isDesktop && prefs.parallax_enabled !== false) {
         if (item.isHovered) {
           // O card sob o cursor fica 100% estático (sem inclinação angular)
           item.targetX = 0;

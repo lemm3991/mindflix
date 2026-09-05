@@ -1,5 +1,5 @@
 ---
-// settings.astro - Painel de Preferências
+// settings.astro - Painel de Preferências, Temas de Cores e Segurança
 import Layout from '../layouts/Layout.astro';
 ---
 
@@ -7,10 +7,27 @@ import Layout from '../layouts/Layout.astro';
   <div class="container settings-page">
     <header class="page-header">
       <h1 class="page-title">Configurações & Preferências</h1>
-      <p class="page-subtitle">Personalize a sua experiência de estudo, reprodução de vídeo e interface visual.</p>
+      <p class="page-subtitle">Personalize a sua experiência de estudo, tema de cores, reprodução de vídeo, interface visual e segurança da conta.</p>
     </header>
 
     <div class="settings-sections-wrapper">
+      <!-- Theme Palette Selection -->
+      <section class="settings-card">
+        <h2 class="card-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+          </svg>
+          <span>Tema de Cores da Interface</span>
+        </h2>
+        <p class="section-description">
+          Escolha uma das 8 paletas pré-definidas para personalizar os botões, destaques, bordas, orbes de brilho e as linhas animadas do fundo.
+        </p>
+
+        <div class="theme-grid" id="theme-grid">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
       <!-- Playback Preferences -->
       <section class="settings-card">
         <h2 class="card-section-title">
@@ -67,7 +84,7 @@ import Layout from '../layouts/Layout.astro';
         <div class="setting-row">
           <div class="setting-text">
             <span class="setting-name">Prévia Automática nos Cards</span>
-            <span class="setting-hint">Permite reproduzir prévia de introdução ao passar o mouse sobre o card (preparado para Etapa 2).</span>
+            <span class="setting-hint">Permite reproduzir prévia de introdução ao passar o mouse sobre o card.</span>
           </div>
           <div class="setting-control">
             <label class="switch">
@@ -127,6 +144,59 @@ import Layout from '../layouts/Layout.astro';
         </div>
       </section>
 
+      <!-- Account Security & Change Password -->
+      <section class="settings-card">
+        <h2 class="card-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Segurança & Alteração de Senha</span>
+        </h2>
+
+        <form id="change-password-form" class="change-pass-form">
+          <div class="setting-row">
+            <div class="setting-text">
+              <span class="setting-name">Nova Senha</span>
+              <span class="setting-hint">Digite a sua nova senha de acesso à plataforma (mínimo 6 caracteres).</span>
+            </div>
+            <div class="setting-control" style="width: 280px;">
+              <input
+                type="password"
+                id="new-password"
+                class="form-input"
+                placeholder="••••••••"
+                minlength="6"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <span class="setting-name">Confirmar Nova Senha</span>
+              <span class="setting-hint">Digite novamente a nova senha para confirmação.</span>
+            </div>
+            <div class="setting-control" style="width: 280px;">
+              <input
+                type="password"
+                id="confirm-password"
+                class="form-input"
+                placeholder="••••••••"
+                minlength="6"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="pass-btn-row">
+            <button type="submit" class="btn btn-primary" id="btn-save-pass">
+              <span>Atualizar Senha</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
       <!-- AI & RAG Preferences -->
       <section class="settings-card">
         <h2 class="card-section-title">
@@ -139,7 +209,7 @@ import Layout from '../layouts/Layout.astro';
         <div class="setting-row">
           <div class="setting-text">
             <span class="setting-name">Chave da API Google Gemini (Opcional)</span>
-            <span class="setting-hint">Habilita síntese contextual em linguagem natural das mais de 2.400 transcrições do acervo. Se não configurado, o Mindflix utiliza o motor local integrado de ranqueamento e análise semântica.</span>
+            <span class="setting-hint">Habilita síntese contextual em linguagem natural das transcrições do acervo.</span>
           </div>
           <div class="setting-control" style="width: 280px;">
             <input
@@ -154,20 +224,25 @@ import Layout from '../layouts/Layout.astro';
       </section>
 
       <div class="save-status-box" id="save-status-box" style="display: none;">
-        <span>Preferências salvas com sucesso!</span>
+        <span>Preferências salvas e sincronizadas com sucesso!</span>
       </div>
     </div>
   </div>
 </Layout>
 
 <script>
-  import { getUserPreferences, saveUserPreferences } from '../lib/progress';
+  import { getUserPreferences, saveUserPreferences, syncPreferencesFromSupabase } from '../lib/progress';
+  import { THEME_PRESETS, applyTheme, getThemePreset } from '../lib/theme';
   import { getLocalUser } from '../lib/supabase';
+  import { updateUserPassword } from '../lib/auth';
+  import { showToast } from '../lib/toast';
 
   const user = getLocalUser();
   if (!user) {
     window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
   }
+
+  let activeThemeId = getUserPreferences().theme_id || 'cyan-indigo';
 
   const speed = document.getElementById('pref-speed') as HTMLSelectElement | null;
   const autoplay = document.getElementById('pref-autoplay') as HTMLInputElement | null;
@@ -178,27 +253,85 @@ import Layout from '../layouts/Layout.astro';
   const reduceMotion = document.getElementById('pref-reduce-motion') as HTMLInputElement | null;
   const geminiKey = document.getElementById('pref-gemini-key') as HTMLInputElement | null;
   const statusBox = document.getElementById('save-status-box');
+  const themeGrid = document.getElementById('theme-grid');
 
-  const prefs = getUserPreferences();
+  function renderThemeGrid() {
+    if (!themeGrid) return;
 
-  if (speed) speed.value = prefs.playback_speed.toString();
-  if (autoplay) autoplay.checked = prefs.autoplay_next;
-  if (autoResume) autoResume.checked = prefs.auto_resume;
-  if (autoPreview) autoPreview.checked = prefs.auto_preview;
-  if (parallax) parallax.checked = prefs.parallax_enabled;
-  if (interactiveBg) interactiveBg.checked = prefs.interactive_bg_enabled;
-  if (reduceMotion) reduceMotion.checked = prefs.reduce_motion;
-  if (geminiKey) geminiKey.value = prefs.gemini_api_key || '';
+    themeGrid.innerHTML = THEME_PRESETS.map(t => {
+      const isActive = t.id === activeThemeId;
+      return `
+        <button 
+          type="button" 
+          class="theme-card ${isActive ? 'active' : ''}" 
+          data-theme-id="${t.id}"
+          aria-label="Selecionar tema ${t.name}"
+        >
+          <div class="theme-check-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="theme-preview-box">
+            <div class="theme-gradient-preview" style="background: linear-gradient(135deg, ${t.primary} 0%, ${t.secondary} 100%);"></div>
+            <div class="theme-swatch-center">
+              <span class="theme-color-pill" style="background: ${t.primary}; box-shadow: 0 0 10px ${t.primary};"></span>
+              <span class="theme-color-pill" style="background: ${t.secondary}; box-shadow: 0 0 8px ${t.secondary};"></span>
+            </div>
+          </div>
+          <div class="theme-info">
+            <span class="theme-name">${t.name}</span>
+            <span class="theme-colors-sub">${t.primary} &bull; ${t.secondary}</span>
+          </div>
+        </button>
+      `;
+    }).join('');
+
+    themeGrid.querySelectorAll('.theme-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const themeId = card.getAttribute('data-theme-id');
+        if (!themeId) return;
+
+        activeThemeId = themeId;
+        applyTheme(themeId);
+        renderThemeGrid();
+        await handleUpdate();
+      });
+    });
+  }
+
+  function loadFormValues() {
+    const prefs = getUserPreferences();
+    activeThemeId = prefs.theme_id || 'cyan-indigo';
+    applyTheme(activeThemeId);
+    renderThemeGrid();
+
+    if (speed) speed.value = prefs.playback_speed.toString();
+    if (autoplay) autoplay.checked = prefs.autoplay_next;
+    if (autoResume) autoResume.checked = prefs.auto_resume;
+    if (autoPreview) autoPreview.checked = prefs.auto_preview;
+    if (parallax) parallax.checked = prefs.parallax_enabled;
+    if (interactiveBg) interactiveBg.checked = prefs.interactive_bg_enabled;
+    if (reduceMotion) reduceMotion.checked = prefs.reduce_motion;
+    if (geminiKey) geminiKey.value = prefs.gemini_api_key || '';
+  }
+
+  // Sync latest preferences from Supabase if configured
+  syncPreferencesFromSupabase().then(() => {
+    loadFormValues();
+  });
+
+  loadFormValues();
 
   const showSaved = () => {
     if (statusBox) {
       statusBox.style.display = 'block';
-      setTimeout(() => { statusBox.style.display = 'none'; }, 2000);
+      setTimeout(() => { statusBox.style.display = 'none'; }, 2500);
     }
   };
 
-  const handleUpdate = () => {
-    saveUserPreferences({
+  const handleUpdate = async () => {
+    await saveUserPreferences({
       playback_speed: parseFloat(speed?.value || '1.0'),
       autoplay_next: autoplay?.checked ?? true,
       auto_resume: autoResume?.checked ?? true,
@@ -206,6 +339,7 @@ import Layout from '../layouts/Layout.astro';
       parallax_enabled: parallax?.checked ?? true,
       interactive_bg_enabled: interactiveBg?.checked ?? true,
       reduce_motion: reduceMotion?.checked ?? false,
+      theme_id: activeThemeId,
       gemini_api_key: geminiKey?.value.trim() || ''
     });
     showSaved();
@@ -219,13 +353,48 @@ import Layout from '../layouts/Layout.astro';
   interactiveBg?.addEventListener('change', handleUpdate);
   reduceMotion?.addEventListener('change', handleUpdate);
   geminiKey?.addEventListener('change', handleUpdate);
+
+  // Password change form
+  const passForm = document.getElementById('change-password-form');
+  const newPassInput = document.getElementById('new-password') as HTMLInputElement | null;
+  const confirmPassInput = document.getElementById('confirm-password') as HTMLInputElement | null;
+
+  passForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newPass = newPassInput?.value.trim() || '';
+    const confirmPass = confirmPassInput?.value.trim() || '';
+
+    if (newPass.length < 6) {
+      showToast('A nova senha deve ter pelo menos 6 caracteres.', 'error');
+      return;
+    }
+
+    if (newPass !== confirmPass) {
+      showToast('As senhas digitadas não coincidem.', 'error');
+      return;
+    }
+
+    const currentLoggedUser = getLocalUser();
+    if (!currentLoggedUser) return;
+
+    const username = currentLoggedUser.full_name || currentLoggedUser.email.split('@')[0];
+    const success = updateUserPassword(username, newPass);
+
+    if (success) {
+      showToast('Senha alterada com sucesso! Utilize a nova senha no próximo acesso.', 'success');
+      if (newPassInput) newPassInput.value = '';
+      if (confirmPassInput) confirmPassInput.value = '';
+    } else {
+      showToast('Falha ao atualizar a senha.', 'error');
+    }
+  });
 </script>
 
 <style>
   .settings-page {
     padding-top: 110px;
     padding-bottom: 5rem;
-    max-width: 860px;
+    max-width: 880px;
   }
 
   .page-header {
@@ -253,32 +422,172 @@ import Layout from '../layouts/Layout.astro';
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    padding: 1.75rem 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    padding: 2rem;
   }
 
   .card-section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 1.25rem;
-    font-weight: 700;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-subtle);
     color: var(--text-primary);
   }
 
-  .card-section-title svg {
-    color: var(--accent-cyan);
+  .section-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  /* Premium Theme Swatch Grid */
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 1.15rem;
+  }
+
+  .theme-card {
+    appearance: none;
+    -webkit-appearance: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    background: rgba(18, 22, 32, 0.85) !important;
+    border: 1px solid var(--border-medium) !important;
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+    color: #ffffff !important;
+    outline: none;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: transform var(--motion-fast) var(--ease-out),
+                border-color var(--motion-normal) var(--ease-out),
+                box-shadow var(--motion-normal) var(--ease-out),
+                background-color var(--motion-normal) var(--ease-out);
+  }
+
+  .theme-card:hover {
+    border-color: rgba(var(--accent-primary-rgb), 0.55) !important;
+    transform: translateY(-3px);
+    background: rgba(26, 32, 48, 0.95) !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), 0 0 16px rgba(var(--accent-primary-rgb), 0.18);
+  }
+
+  .theme-card.active {
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.35), 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 22px rgba(var(--accent-primary-rgb), 0.25) !important;
+    background: rgba(24, 32, 50, 0.95) !important;
+  }
+
+  .theme-preview-box {
+    width: 100%;
+    height: 52px;
+    border-radius: var(--radius-sm);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.65rem;
+  }
+
+  .theme-gradient-preview {
+    position: absolute;
+    inset: 0;
+    opacity: 0.9;
+  }
+
+  .theme-swatch-center {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+
+  .theme-color-pill {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.5);
+  }
+
+  .theme-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    width: 100%;
+    padding: 0 0.15rem;
+  }
+
+  .theme-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #ffffff !important;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .theme-colors-sub {
+    font-size: 0.725rem;
+    color: var(--text-secondary) !important;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .theme-check-badge {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    color: #07090e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all var(--motion-fast) var(--ease-spring);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    z-index: 5;
+  }
+
+  .theme-card.active .theme-check-badge {
+    opacity: 1;
+    transform: scale(1);
   }
 
   .setting-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border-subtle);
     gap: 2rem;
+  }
+
+  .setting-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .setting-row:first-of-type {
+    padding-top: 0;
   }
 
   .setting-text {
@@ -294,29 +603,33 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .setting-hint {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
   }
 
-  .form-select {
-    height: 40px;
+  .form-select, .form-input {
+    height: 42px;
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     padding: 0 1rem;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     outline: none;
-    cursor: pointer;
+    width: 100%;
   }
 
-  /* Modern iOS-style toggle switch */
+  .form-select:focus, .form-input:focus {
+    border-color: var(--accent-cyan);
+  }
+
+  /* Switch Component */
   .switch {
     position: relative;
     display: inline-block;
     width: 48px;
     height: 26px;
-    flex-shrink: 0;
   }
 
   .switch input {
@@ -328,42 +641,59 @@ import Layout from '../layouts/Layout.astro';
   .slider {
     position: absolute;
     cursor: pointer;
-    inset: 0;
-    background-color: rgba(255, 255, 255, 0.12);
-    transition: var(--transition-fast);
-    border-radius: var(--radius-full);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .3s;
+    border-radius: 26px;
+    border: 1px solid var(--border-subtle);
   }
 
   .slider:before {
     position: absolute;
     content: "";
-    height: 20px;
-    width: 20px;
+    height: 18px;
+    width: 18px;
     left: 3px;
     bottom: 3px;
-    background-color: white;
-    transition: var(--transition-fast);
+    background-color: var(--text-secondary);
+    transition: .3s;
     border-radius: 50%;
   }
 
   input:checked + .slider {
-    background-color: var(--accent-cyan);
+    background: var(--accent-cyan);
   }
 
   input:checked + .slider:before {
     transform: translateX(22px);
-    background-color: #0b0d13;
+    background-color: #07090e;
+  }
+
+  .change-pass-form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pass-btn-row {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
   }
 
   .save-status-box {
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    color: var(--accent-emerald);
-    padding: 0.75rem 1.25rem;
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: rgba(16, 185, 129, 0.9);
+    color: #ffffff;
+    padding: 0.85rem 1.5rem;
     border-radius: var(--radius-md);
-    text-align: center;
     font-weight: 600;
-    font-size: 0.9375rem;
-    animation: fadeIn 0.2s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    z-index: var(--z-toast);
+    backdrop-filter: blur(10px);
   }
 </style>

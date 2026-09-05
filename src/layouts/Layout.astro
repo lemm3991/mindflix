@@ -34,6 +34,68 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <script is:inline>
+      (function() {
+        var THEMES = {
+          'cyan-indigo': { p: '#00f2fe', s: '#4facfe', prgb: '0, 242, 254', srgb: '79, 172, 254' },
+          'crimson-orange': { p: '#ff2a4b', s: '#ff7300', prgb: '255, 42, 75', srgb: '255, 115, 0' },
+          'violet-magenta': { p: '#a855f7', s: '#ec4899', prgb: '168, 85, 247', srgb: '236, 72, 153' },
+          'emerald-mint': { p: '#10b981', s: '#06b6d4', prgb: '16, 185, 129', srgb: '6, 182, 212' },
+          'golden-fire': { p: '#f59e0b', s: '#ef4444', prgb: '245, 158, 11', srgb: '239, 68, 68' },
+          'sapphire-turquoise': { p: '#2563eb', s: '#06b6d4', prgb: '37, 99, 235', srgb: '6, 182, 212' },
+          'cyber-rose': { p: '#f43f5e', s: '#fb923c', prgb: '244, 63, 94', srgb: '251, 146, 60' },
+          'platinum-silver': { p: '#e2e8f0', s: '#38bdf8', prgb: '226, 232, 240', srgb: '56, 189, 248' }
+        };
+
+        function applyInlineTheme(tId) {
+          var t = THEMES[tId] || THEMES['cyan-indigo'];
+          var root = document.documentElement;
+          root.style.setProperty('--accent-cyan', t.p);
+          root.style.setProperty('--accent-blue', t.s);
+          root.style.setProperty('--accent-primary-rgb', t.prgb);
+          root.style.setProperty('--accent-secondary-rgb', t.srgb);
+          root.style.setProperty('--grad-primary', 'linear-gradient(135deg, ' + t.p + ' 0%, ' + t.s + ' 100%)');
+          root.setAttribute('data-theme', tId);
+        }
+
+        var path = window.location.pathname;
+        if (path !== '/login' && path !== '/register') {
+          try {
+            var user = localStorage.getItem('mindflix_user');
+            if (!user) {
+              document.documentElement.classList.add('auth-pending');
+              window.location.href = '/login?redirect=' + encodeURIComponent(path + window.location.search);
+              return;
+            }
+            var uData = JSON.parse(user);
+            var prefKey = uData.id ? 'mindflix_preferences_' + uData.id : 'mindflix_preferences';
+            var prefsStr = localStorage.getItem(prefKey) || localStorage.getItem('mindflix_preferences');
+            if (prefsStr) {
+              var prefs = JSON.parse(prefsStr);
+              if (prefs.reduce_motion) {
+                document.documentElement.classList.add('reduce-motion');
+              }
+              if (prefs.theme_id) {
+                applyInlineTheme(prefs.theme_id);
+              }
+            }
+          } catch (e) {}
+        } else {
+          try {
+            var prefsStr = localStorage.getItem('mindflix_preferences');
+            if (prefsStr) {
+              var prefs = JSON.parse(prefsStr);
+              if (prefs.theme_id) applyInlineTheme(prefs.theme_id);
+            }
+          } catch (e) {}
+        }
+      })();
+    </script>
+    <style is:inline>
+      html.auth-pending body {
+        display: none !important;
+      }
+    </style>
   </head>
   <body>
     <!-- Plano 1: Interactive Canvas Background -->

@@ -33,6 +33,32 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 ---
 
 <Layout title="Administração da Biblioteca — Mindflix">
+  <script is:inline>
+    (function() {
+      try {
+        var userStr = localStorage.getItem('mindflix_user');
+        if (!userStr) {
+          window.location.href = '/login?redirect=/library';
+          return;
+        }
+        var user = JSON.parse(userStr);
+        var name = (user.full_name || user.email || user.username || '').toLowerCase();
+        var isLemmg = name.includes('lemmg0800');
+        if (!isLemmg) {
+          document.documentElement.classList.add('admin-forbidden');
+          window.location.href = '/?denied=1';
+        }
+      } catch (e) {
+        window.location.href = '/';
+      }
+    })();
+  </script>
+  <style is:inline>
+    html.admin-forbidden body {
+      display: none !important;
+    }
+  </style>
+
   <div class="container library-admin-page">
     <header class="page-header">
       <div class="header-content">

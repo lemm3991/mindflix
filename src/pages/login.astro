@@ -1,5 +1,5 @@
 ---
-// login.astro - Tela de Login
+// login.astro - Tela de Login Exclusiva para Contas Autorizadas
 import Layout from '../layouts/Layout.astro';
 ---
 
@@ -7,7 +7,7 @@ import Layout from '../layouts/Layout.astro';
   <div class="auth-page-container">
     <div class="auth-card">
       <div class="auth-brand">
-        <a href="/" class="brand-logo">
+        <a href="/login" class="brand-logo">
           <span class="logo-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -17,33 +17,30 @@ import Layout from '../layouts/Layout.astro';
         </a>
       </div>
 
-      <h1 class="auth-title">Acessar sua biblioteca</h1>
-      <p class="auth-subtitle">Entre para acompanhar seu progresso e cursos favoritos.</p>
+      <h1 class="auth-title">Acesso Restrito</h1>
+      <p class="auth-subtitle">Informe seu usuário e senha autorizados para acessar a biblioteca.</p>
 
       <form id="login-form" class="auth-form">
         <div class="form-group">
-          <label for="email" class="form-label">E-mail</label>
+          <label for="username" class="form-label">Nome de Usuário</label>
           <input
-            type="email"
-            id="email"
+            type="text"
+            id="username"
             class="form-input"
-            placeholder="exemplo@email.com"
-            value="usuario@mindflix.local"
+            placeholder="Ex: Lemmg0800 ou Tamydoagro"
+            autocomplete="username"
             required
           />
         </div>
 
         <div class="form-group">
-          <div class="label-row">
-            <label for="password" class="form-label">Senha</label>
-            <a href="#" class="forgot-link" id="forgot-password-link">Esqueceu a senha?</a>
-          </div>
+          <label for="password" class="form-label">Senha</label>
           <input
             type="password"
             id="password"
             class="form-input"
             placeholder="••••••••"
-            value="mindflix123"
+            autocomplete="current-password"
             required
           />
         </div>
@@ -53,93 +50,50 @@ import Layout from '../layouts/Layout.astro';
         <button type="submit" class="btn btn-primary btn-submit" id="login-submit-btn">
           <span>Entrar na Plataforma</span>
         </button>
-
-        <div class="divider">
-          <span>ou</span>
-        </div>
-
-        <!-- Google Auth button (ready for Supabase Google OAuth) -->
-        <button type="button" class="btn btn-secondary btn-google" id="google-auth-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24">
-            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"/>
-            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5.1 3.7-8.8z"/>
-            <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.2s.7 5.5 1.9 7.9l3.7-2.9z"/>
-            <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 16.5C3.7 20.4 7.5 23.5 12 23.5z"/>
-          </svg>
-          <span>Continuar com Google</span>
-        </button>
       </form>
-
-      <div class="auth-footer">
-        <p>Ainda não tem cadastro? <a href="/register">Cadastre-se gratuitamente</a></p>
-      </div>
     </div>
   </div>
 </Layout>
 
 <script>
-  import { supabase, isSupabaseConfigured, setLocalUser } from '../lib/supabase';
+  import { setLocalUser } from '../lib/supabase';
+  import { authenticateUser } from '../lib/auth';
 
   const form = document.getElementById('login-form');
-  const emailInput = document.getElementById('email') as HTMLInputElement | null;
+  const userInput = document.getElementById('username') as HTMLInputElement | null;
   const passInput = document.getElementById('password') as HTMLInputElement | null;
   const errorBox = document.getElementById('login-error-box');
-  const googleBtn = document.getElementById('google-auth-btn');
 
-  form?.addEventListener('submit', async (e) => {
+  form?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const email = emailInput?.value.trim();
-    const password = passInput?.value.trim();
+    const loginVal = userInput?.value.trim() || '';
+    const passVal = passInput?.value.trim() || '';
 
-    if (!email || !password) return;
-
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        if (errorBox) {
-          errorBox.textContent = error.message;
-          errorBox.style.display = 'block';
-        }
-        return;
+    if (!loginVal || !passVal) {
+      if (errorBox) {
+        errorBox.textContent = 'Por favor, informe o usuário e a senha.';
+        errorBox.style.display = 'block';
       }
-
-      const params = new URLSearchParams(window.location.search);
-      const redirectTarget = params.get('redirect') || '/';
-
-      if (data.user) {
-        setLocalUser({
-          id: data.user.id,
-          email: data.user.email || email,
-          full_name: data.user.user_metadata?.full_name
-        });
-        window.location.href = redirectTarget;
-      }
-    } else {
-      // Local fallback mode
-      const params = new URLSearchParams(window.location.search);
-      const redirectTarget = params.get('redirect') || '/';
-
-      setLocalUser({
-        id: 'local-user-id-01',
-        email,
-        full_name: email.split('@')[0]
-      });
-      window.location.href = redirectTarget;
+      return;
     }
-  });
 
-  googleBtn?.addEventListener('click', async () => {
-    if (isSupabaseConfigured && supabase) {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin }
+    const authUser = authenticateUser(loginVal, passVal);
+
+    if (authUser) {
+      setLocalUser({
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.name
       });
+
+      const params = new URLSearchParams(window.location.search);
+      const redirectTarget = params.get('redirect') || '/';
+      window.location.href = redirectTarget;
     } else {
-      alert('Google OAuth requer credenciais do Supabase configuradas em .env (PUBLIC_SUPABASE_URL).');
+      if (errorBox) {
+        errorBox.textContent = 'Nome de usuário ou senha incorretos. Verifique suas credenciais de acesso.';
+        errorBox.style.display = 'block';
+      }
     }
   });
 </script>
@@ -155,7 +109,7 @@ import Layout from '../layouts/Layout.astro';
 
   .auth-card {
     width: 100%;
-    max-width: 440px;
+    max-width: 420px;
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
@@ -173,6 +127,7 @@ import Layout from '../layouts/Layout.astro';
     display: flex;
     align-items: center;
     gap: 0.6rem;
+    text-decoration: none;
   }
 
   .logo-icon {
@@ -212,6 +167,7 @@ import Layout from '../layouts/Layout.astro';
     color: var(--text-secondary);
     text-align: center;
     margin-bottom: 2rem;
+    line-height: 1.5;
   }
 
   .auth-form {
@@ -226,21 +182,10 @@ import Layout from '../layouts/Layout.astro';
     gap: 0.4rem;
   }
 
-  .label-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
   .form-label {
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--text-secondary);
-  }
-
-  .forgot-link {
-    font-size: 0.75rem;
-    color: var(--accent-cyan);
   }
 
   .form-input {
@@ -266,47 +211,12 @@ import Layout from '../layouts/Layout.astro';
     padding: 0.65rem 1rem;
     border-radius: var(--radius-sm);
     font-size: 0.8125rem;
+    line-height: 1.4;
   }
 
   .btn-submit {
     height: 46px;
     margin-top: 0.5rem;
-  }
-
-  .divider {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    margin: 0.5rem 0;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-  }
-
-  .divider::before, .divider::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .divider span {
-    padding: 0 0.75rem;
-  }
-
-  .btn-google {
-    height: 44px;
-    gap: 0.75rem;
-  }
-
-  .auth-footer {
-    margin-top: 2rem;
-    text-align: center;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-  }
-
-  .auth-footer a {
-    color: var(--accent-cyan);
     font-weight: 600;
   }
 </style>

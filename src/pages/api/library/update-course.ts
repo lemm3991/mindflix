@@ -1,9 +1,48 @@
 import type { APIRoute } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 
-const OVERRIDES_PATH = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
-const CATALOG_PATH = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
+const PRIMARY_OVERRIDES_PATH = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
+const TMP_OVERRIDES_PATH = path.join(os.tmpdir(), 'manual_overrides.json');
+
+const PRIMARY_CATALOG_PATH = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
+const TMP_CATALOG_PATH = path.join(os.tmpdir(), 'catalog.json');
+
+function loadJsonSafe(primaryPath: string, tmpPath: string): any {
+  let result: any = {};
+  if (fs.existsSync(primaryPath)) {
+    try {
+      result = JSON.parse(fs.readFileSync(primaryPath, 'utf-8'));
+    } catch {}
+  }
+  if (fs.existsSync(tmpPath)) {
+    try {
+      const tmpData = JSON.parse(fs.readFileSync(tmpPath, 'utf-8'));
+      result = { ...result, ...tmpData };
+    } catch {}
+  }
+  return result;
+}
+
+function saveJsonSafe(primaryPath: string, tmpPath: string, content: any): { success: boolean; isReadOnly: boolean } {
+  const dataStr = JSON.stringify(content, null, 2);
+  try {
+    fs.writeFileSync(primaryPath, dataStr, 'utf-8');
+    return { success: true, isReadOnly: false };
+  } catch (err: any) {
+    if (err?.code === 'EROFS' || err?.code === 'EACCES' || err?.code === 'EPERM' || err?.message?.includes('read-only') || err?.message?.includes('EROFS')) {
+      try {
+        fs.writeFileSync(tmpPath, dataStr, 'utf-8');
+        return { success: true, isReadOnly: true };
+      } catch (tmpErr) {
+        console.error('Erro ao escrever no diretório temporário:', tmpErr);
+        return { success: false, isReadOnly: true };
+      }
+    }
+    throw err;
+  }
+}
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -19,14 +58,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Load existing overrides
-    let overrides: Record<string, any> = {};
-    if (fs.existsSync(OVERRIDES_PATH)) {
-      try {
-        overrides = JSON.parse(fs.readFileSync(OVERRIDES_PATH, 'utf-8'));
-      } catch {
-        overrides = {};
-      }
-    }
+    let overrides = loadJsonSafe(PRIMARY_OVERRIDES_PATH, TMP_OVERRIDES_PATH);
 
     // Save override
     overrides[courseId] = {
@@ -42,34 +74,31 @@ export const POST: APIRoute = async ({ request }) => {
       updated_at: new Date().toISOString()
     };
 
-    fs.writeFileSync(OVERRIDES_PATH, JSON.stringify(overrides, null, 2), 'utf-8');
+    const writeRes = saveJsonSafe(PRIMARY_OVERRIDES_PATH, TMP_OVERRIDES_PATH, overrides);
 
-    // Also hot-patch catalog.json so changes reflect immediately in SSR
-    if (fs.existsSync(CATALOG_PATH)) {
-      try {
-        const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf-8'));
-        const course = catalog.courses?.find((c: any) => c.id === courseId);
-        if (course) {
-          if (display_title) course.display_title = display_title.trim();
-          if (description) course.description = description.trim();
-          if (provider) course.provider = provider.trim();
-          if (categories) course.categories = categories;
-          if (tags) course.tags = tags;
-          if (is_hidden !== undefined) course.is_hidden = Boolean(is_hidden);
-          if (is_featured !== undefined) course.is_featured = Boolean(is_featured);
-          if (cover_image) course.cover_image = cover_image;
-          course.classification_source = 'manual';
-          fs.writeFileSync(CATALOG_PATH, JSON.stringify(catalog, null, 2), 'utf-8');
-        }
-      } catch (err) {
-        console.warn('Could not hot-patch catalog.json:', err);
+    // Also hot-patch catalog.json if possible
+    const catalog = loadJsonSafe(PRIMARY_CATALOG_PATH, TMP_CATALOG_PATH);
+    if (catalog && catalog.courses) {
+      const course = catalog.courses.find((c: any) => c.id === courseId);
+      if (course) {
+        if (display_title) course.display_title = display_title.trim();
+        if (description) course.description = description.trim();
+        if (provider) course.provider = provider.trim();
+        if (categories) course.categories = categories;
+        if (tags) course.tags = tags;
+        if (is_hidden !== undefined) course.is_hidden = Boolean(is_hidden);
+        if (is_featured !== undefined) course.is_featured = Boolean(is_featured);
+        if (cover_image) course.cover_image = cover_image;
+        course.classification_source = 'manual';
+        saveJsonSafe(PRIMARY_CATALOG_PATH, TMP_CATALOG_PATH, catalog);
       }
     }
 
     return new Response(JSON.stringify({ 
       success: true, 
       courseId, 
-      overrides: overrides[courseId] 
+      overrides: overrides[courseId],
+      isReadOnlyEnv: writeRes.isReadOnly
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

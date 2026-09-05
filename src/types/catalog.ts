@@ -85,5 +85,6 @@ export interface UserPreferences {
   parallax_enabled: boolean;
   interactive_bg_enabled: boolean;
   reduce_motion: boolean;
+  theme_id?: string;
   gemini_api_key?: string;
 }

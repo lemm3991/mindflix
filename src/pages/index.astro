@@ -131,6 +131,14 @@ const nextInPathCourses = allCourses.filter(c =>
 
 <script>
   import { getRecentCourseIds, getFavoriteCourseIds } from '../lib/progress';
+  import { showToast } from '../lib/toast';
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('denied') === '1') {
+    showToast('A página Biblioteca é de acesso exclusivo para o administrador (Lemmg0800).', 'error');
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }
 
   const recentIds = getRecentCourseIds();
   const favIds = getFavoriteCourseIds();

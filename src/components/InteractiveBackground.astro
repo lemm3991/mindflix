@@ -26,6 +26,9 @@ const { disableInteraction = false } = Astro.props;
 </div>
 
 <script>
+  import { getUserPreferences } from '../lib/progress';
+  import { getThemePreset, applyTheme, type ThemePreset } from '../lib/theme';
+
   interface WavePoint {
     x: number;
     baseY: number;
@@ -70,8 +73,26 @@ const { disableInteraction = false } = Astro.props;
       let height = window.innerHeight;
       let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-      // Check if on video page
+      let currentTheme: ThemePreset = getThemePreset(getUserPreferences().theme_id);
+      
+      // Apply theme on load to sync orbs and root CSS variables
+      applyTheme(currentTheme.id);
+
+      window.addEventListener('mindflix:theme-changed', (e: Event) => {
+        const customEv = e as CustomEvent<ThemePreset>;
+        if (customEv.detail) {
+          currentTheme = customEv.detail;
+          initLines();
+          initParticles();
+        }
+      });
+
+      // Check if on video page or interaction is disabled in user preferences
       function isWatchPage(): boolean {
+        try {
+          const prefs = getUserPreferences();
+          if (prefs.interactive_bg_enabled === false) return true;
+        } catch (e) {}
         return window.location.pathname.startsWith('/watch') || canvas?.dataset.disableInteraction === 'true';
       }
 
@@ -107,21 +128,15 @@ const { disableInteraction = false } = Astro.props;
       let animFrameId: number;
       let isVisible = true;
 
-      // --- 1. Wave Ribbons Setup (Clearly Visible, Moving & Interactive) ---
+      // --- 1. Wave Ribbons Setup ---
       const lineCount = isMobile ? 9 : 14;
       const pointSpacing = isMobile ? 40 : 26;
       const lines: WaveLine[] = [];
 
-      const lineColors = [
-        { base: 'rgba(0, 242, 254, 0.26)', active: 'rgba(0, 242, 254, 0.95)' },  // Neon Cyan
-        { base: 'rgba(56, 189, 248, 0.24)', active: 'rgba(56, 189, 248, 0.90)' },  // Sky Blue
-        { base: 'rgba(99, 102, 241, 0.22)', active: 'rgba(129, 140, 248, 0.88)' },  // Indigo
-        { base: 'rgba(168, 85, 247, 0.20)', active: 'rgba(192, 132, 252, 0.85)' }   // Purple
-      ];
-
       function initLines() {
         lines.length = 0;
         const totalPoints = Math.ceil(width / pointSpacing) + 4;
+        const lineColors = currentTheme.lineColors;
 
         for (let i = 0; i < lineCount; i++) {
           const baseY = (height / (lineCount + 1)) * (i + 1);
@@ -164,7 +179,7 @@ const { disableInteraction = false } = Astro.props;
             vy: (Math.random() - 0.5) * 0.45,
             radius: 1.4 + Math.random() * 1.5,
             alpha: 0.35 + Math.random() * 0.3,
-            color: i % 2 === 0 ? '#00f2fe' : '#818cf8'
+            color: i % 2 === 0 ? currentTheme.particleColors[0] : currentTheme.particleColors[1]
           });
         }
       }
@@ -188,7 +203,7 @@ const { disableInteraction = false } = Astro.props;
       initLines();
       initParticles();
 
-      // Mouse & Touch Tracking: Unconditional global capture
+      // Mouse & Touch Tracking
       function updatePointer(clientX: number, clientY: number) {
         if (isWatchPage()) return;
         mouse.targetX = clientX;
@@ -290,8 +305,8 @@ const { disableInteraction = false } = Astro.props;
               mouse.x, mouse.y, 0,
               mouse.x, mouse.y, mouseRadius * 1.2
             );
-            glowGrad.addColorStop(0, 'rgba(0, 242, 254, 0.16)');
-            glowGrad.addColorStop(0.45, 'rgba(99, 102, 241, 0.07)');
+            glowGrad.addColorStop(0, `rgba(${currentTheme.primaryRgb}, 0.18)`);
+            glowGrad.addColorStop(0.45, `rgba(${currentTheme.secondaryRgb}, 0.08)`);
             glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
             ctx.fillStyle = glowGrad;
@@ -312,7 +327,7 @@ const { disableInteraction = false } = Astro.props;
                 continue;
               }
 
-              ctx.strokeStyle = `rgba(0, 242, 254, ${Math.min(rip.intensity * 0.008, 0.16)})`;
+              ctx.strokeStyle = `rgba(${currentTheme.primaryRgb}, ${Math.min(rip.intensity * 0.008, 0.16)})`;
               ctx.lineWidth = 1.1;
               ctx.beginPath();
               ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
@@ -334,7 +349,7 @@ const { disableInteraction = false } = Astro.props;
               const naturalWave = Math.sin(pt.x * line.wavelength + line.phase) * line.amplitude;
               let target = pt.baseY + naturalWave;
 
-              // Mouse deflection force field (only on non-watch pages)
+              // Mouse deflection force field
               if (!onWatch && mouse.active) {
                 const dx = pt.x - mouse.x;
                 const dy = pt.currY - mouse.y;
@@ -430,7 +445,7 @@ const { disableInteraction = false } = Astro.props;
 
                   // Glowing Laser Ray from Cursor to Node
                   const rayAlpha = (1 - pdist / mouseConnDist) * 0.5;
-                  ctx.strokeStyle = `rgba(0, 242, 254, ${rayAlpha})`;
+                  ctx.strokeStyle = `rgba(${currentTheme.primaryRgb}, ${rayAlpha})`;
                   ctx.lineWidth = 1;
                   ctx.beginPath();
                   ctx.moveTo(mouse.x, mouse.y);
@@ -456,7 +471,7 @@ const { disableInteraction = false } = Astro.props;
 
                 if (dSq < maxConnDistSq) {
                   const alpha = (1 - Math.sqrt(dSq) / maxConnDist) * 0.22;
-                  ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+                  ctx.strokeStyle = `rgba(${currentTheme.secondaryRgb}, ${alpha})`;
                   ctx.lineWidth = 0.8;
                   ctx.beginPath();
                   ctx.moveTo(p.x, p.y);
@@ -471,7 +486,7 @@ const { disableInteraction = false } = Astro.props;
         animFrameId = requestAnimationFrame(loop);
       }
 
-      // Unconditional start of the animation loop!
+      // Unconditional start of the animation loop
       animFrameId = requestAnimationFrame(loop);
     }
   }

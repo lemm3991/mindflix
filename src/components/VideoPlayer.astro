@@ -275,10 +275,19 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
 
     // Native HTML5 Video Specific Controls
     if (video) {
-      // Set initial speed (per-course or global preference)
-      const initialSpeed = getCoursePlaybackSpeed(courseId);
-      video.playbackRate = initialSpeed;
-      if (speedLabel) speedLabel.textContent = `${initialSpeed}x`;
+      // Apply preferred playback speed dynamically on load, metadata, canplay and play
+      const applyPlaybackSpeed = () => {
+        const targetSpeed = getCoursePlaybackSpeed(courseId);
+        try {
+          video.playbackRate = targetSpeed;
+        } catch (e) {}
+        if (speedLabel) speedLabel.textContent = `${targetSpeed}x`;
+      };
+
+      applyPlaybackSpeed();
+      video.addEventListener('loadedmetadata', applyPlaybackSpeed);
+      video.addEventListener('canplay', applyPlaybackSpeed);
+      video.addEventListener('play', applyPlaybackSpeed);
 
       // Speed popover toggle
       speedBtn?.addEventListener('click', (e) => {
@@ -314,9 +323,16 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
         video.play().catch(() => {});
       });
 
-      // Resume position check
-      if (saved && saved.position_seconds > 5 && !saved.completed) {
-        video.currentTime = saved.position_seconds;
+      // Resume position check (respects prefs.auto_resume)
+      if (prefs.auto_resume !== false && saved && saved.position_seconds > 5 && !saved.completed) {
+        const setResumeTime = () => {
+          if (!isNaN(video.duration) && saved.position_seconds < video.duration - 2) {
+            video.currentTime = saved.position_seconds;
+          }
+        };
+        video.addEventListener('loadedmetadata', setResumeTime, { once: true });
+        if (video.readyState >= 1) setResumeTime();
+
         const mins = Math.floor(saved.position_seconds / 60);
         const secs = Math.floor(saved.position_seconds % 60);
         showToast(`Continuando de ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 3000);
@@ -361,31 +377,27 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
 
       video.addEventListener('pause', () => triggerSave());
 
-      // Next lesson countdown logic
+      // Next lesson countdown logic (respects prefs.autoplay_next)
       let countdownInterval: any;
       video.addEventListener('ended', () => {
         triggerSave(true);
         updateCompleteUI(true);
 
-        if (nextHref && overlay) {
+        const currentPrefs = getUserPreferences();
+        if (currentPrefs.autoplay_next !== false && nextHref && overlay) {
           overlay.style.display = 'flex';
+          let count = 6;
+          if (countdownSecs) countdownSecs.textContent = count.toString();
 
-          if (prefs.autoplay_next) {
-            let secondsLeft = 8;
-            if (countdownSecs) countdownSecs.textContent = '8';
-
-            countdownInterval = setInterval(() => {
-              secondsLeft--;
-              if (countdownSecs) countdownSecs.textContent = secondsLeft.toString();
-
-              if (secondsLeft <= 0) {
-                clearInterval(countdownInterval);
-                window.location.href = nextHref;
-              }
-            }, 1000);
-          } else {
-            if (countdownText) countdownText.style.display = 'none';
-          }
+          clearInterval(countdownInterval);
+          countdownInterval = setInterval(() => {
+            count--;
+            if (countdownSecs) countdownSecs.textContent = count.toString();
+            if (count <= 0) {
+              clearInterval(countdownInterval);
+              window.location.href = nextHref;
+            }
+          }, 1000);
         }
       });
 
