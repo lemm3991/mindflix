@@ -19,7 +19,7 @@ from googleapiclient.http import MediaIoBaseDownload
 DRIVE_READONLY_SCOPE = ['https://www.googleapis.com/auth/drive.readonly']
 DEFAULT_DRIVE_FOLDER_ID = '1BFljfXrOGVTgiFXg3jmNcYcWlaafrxOz'
 
-VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v"}
+VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".ts"}
 DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md"}
 IMAGE_NAMES = {"cover.jpg", "cover.png", "capa.jpg", "capa.png", "thumb.jpg", "thumb.png"}
 
@@ -146,8 +146,8 @@ def scan_google_drive(
         raw_name = item['name']
         folder_id = item['id']
 
-        # Verificar se é contêiner multi-cursos (como Asimov ou SCTEC)
-        if raw_name.lower() in {'asimov', 'sctec'}:
+        # Verificar se é contêiner multi-cursos (como Asimov, SCTEC ou Asimov Skills)
+        if raw_name.lower() in {'asimov', 'sctec', 'asimov skills'}:
             container_name = raw_name
             is_asimov = container_name.lower() == 'asimov'
             sub_items = list_drive_folder(service, folder_id)
@@ -214,27 +214,50 @@ def scan_google_drive(
                     if not cover_image:
                         cover_image = f"https://drive.google.com/uc?export=view&id={f['id']}"
 
+        def get_subfolder_media(folder_id):
+            """Coleta recursivamente todos os vídeos e documentos dentro de uma pasta de módulo."""
+            v_list = []
+            d_list = []
+            items = list_drive_folder(service, folder_id)
+            items = sorted(items, key=lambda x: natural_sort_key(x['name']))
+            
+            for item in items:
+                m_type = item.get('mimeType', '')
+                f_name = item.get('name', '')
+                ext = os.path.splitext(f_name)[1].lower()
+                
+                if m_type == 'application/vnd.google-apps.folder':
+                    sub_v, sub_d = get_subfolder_media(item['id'])
+                    v_list.extend(sub_v)
+                    d_list.extend(sub_d)
+                elif m_type.startswith('video/') or ext in VIDEO_EXTS:
+                    v_list.append(item)
+                elif ext in DOC_EXTS or ext == '.zip':
+                    d_list.append(item)
+                    
+            return v_list, d_list
+
         subfolders = [f for f in course_items if f['mimeType'] == 'application/vnd.google-apps.folder']
         modules = []
 
         if subfolders:
-            # Curso com módulos em subpastas
+            # Curso com módulos em subpastas (com suporte a subpastas aninhadas)
             for mod_idx, sub in enumerate(subfolders, 1):
                 clean_m_title = clean_module_title(sub['name'])
                 m_slug = slugify(sub['name'])
                 m_id = f"{course_id}-mod-{m_slug}" if m_slug else f"{course_id}-mod-{mod_idx:02d}"
 
-                mod_items = list_drive_folder(service, sub['id'])
-                mod_items = sorted(mod_items, key=lambda x: natural_sort_key(x['name']))
-
-                video_files = [f for f in mod_items if f['mimeType'].startswith('video/') or os.path.splitext(f['name'])[1].lower() in VIDEO_EXTS]
-                other_files = [f for f in mod_items if os.path.splitext(f['name'])[1].lower() in DOC_EXTS]
+                video_files, other_files = get_subfolder_media(sub['id'])
+                video_files = sorted(video_files, key=lambda x: natural_sort_key(x['name']))
 
                 lessons = []
                 for idx, v in enumerate(video_files, 1):
-                    v_name = v['name']
+                    raw_v_name = v['name']
+                    # Limpar caracteres unicode especiais (ex: \uf03a usado para dois-pontos em nomes do Windows)
+                    clean_v_name = raw_v_name.replace('\uf03a', ':').replace('\uf022', '"').replace('\uf02f', '/')
+                    clean_v_name = unicodedata.normalize('NFC', clean_v_name).strip()
                     v_id = v['id']
-                    les_slug = slugify(os.path.splitext(v_name)[0])
+                    les_slug = slugify(os.path.splitext(clean_v_name)[0])
                     les_id = f"{m_id}-les-{les_slug}"
 
                     dur_ms = v.get('videoMediaMetadata', {}).get('durationMillis', 0)
@@ -242,7 +265,7 @@ def scan_google_drive(
                     dur_fmt = f"{dur_sec // 60:02d}:{dur_sec % 60:02d}"
 
                     # Materiais da aula
-                    base_name = os.path.splitext(v_name)[0][:10]
+                    base_name = os.path.splitext(clean_v_name)[0][:10]
                     mats = []
                     for o in other_files:
                         if o['name'].startswith(base_name):
@@ -258,8 +281,8 @@ def scan_google_drive(
                     lessons.append({
                         "id": les_id,
                         "order_index": idx,
-                        "raw_title": v_name,
-                        "display_title": clean_display_title(v_name),
+                        "raw_title": clean_v_name,
+                        "display_title": clean_display_title(clean_v_name),
                         "relative_path": f"drive:{v_id}",
                         "drive_file_id": v_id,
                         "drive_url": f"https://drive.google.com/file/d/{v_id}/preview",
@@ -286,9 +309,11 @@ def scan_google_drive(
                 m_id = f"{course_id}-mod-01"
                 lessons = []
                 for idx, v in enumerate(video_files, 1):
-                    v_name = v['name']
+                    raw_v_name = v['name']
+                    clean_v_name = raw_v_name.replace('\uf03a', ':').replace('\uf022', '"').replace('\uf02f', '/')
+                    clean_v_name = unicodedata.normalize('NFC', clean_v_name).strip()
                     v_id = v['id']
-                    les_slug = slugify(os.path.splitext(v_name)[0])
+                    les_slug = slugify(os.path.splitext(clean_v_name)[0])
                     dur_ms = v.get('videoMediaMetadata', {}).get('durationMillis', 0)
                     dur_sec = round(int(dur_ms) / 1000) if dur_ms else 300
                     dur_fmt = f"{dur_sec // 60:02d}:{dur_sec % 60:02d}"
@@ -296,8 +321,8 @@ def scan_google_drive(
                     lessons.append({
                         "id": f"{m_id}-les-{les_slug}",
                         "order_index": idx,
-                        "raw_title": v_name,
-                        "display_title": clean_display_title(v_name),
+                        "raw_title": clean_v_name,
+                        "display_title": clean_display_title(clean_v_name),
                         "relative_path": f"drive:{v_id}",
                         "drive_file_id": v_id,
                         "drive_url": f"https://drive.google.com/file/d/{v_id}/preview",

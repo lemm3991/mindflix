@@ -31,7 +31,15 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
           class={`hero-video-item ${idx === 0 ? 'active' : ''}`}
           data-video-index={idx}
         >
-          {videoPath && (
+          {course.cover_image && (
+            <img
+              class="hero-poster-fallback"
+              src={course.cover_image}
+              alt={course.display_title}
+              loading={idx === 0 ? 'eager' : 'lazy'}
+            />
+          )}
+          {videoPath && !videoPath.startsWith('drive:') && (
             <video
               class="hero-bg-video"
               muted
@@ -169,7 +177,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
     if (vid) {
       vid.addEventListener('error', () => {
-        item.style.opacity = '0';
+        vid.style.display = 'none';
       });
     }
   });
@@ -377,7 +385,20 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     opacity: 0.85;
   }
 
+  .hero-poster-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 35%;
+    filter: saturate(1.1) brightness(0.92) contrast(1.04);
+    z-index: 0;
+  }
+
   .hero-bg-video {
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: cover;

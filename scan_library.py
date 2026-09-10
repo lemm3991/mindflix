@@ -17,8 +17,9 @@ from datetime import datetime
 
 try:
     import drive_scanner
-except ImportError:
+except ImportError as e:
     drive_scanner = None
+    print(f"[Aviso] drive_scanner não disponível ({e}). Para sincronizar com o Google Drive, execute com .venv\\Scripts\\python.exe")
 
 # Path resolution
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -878,35 +879,121 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
     if drive_courses:
         print(f"\n[Drive] Sincronizando {len(drive_courses)} cursos do Google Drive com a biblioteca...")
         local_courses_map = {c["id"]: c for c in scanned_courses}
+        matched_drive_course_ids = set()
         final_scanned = []
+
+        def normalize_lesson_key(title):
+            if not title:
+                return ""
+            t = os.path.splitext(title)[0]
+            t = t.replace('\uf03a', ' ').replace(':', ' ').replace('_', ' ').replace('-', ' ').replace('.', ' ')
+            t = unicodedata.normalize('NFKD', t).encode('ascii', 'ignore').decode('utf-8')
+            t = re.sub(r'^\d+[\.\-_ ]*', '', t)
+            t = re.sub(r'[^\w\s]', '', t).strip().lower()
+            return re.sub(r'\s+', '-', t)
+
+        total_matched_lessons = 0
 
         for d_c in drive_courses:
             c_id = d_c["id"]
-            if c_id in local_courses_map:
-                # Merge: enrich local course with Drive streaming links
-                loc_c = local_courses_map[c_id]
+            loc_c = local_courses_map.get(c_id)
+
+            # Fallback 1: match by slugified display_title or raw_title
+            if not loc_c:
+                d_slug_disp = slugify(d_c.get("display_title", ""))
+                d_slug_raw = slugify(d_c.get("raw_title", ""))
+                for cand_id, cand_c in list(local_courses_map.items()):
+                    if slugify(cand_c.get("display_title", "")) == d_slug_disp or slugify(cand_c.get("raw_title", "")) == d_slug_raw:
+                        loc_c = cand_c
+                        c_id = cand_id
+                        break
+
+            if loc_c:
+                matched_drive_course_ids.add(c_id)
                 loc_c["drive_folder_id"] = d_c.get("drive_folder_id")
                 loc_c["source"] = "hybrid"
 
-                # Map drive lessons by slug and lower raw_title
+                # Map drive lessons by multiple keys for maximum resilience
                 d_lessons_map = {}
+                d_mod_lessons_map = {}
+
                 for dm in d_c.get("modules", []):
+                    dm_raw = dm.get("raw_title", "")
+                    dm_disp = dm.get("display_title", "")
+                    dm_keys = [
+                        slugify(dm_raw),
+                        slugify(dm_disp),
+                        normalize_lesson_key(dm_raw),
+                        normalize_lesson_key(dm_disp)
+                    ]
+
                     for dl in dm.get("lessons", []):
-                        d_lessons_map[slugify(dl["raw_title"])] = dl
-                        d_lessons_map[dl["raw_title"].lower().strip()] = dl
+                        dl_raw = dl.get("raw_title", "")
+                        dl_disp = dl.get("display_title", "")
+                        k_slug_raw = slugify(dl_raw)
+                        k_slug_noext = slugify(os.path.splitext(dl_raw)[0])
+                        k_norm_raw = normalize_lesson_key(dl_raw)
+                        k_norm_disp = normalize_lesson_key(dl_disp)
+                        k_raw_lower = dl_raw.lower().strip()
+
+                        for k in [k_slug_raw, k_slug_noext, k_norm_raw, k_norm_disp, k_raw_lower]:
+                            if k:
+                                d_lessons_map[k] = dl
+                                for m_k in dm_keys:
+                                    if m_k:
+                                        d_mod_lessons_map[(m_k, k)] = dl
+
+                matched_in_course = 0
+                total_in_course = 0
 
                 for lm in loc_c.get("modules", []):
+                    lm_raw = lm.get("raw_title", "")
+                    lm_disp = lm.get("display_title", "")
+                    lm_keys = [
+                        slugify(lm_raw),
+                        slugify(lm_disp),
+                        normalize_lesson_key(lm_raw),
+                        normalize_lesson_key(lm_disp)
+                    ]
+
                     for ll in lm.get("lessons", []):
-                        slug_k = slugify(ll["raw_title"])
-                        raw_k = ll["raw_title"].lower().strip()
-                        match_dl = d_lessons_map.get(slug_k) or d_lessons_map.get(raw_k)
+                        total_in_course += 1
+                        ll_raw = ll.get("raw_title", "")
+                        ll_disp = ll.get("display_title", "")
+                        k_slug_raw = slugify(ll_raw)
+                        k_slug_noext = slugify(os.path.splitext(ll_raw)[0])
+                        k_norm_raw = normalize_lesson_key(ll_raw)
+                        k_norm_disp = normalize_lesson_key(ll_disp)
+                        k_raw_lower = ll_raw.lower().strip()
+
+                        # Priority 1: Module-aware matching
+                        match_dl = None
+                        for m_k in lm_keys:
+                            if m_k:
+                                for k in [k_slug_noext, k_norm_raw, k_norm_disp, k_slug_raw, k_raw_lower]:
+                                    if k and (m_k, k) in d_mod_lessons_map:
+                                        match_dl = d_mod_lessons_map[(m_k, k)]
+                                        break
+                            if match_dl:
+                                break
+
+                        # Priority 2: Global course lesson matching
+                        if not match_dl:
+                            for k in [k_slug_noext, k_norm_raw, k_norm_disp, k_slug_raw, k_raw_lower]:
+                                if k and k in d_lessons_map:
+                                    match_dl = d_lessons_map[k]
+                                    break
+
                         if match_dl:
                             ll["drive_file_id"] = match_dl.get("drive_file_id")
                             ll["drive_url"] = match_dl.get("drive_url")
                             if not ll.get("duration_seconds") and match_dl.get("duration_seconds"):
                                 ll["duration_seconds"] = match_dl.get("duration_seconds")
                                 ll["duration_formatted"] = match_dl.get("duration_formatted")
+                            matched_in_course += 1
+                            total_matched_lessons += 1
 
+                print(f"  -> {loc_c['display_title']}: {matched_in_course}/{total_in_course} aulas vinculadas ao Drive")
                 final_scanned.append(loc_c)
                 del local_courses_map[c_id]
             else:
@@ -924,6 +1011,8 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
             final_scanned.append(rem_c)
 
         scanned_courses = final_scanned
+        print(f"[Drive] Total de aulas vinculadas com sucesso ao Google Drive: {total_matched_lessons}")
+
 
     total_modules_all = sum(c["modules_count"] for c in scanned_courses)
     total_lessons_all = sum(c["lessons_count"] for c in scanned_courses)

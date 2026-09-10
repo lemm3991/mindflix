@@ -132,7 +132,7 @@ const isVideo = !isDrive && !isPdf && !isDoc;
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
         <h3 class="video-error-title">Vídeo Indisponível</h3>
-        <p class="video-error-desc">O arquivo de mídia não pôde ser carregado ou o formato não é suportado pelo navegador.</p>
+        <p class="video-error-desc" id="video-error-desc">Este arquivo de mídia está disponível apenas na biblioteca local ou ainda em processo de sincronização com o Google Drive.</p>
         <div class="video-error-actions">
           <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-video">Tentar Novamente</button>
           <a href="/courses" class="btn btn-primary btn-sm">Voltar aos Cursos</a>
