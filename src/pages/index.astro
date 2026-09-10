@@ -4,15 +4,15 @@ import Layout from '../layouts/Layout.astro';
 import HeroCourse from '../components/HeroCourse.astro';
 import CourseRow from '../components/CourseRow.astro';
 import CourseCard from '../components/CourseCard.astro';
-import { getAllCourses, getCoursesByCategory } from '../lib/catalog';
+import { getAllCourses, getCoursesByCategory, getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
 
 const allCourses = getAllCourses();
 
-// Eligible courses for hero showcase (must not be hidden and have playable lesson videos)
+// Eligible courses for hero showcase (must not be hidden/missing and must have real playable lesson videos)
 const eligibleHeroCourses = allCourses.filter(c => {
-  if (c.is_hidden) return false;
-  const firstLesson = c.modules?.[0]?.lessons?.[0];
-  return Boolean(firstLesson?.relative_path);
+  if (c.is_hidden || (c as any).missing) return false;
+  const firstVideo = getFirstPlayableLesson(c);
+  return Boolean(firstVideo && isPlayableVideoLesson(firstVideo));
 });
 
 // Fisher-Yates shuffle algorithm for uniform randomness
@@ -26,8 +26,10 @@ function getRandomHeroCourses(list: typeof allCourses, count = 5) {
 }
 
 // Randomly select 5 diverse courses on each page load/request
-const poolToSample = eligibleHeroCourses.length >= 5 ? eligibleHeroCourses : allCourses;
-const featuredCourses = getRandomHeroCourses(poolToSample, 5);
+const poolToSample = eligibleHeroCourses.length >= 5 
+  ? eligibleHeroCourses 
+  : (eligibleHeroCourses.length > 0 ? eligibleHeroCourses : allCourses);
+const featuredCourses = getRandomHeroCourses(poolToSample, Math.min(5, poolToSample.length));
 
 // Course slices by main categories
 const iaCourses = getCoursesByCategory('ia');

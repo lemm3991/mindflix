@@ -17,6 +17,11 @@ const driveId = getLessonDriveId(lesson);
 const isDrive = Boolean(driveId) || isDriveLesson(lesson);
 const drivePreviewUrl = driveId ? getDrivePreviewUrl(driveId) : null;
 const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_path || '')}`;
+
+const ext = (lesson.relative_path || '').split('.').pop()?.toLowerCase() || '';
+const isPdf = lesson.type === 'pdf' || ext === 'pdf';
+const isDoc = ['docx', 'pptx', 'xlsx', 'txt', 'md', 'html'].includes(ext);
+const isVideo = !isDrive && !isPdf && !isDoc;
 ---
 
 <div
@@ -57,7 +62,7 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
     <span>Progresso salvo</span>
   </div>
 
-  <!-- Main Video Viewport (Supports Google Drive & Local Video Stream) -->
+  <!-- Main Video Viewport (Supports Google Drive & Local Video Stream & PDFs/Docs) -->
   <div class="video-viewport" id="video-viewport">
     {isDrive && drivePreviewUrl ? (
       <div class="drive-video-wrapper">
@@ -71,6 +76,39 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
         ></iframe>
         <!-- Blocker to prevent clicking Google Drive's native pop-out button in the top right -->
         <div class="drive-popout-blocker" title=""></div>
+      </div>
+    ) : isPdf ? (
+      <div class="doc-player-wrapper">
+        <iframe
+          id="pdf-viewer-frame"
+          class="doc-player-frame"
+          src={videoStreamUrl}
+          title={lesson.display_title}
+        ></iframe>
+      </div>
+    ) : isDoc ? (
+      <div class="doc-download-card">
+        <div class="doc-icon-box">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+        </div>
+        <h3 class="doc-card-title">{lesson.display_title}</h3>
+        <p class="doc-card-desc">Material de apoio e documento complementar da aula.</p>
+        <div class="doc-card-actions">
+          <a href={videoStreamUrl} download class="btn btn-primary btn-sm">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Baixar Arquivo ({ext.toUpperCase()})</span>
+          </a>
+          <a href={videoStreamUrl} target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Abrir no Navegador</a>
+        </div>
       </div>
     ) : (
       <video
@@ -1077,6 +1115,57 @@ const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_pat
 
   .video-player-component.pip-floating-mini-player .player-controls-bar {
     padding: 0.6rem 0.85rem;
+  }
+
+  /* Document and PDF Embed Styles */
+  .doc-player-wrapper {
+    width: 100%;
+    height: 100%;
+    min-height: 540px;
+    background: #111;
+  }
+
+  .doc-player-frame {
+    width: 100%;
+    height: 100%;
+    min-height: 540px;
+    border: none;
+  }
+
+  .doc-download-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3.5rem 2rem;
+    text-align: center;
+    min-height: 380px;
+    background: radial-gradient(circle at center, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%);
+  }
+
+  .doc-icon-box {
+    color: var(--accent-cyan);
+    margin-bottom: 1.2rem;
+  }
+
+  .doc-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .doc-card-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .doc-card-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   @media (max-width: 768px) {

@@ -1,6 +1,7 @@
 ---
 // HeroCourse.astro - Rotating editorial showcase with mouse parallax and smooth crossfade
 import type { Course } from '../types/catalog';
+import { getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
 import ProgressBar from './ProgressBar.astro';
 
 interface Props {
@@ -22,8 +23,9 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
   <!-- Video Backdrop Layer with Feathered Gradient Edges & Dark Overlay -->
   <div class="hero-video-backdrop" id="hero-video-backdrop">
     {courses.map((course, idx) => {
-      const firstLesson = course.modules[0]?.lessons[0];
-      const videoPath = firstLesson?.relative_path || '';
+      const firstLesson = getFirstPlayableLesson(course);
+      const isVideo = isPlayableVideoLesson(firstLesson);
+      const videoPath = isVideo ? (firstLesson?.relative_path || '') : '';
       return (
         <div
           class={`hero-video-item ${idx === 0 ? 'active' : ''}`}
@@ -50,7 +52,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
 
   <div class="container hero-content-wrapper">
     {courses.map((course, idx) => {
-      const firstLesson = course.modules[0]?.lessons[0];
+      const firstLesson = getFirstPlayableLesson(course);
       const watchUrl = firstLesson ? `/watch/${course.id}/${firstLesson.id}` : '/courses';
       return (
         <div
@@ -161,6 +163,16 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
       }
     });
   }
+
+  // Attach error listeners for smooth fallback
+  videoItems.forEach(item => {
+    const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
+    if (vid) {
+      vid.addEventListener('error', () => {
+        item.style.opacity = '0';
+      });
+    }
+  });
 
   // Initial video start
   updateVideoBackdrop(0);

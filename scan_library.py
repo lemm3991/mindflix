@@ -64,14 +64,14 @@ def load_categories_overrides():
     return None
 
 # Supported extensions
-VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v"}
+VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".ts"}
 AUDIO_EXTS = {".mp3", ".m4a", ".wav", ".ogg"}
 DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
 DEFAULT_IGNORE = {
     ".git", "node_modules", "__pycache__", "mindflix", ".vscode", 
-    "$recycle.bin", "system volume information", "desktop.ini"
+    "$recycle.bin", "system volume information", "desktop.ini", "imagens cursos"
 }
 
 # Categories catalog definition
@@ -195,7 +195,8 @@ CATEGORY_RULES = {
 }
 
 def natural_sort_key(s):
-    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+    normalized = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode('ascii').lower()
+    return [int(text) if text.isdigit() else text for text in re.split(r'(\d+)', normalized)]
 
 def slugify(text):
     text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
@@ -497,9 +498,22 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                     "is_asimov": False
                 })
 
-    # 3. Root directory courses
+    # 3. Asimov Skills directory courses
+    skills_dir = os.path.join(courses_root, "Asimov Skills")
+    if os.path.isdir(skills_dir):
+        for entry in sorted(os.listdir(skills_dir), key=natural_sort_key):
+            full = os.path.join(skills_dir, entry)
+            if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+                course_candidates.append({
+                    "raw_name": entry,
+                    "rel_path": f"Asimov Skills/{entry}",
+                    "full_path": full,
+                    "is_asimov": True
+                })
+
+    # 4. Root directory courses
     for entry in sorted(os.listdir(courses_root), key=natural_sort_key):
-        if entry.lower() in DEFAULT_IGNORE or entry in {"Asimov", "SCTEC"}:
+        if entry.lower() in DEFAULT_IGNORE or entry in {"Asimov", "SCTEC", "Asimov Skills"}:
             continue
         full = os.path.join(courses_root, entry)
         if os.path.isdir(full):
@@ -539,6 +553,20 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                 local_cover = f"/api/video?path={rel_path}/{img_name}"
                 break
 
+        # Also check 'imagens cursos' directory if exists
+        if not local_cover:
+            covers_dir_cand = os.path.join(courses_root, "imagens cursos")
+            if os.path.isdir(covers_dir_cand):
+                candidates_names = [raw_name, clean_title]
+                for c_name in candidates_names:
+                    for ext in [".png", ".jpg", ".jpeg"]:
+                        cand_img = os.path.join(covers_dir_cand, f"{c_name}{ext}")
+                        if os.path.isfile(cand_img):
+                            local_cover = f"/api/video?path=imagens cursos/{c_name}{ext}"
+                            break
+                    if local_cover:
+                        break
+
         # Scan modules and lessons
         modules = []
         entries = sorted(os.listdir(full_path), key=natural_sort_key)
@@ -572,26 +600,62 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                     for sub_dir in sub_subdirs:
                         sub_full = os.path.join(m_full, sub_dir)
                         sub_files = sorted(os.listdir(sub_full), key=natural_sort_key)
-                        for f in sub_files:
-                            f_path = os.path.join(sub_full, f)
-                            f_ext = os.path.splitext(f)[1].lower()
-                            if f_ext in VIDEO_EXTS or f_ext in DOC_EXTS or f_ext in AUDIO_EXTS:
-                                les_slug = slugify(os.path.splitext(f)[0])
-                                les_id = f"{m_id}-les-{slugify(sub_dir)}-{les_slug}"
-                                dur, dur_fmt, meta = (probe_media_file(f_path, cache, deep=deep) if f_ext in VIDEO_EXTS 
-                                                      else (300, "05:00", {}))
-                                if f_ext in VIDEO_EXTS and not first_video_for_thumb:
-                                    first_video_for_thumb = f_path
+                        
+                        v_files = [f for f in sub_files if os.path.splitext(f)[1].lower() in VIDEO_EXTS]
+                        o_files = [f for f in sub_files if os.path.splitext(f)[1].lower() in DOC_EXTS or os.path.splitext(f)[1].lower() in AUDIO_EXTS]
 
+                        for idx, v_file in enumerate(v_files, 1):
+                            v_full = os.path.join(sub_full, v_file)
+                            v_rel = f"{rel_path}/{m_entry}/{sub_dir}/{v_file}"
+                            les_slug = slugify(os.path.splitext(v_file)[0])
+                            les_id = f"{m_id}-les-{slugify(sub_dir)}-{les_slug}"
+                            dur, dur_fmt, meta = probe_media_file(v_full, cache, deep=deep)
+                            if not first_video_for_thumb:
+                                first_video_for_thumb = v_full
+
+                            # Check for matching materials (transcripts and articles excluded from becoming fake lessons)
+                            base_v_name = os.path.splitext(v_file)[0][:10]
+                            mats = []
+                            for o_file in o_files:
+                                o_lower = o_file.lower()
+                                if any(k in o_lower for k in ["artigo", "transcricao", "transcrição", "transcript", "article"]):
+                                    continue
+                                if o_file.startswith(base_v_name):
+                                    mats.append({
+                                        "id": f"{les_id}-mat-{len(mats)+1}",
+                                        "title": clean_display_title(o_file),
+                                        "type": "pdf" if o_file.endswith(".pdf") else "document",
+                                        "relative_path": f"{rel_path}/{m_entry}/{sub_dir}/{o_file}"
+                                    })
+
+                            lessons.append({
+                                "id": les_id,
+                                "order_index": len(lessons) + 1,
+                                "raw_title": v_file,
+                                "display_title": clean_display_title(v_file),
+                                "relative_path": v_rel,
+                                "type": "video",
+                                "duration_seconds": dur,
+                                "duration_formatted": dur_fmt,
+                                "materials": mats
+                            })
+
+                        # If no videos in this sub_dir, treat clean documents as lessons
+                        if not v_files:
+                            clean_other = [f for f in o_files if not any(k in f.lower() for k in ["artigo", "transcricao", "transcrição", "transcript", "article"])]
+                            for idx, o_file in enumerate(clean_other, 1):
+                                o_ext = os.path.splitext(o_file)[1].lower()
+                                les_slug = slugify(os.path.splitext(o_file)[0])
+                                les_id = f"{m_id}-doc-{slugify(sub_dir)}-{les_slug}"
                                 lessons.append({
                                     "id": les_id,
                                     "order_index": len(lessons) + 1,
-                                    "raw_title": f,
-                                    "display_title": clean_display_title(f),
-                                    "relative_path": f"{rel_path}/{m_entry}/{sub_dir}/{f}",
-                                    "type": "video" if f_ext in VIDEO_EXTS else "pdf" if f_ext == ".pdf" else "audio" if f_ext in AUDIO_EXTS else "article",
-                                    "duration_seconds": dur,
-                                    "duration_formatted": dur_fmt,
+                                    "raw_title": o_file,
+                                    "display_title": clean_display_title(o_file),
+                                    "relative_path": f"{rel_path}/{m_entry}/{sub_dir}/{o_file}",
+                                    "type": "pdf" if o_ext == ".pdf" else "audio" if o_ext in AUDIO_EXTS else "article",
+                                    "duration_seconds": 300,
+                                    "duration_formatted": "05:00",
                                     "materials": []
                                 })
                 else:
@@ -869,10 +933,16 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
     missing_courses = []
     for old_id, old_c in old_courses_map.items():
         if old_id not in scanned_ids:
-            missing_c = dict(old_c)
-            missing_c["missing"] = True
-            missing_courses.append(missing_c)
-            missing_files_count += missing_c.get("lessons_count", 0)
+            # Only retain if it has valid modules AND either is Drive-based or local folder exists
+            is_drive_course = old_c.get("source") == "drive" or any(l.get("drive_file_id") for m in old_c.get("modules", []) for l in m.get("lessons", []))
+            has_local_folder = bool(old_c.get("relative_path") and os.path.isdir(os.path.join(courses_root, old_c["relative_path"])))
+            has_lessons = old_c.get("lessons_count", 0) > 0
+
+            if (is_drive_course or has_local_folder) and has_lessons:
+                missing_c = dict(old_c)
+                missing_c["missing"] = True
+                missing_courses.append(missing_c)
+                missing_files_count += missing_c.get("lessons_count", 0)
 
     all_courses_result = scanned_courses + missing_courses
 

@@ -4,7 +4,7 @@ import Layout from '../../../layouts/Layout.astro';
 import VideoPlayer from '../../../components/VideoPlayer.astro';
 import CourseSidebar from '../../../components/CourseSidebar.astro';
 import ChallengeModal from '../../../components/ChallengeModal.astro';
-import { getCourseById } from '../../../lib/catalog';
+import { getCourseById, getFirstPlayableLesson } from '../../../lib/catalog';
 
 const { courseId, lessonId } = Astro.params;
 const course = courseId ? getCourseById(courseId) : undefined;
@@ -29,8 +29,12 @@ for (const mod of course.modules) {
 }
 
 if (!currentLesson) {
-  // If lesson not found in course, fallback to first lesson or course details
-  if (allLessonsInCourse.length > 0) {
+  // If lesson not found in course, fallback to first playable lesson or first lesson
+  const firstPlayable = getFirstPlayableLesson(course);
+  if (firstPlayable) {
+    currentLesson = firstPlayable;
+    currentModule = course.modules.find(m => m.lessons.some(l => l.id === firstPlayable.id)) || course.modules[0];
+  } else if (allLessonsInCourse.length > 0) {
     currentLesson = allLessonsInCourse[0];
     currentModule = course.modules[0];
   } else {

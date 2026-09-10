@@ -1,13 +1,13 @@
 {
-  "last_scan_at": "2026-09-04T23:21:11.939650-03:00",
+  "last_scan_at": "2026-09-10T08:58:15.283998-03:00",
   "courses_root": "D:\\Projetos Antigravity\\download synapse",
-  "total_courses": 47,
-  "total_modules": 378,
-  "total_lessons": 4267,
-  "new_courses": 0,
-  "new_lessons": 173,
-  "missing_courses": 2,
-  "missing_lessons": 4,
+  "total_courses": 56,
+  "total_modules": 428,
+  "total_lessons": 4227,
+  "new_courses": 12,
+  "new_lessons": 459,
+  "missing_courses": 0,
+  "missing_lessons": 0,
   "dry_run": false,
   "status": "success"
 }

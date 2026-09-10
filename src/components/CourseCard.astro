@@ -1,6 +1,7 @@
 ---
 // CourseCard.astro - Premium 3D Tilt, Spotlight Border, Smart Direct Watch & Modal Trigger
 import type { Course } from '../types/catalog';
+import { getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
 import ProgressBar from './ProgressBar.astro';
 
 interface Props {
@@ -9,8 +10,8 @@ interface Props {
 
 const { course } = Astro.props;
 
-// Default first lesson for SSR fallback
-const firstLesson = course.modules[0]?.lessons[0];
+// Default first playable lesson for SSR fallback
+const firstLesson = getFirstPlayableLesson(course);
 const defaultWatchUrl = firstLesson 
   ? `/watch/${course.id}/${firstLesson.id}` 
   : '/courses';
@@ -32,7 +33,7 @@ const hues = [
   'linear-gradient(135deg, #4a0e2e, #831843)'
 ];
 const coverGradient = hues[Math.abs(hash) % hues.length];
-const sampleVideoPath = firstLesson?.relative_path || '';
+const sampleVideoPath = isPlayableVideoLesson(firstLesson) ? (firstLesson?.relative_path || '') : '';
 ---
 
 <div class="course-card-wrapper" data-course-id={course.id} data-video-path={sampleVideoPath}>

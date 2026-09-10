@@ -1,5 +1,5 @@
 import catalogData from '../data/catalog.json';
-import type { Course, Category, CatalogData } from '../types/catalog';
+import type { Course, Category, CatalogData, Lesson } from '../types/catalog';
 
 function getNodeModule(name: string): any {
   if (typeof window !== 'undefined') return null;
@@ -148,6 +148,27 @@ export function getFeaturedCourse(): Course {
   const catalog = getCatalog();
   const featured = catalog.courses.find(c => c.is_featured);
   return featured || catalog.courses[0];
+}
+
+export function isPlayableVideoLesson(lesson: Lesson | undefined): boolean {
+  if (!lesson) return false;
+  if (lesson.drive_file_id || lesson.drive_url) return true;
+  if (!lesson.relative_path) return false;
+  const ext = lesson.relative_path.split('.').pop()?.toLowerCase() || '';
+  return ['mp4', 'webm', 'mkv', 'm4v', 'ts'].includes(ext) || lesson.type === 'video';
+}
+
+export function getFirstPlayableLesson(course: Course | undefined): Lesson | undefined {
+  if (!course || !course.modules || course.modules.length === 0) return undefined;
+  for (const mod of course.modules) {
+    if (!mod.lessons) continue;
+    for (const les of mod.lessons) {
+      if (isPlayableVideoLesson(les)) {
+        return les;
+      }
+    }
+  }
+  return course.modules[0]?.lessons?.[0];
 }
 
 export function getAllProviders(): string[] {
