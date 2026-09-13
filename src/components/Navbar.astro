@@ -10,7 +10,6 @@ const { currentPath = '/' } = Astro.props;
 
 const navItems = [
   { label: 'Cursos', href: '/courses' },
-  { label: 'Categorias', href: '/categories' },
   { label: 'Minha Lista', href: '/my-list' },
   { label: 'Biblioteca', href: '/library', adminOnly: true },
 ];
@@ -341,9 +340,11 @@ const navItems = [
       setActiveSource(subsource);
       updateActiveSourceUI(subsource);
 
-      const url = new URL(window.location.href);
-      url.searchParams.set('source', subsource);
-      window.history.replaceState({}, '', url.toString());
+      if (subsource === 'all') {
+        window.location.href = '/';
+      } else {
+        window.location.href = `/source/${subsource}`;
+      }
       return;
     }
 
@@ -401,14 +402,11 @@ const navItems = [
       setActiveSource(sourceId);
       updateActiveSourceUI(sourceId);
 
-      const url = new URL(window.location.href);
       if (sourceId === 'all') {
-        url.searchParams.delete('source');
-        url.searchParams.delete('fonte');
+        window.location.href = '/';
       } else {
-        url.searchParams.set('source', sourceId);
+        window.location.href = `/source/${sourceId}`;
       }
-      window.history.replaceState({}, '', url.toString());
       return;
     }
 

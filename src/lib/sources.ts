@@ -77,9 +77,9 @@ export const STUDY_SOURCES: StudySource[] = [
   },
   {
     id: 'outros',
-    name: 'Outros',
-    shortName: 'Outros',
-    badge: 'Outros / Especialidades',
+    name: 'Diversos',
+    shortName: 'Diversos',
+    badge: 'Diversos',
     description: 'Cursos complementares de desenvolvimento pessoal, saúde, especialidades e no-code.',
     color: '#f59e0b',
     gradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
@@ -119,7 +119,7 @@ export function getCourseSourceId(course: Course | undefined | null): StudySourc
   if (directSrc === 'asimov') return 'asimov';
   if (directSrc === 'hashtag') return 'hashtag';
   if (directSrc === 'sctec') return 'sctec';
-  if (directSrc === 'outros') return 'outros';
+  if (directSrc === 'outros' || directSrc === 'diversos') return 'outros';
 
   const p = (course.provider || '').toLowerCase();
   const slug = (course.slug || course.id || '').toLowerCase();
@@ -178,12 +178,27 @@ export function getCourseSourceId(course: Course | undefined | null): StudySourc
     return 'sctec';
   }
 
-  // 5. Outros
+  // 5. Diversos (outros)
   return 'outros';
 }
 
+export function normalizeSourceId(id: string): StudySourceId | 'all' {
+  const clean = (id || '').toLowerCase().trim();
+  if (!clean || clean === 'all' || clean === 'todas' || clean === 'todos') return 'all';
+  if (clean === 'diversos' || clean === 'outros') return 'outros';
+  if (clean === 'ai-lab' || clean === 'ailab') return 'ailab';
+  if (clean === 'asimov') return 'asimov';
+  if (clean === 'asimov-skills' || clean === 'asimov_skills') return 'asimov-skills';
+  if (clean === 'hashtag') return 'hashtag';
+  if (clean === 'hashtag-soft-skills' || clean === 'hashtag_soft_skills' || clean === 'soft-skills') return 'hashtag-soft-skills';
+  if (clean === 'sctec') return 'sctec';
+  return 'all';
+}
+
 export function getSourceById(id: string): StudySource | undefined {
-  return STUDY_SOURCES.find(s => s.id === id);
+  const norm = normalizeSourceId(id);
+  if (norm === 'all') return undefined;
+  return STUDY_SOURCES.find(s => s.id === norm);
 }
 
 export function filterCoursesBySource(courses: Course[], sourceId: string): Course[] {
@@ -196,14 +211,22 @@ const ACTIVE_SOURCE_STORAGE_KEY = 'mindflix_active_source';
 export function getActiveSource(): string {
   if (typeof window === 'undefined') return 'all';
   try {
+    const path = window.location.pathname;
+    const match = path.match(/^\/(?:source|fonte)\/([^\/?#]+)/);
+    if (match && match[1]) {
+      const norm = normalizeSourceId(match[1]);
+      if (norm !== 'all') return norm;
+    }
     const params = new URLSearchParams(window.location.search);
     const fromUrl = params.get('source') || params.get('fonte');
-    if (fromUrl && (fromUrl === 'all' || STUDY_SOURCES.some(s => s.id === fromUrl))) {
-      return fromUrl;
+    if (fromUrl) {
+      const norm = normalizeSourceId(fromUrl);
+      if (norm !== 'all') return norm;
     }
     const stored = localStorage.getItem(ACTIVE_SOURCE_STORAGE_KEY);
-    if (stored && (stored === 'all' || STUDY_SOURCES.some(s => s.id === stored))) {
-      return stored;
+    if (stored) {
+      const norm = normalizeSourceId(stored);
+      if (norm !== 'all') return norm;
     }
     return 'all';
   } catch {

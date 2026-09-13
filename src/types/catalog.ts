@@ -46,6 +46,10 @@ export interface Course {
   lessons_count: number;
   modules: Module[];
   is_featured?: boolean;
+  is_project?: boolean;
+  is_comece_por_aqui?: boolean;
+  is_hidden?: boolean;
+  source?: string;
   drive_folder_id?: string;
   drive_folder_url?: string;
 }

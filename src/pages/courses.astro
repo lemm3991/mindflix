@@ -5,10 +5,10 @@ import CourseCard from '../components/CourseCard.astro';
 import SearchBar from '../components/SearchBar.astro';
 import CourseFilters from '../components/CourseFilters.astro';
 import EmptyState from '../components/EmptyState.astro';
-import { getAllCourses, getCategories, getAllProviders } from '../lib/catalog';
+import { getAllCourses, getCategories, getAllProviders, isComecePorAqui } from '../lib/catalog';
 import { getCourseSourceId } from '../lib/sources';
 
-const courses = getAllCourses();
+const courses = getAllCourses().filter(c => !isComecePorAqui(c));
 const categories = getCategories();
 const providers = getAllProviders();
 ---
@@ -270,7 +270,22 @@ const providers = getAllProviders();
     filterAndSort();
   });
 
-  document.addEventListener('astro:page-load', filterAndSort);
+  function initFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get('category') || params.get('categoria');
+    const q = params.get('q') || params.get('search');
+    const src = params.get('source') || params.get('fonte');
+    
+    if (cat && categorySelect) categorySelect.value = cat;
+    if (q && searchInput) searchInput.value = q;
+    if (src) setActiveSource(src);
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    initFromUrl();
+    filterAndSort();
+  });
+  initFromUrl();
   filterAndSort();
 </script>
 

@@ -1,0 +1,860 @@
+---
+// src/pages/source/[id].astro - Página Inicial Dedicada por Fonte de Estudo
+import Layout from '../../layouts/Layout.astro';
+import HeroCourse from '../../components/HeroCourse.astro';
+import CourseRow from '../../components/CourseRow.astro';
+import CourseCard from '../../components/CourseCard.astro';
+import TrilhasRow from '../../components/TrilhasRow.astro';
+import { getAllCourses, getFirstPlayableLesson, isPlayableVideoLesson, isComecePorAqui, isProjectCourse } from '../../lib/catalog';
+import { getSourceById, STUDY_SOURCES, normalizeSourceId } from '../../lib/sources';
+
+const { id } = Astro.params;
+const sourceId = normalizeSourceId(id || '');
+
+if (sourceId === 'all') {
+  return Astro.redirect('/');
+}
+
+const source = getSourceById(sourceId);
+if (!source) {
+  return Astro.redirect('/');
+}
+
+const allCourses = getAllCourses();
+const sourceCourses = allCourses.filter(c => {
+  if (c.is_hidden || (c as any).missing || isComecePorAqui(c) || isProjectCourse(c)) return false;
+  const directSrc = (c.source || '').toLowerCase();
+  const rel = (c.modules?.[0]?.lessons?.[0]?.relative_path || c.relative_path || '').toLowerCase();
+  
+  if (source.id === 'hashtag-soft-skills') {
+    return directSrc === 'hashtag-soft-skills' || directSrc === 'hashtag_soft_skills' || rel.includes('hashtag/soft skills') || rel.includes('hashtag\\soft skills');
+  }
+  if (source.id === 'asimov-skills') {
+    return directSrc === 'asimov-skills' || directSrc === 'asimov_skills' || rel.includes('asimov skills') || rel.includes('asimov/asimov skills') || rel.includes('asimov\\asimov skills');
+  }
+  if (source.id === 'ailab') {
+    return directSrc === 'ailab' || directSrc === 'ai-lab' || rel.startsWith('ai lab') || rel.includes('/ai lab') || rel.includes('\\ai lab') || (c.provider || '').toLowerCase().includes('ai lab');
+  }
+  if (source.id === 'asimov') {
+    const isSkills = directSrc === 'asimov-skills' || directSrc === 'asimov_skills' || rel.includes('asimov skills');
+    return !isSkills && (directSrc === 'asimov' || rel.startsWith('asimov') || rel.includes('/asimov') || rel.includes('\\asimov') || (c.provider || '').toLowerCase().includes('asimov'));
+  }
+  if (source.id === 'hashtag') {
+    const isSoft = directSrc === 'hashtag-soft-skills' || directSrc === 'hashtag_soft_skills' || rel.includes('soft skills');
+    return !isSoft && (directSrc === 'hashtag' || rel.includes('hashtag') || (c.provider || '').toLowerCase().includes('hashtag') || (c.display_title || '').toLowerCase().includes('impressionador'));
+  }
+  if (source.id === 'sctec') {
+    return directSrc === 'sctec' || rel.startsWith('sctec') || rel.includes('/sctec') || rel.includes('\\sctec') || (c.provider || '').toLowerCase().includes('sctec');
+  }
+  if (source.id === 'outros') {
+    return directSrc === 'outros' || directSrc === 'diversos' || (!rel.includes('asimov') && !rel.includes('hashtag') && !rel.includes('sctec') && !rel.includes('ai lab'));
+  }
+  return false;
+});
+
+// Calculate statistics
+const totalCourses = sourceCourses.length;
+const totalLessons = sourceCourses.reduce((sum, c) => {
+  const modLessons = (c.modules || []).reduce((mSum, m) => mSum + (m.lessons?.length || 0), 0);
+  return sum + (c.lessons_count || modLessons || 0);
+}, 0);
+const totalSeconds = sourceCourses.reduce((sum, c) => sum + (c.duration_seconds || 0), 0);
+const totalHours = Math.round(totalSeconds / 3600);
+
+// Featured hero courses specifically for this source
+const eligibleHero = sourceCourses.filter(c => {
+  const firstVideo = getFirstPlayableLesson(c);
+  return Boolean(firstVideo && isPlayableVideoLesson(firstVideo));
+});
+
+function shuffle<T>(arr: T[], count = 4): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, count);
+}
+
+const featuredCourses = eligibleHero.length > 0 
+  ? shuffle(eligibleHero, Math.min(4, eligibleHero.length)) 
+  : shuffle(sourceCourses, Math.min(4, sourceCourses.length));
+
+// Group courses by categories within this source
+const categoryMap = new Map<string, typeof sourceCourses>();
+sourceCourses.forEach(course => {
+  course.categories.forEach(cat => {
+    if (!categoryMap.has(cat)) categoryMap.set(cat, []);
+    categoryMap.get(cat)!.push(course);
+  });
+});
+
+const categoryRows = Array.from(categoryMap.entries())
+  .filter(([_, list]) => list.length >= 2)
+  .sort((a, b) => b[1].length - a[1].length);
+
+const categoryLabels: Record<string, string> = {
+  'ia': 'Inteligência Artificial & LLMs',
+  'automacao-agentes': 'Automação & Agentes de IA',
+  'web-vibe-coding': 'Web, Apps & Vibe Coding',
+  'programacao-dev': 'Programação & Engenharia de Software',
+  'backend-infra': 'Backend, Bancos de Dados & Infra',
+  'dados-datascience': 'Ciência de Dados & Dashboards',
+  'python': 'Ecossistema Python Aplicado',
+  'trading': 'Trading & Algoritmos Financeiros',
+  'desenvolvimento-pessoal': 'Desenvolvimento Pessoal & Alta Performance'
+};
+---
+
+<Layout title={`${source.name} — Mindflix`}>
+  
+  <!-- Source-Specific Hero Showcase or Custom Source Banner -->
+  {featuredCourses.length > 0 ? (
+    <HeroCourse featuredCourses={featuredCourses} />
+  ) : (
+    <div class="source-header-hero" style={`--source-color: ${source.color};`}>
+      <div class="container">
+        <div class="source-hero-content">
+          <div class="source-hero-badge" style={`background: ${source.color}20; border-color: ${source.color}40; color: ${source.color};`}>
+            <span class="source-hero-dot" style={`background: ${source.color}; box-shadow: 0 0 10px ${source.color};`}></span>
+            <span>{source.badge}</span>
+          </div>
+          <h1 class="source-hero-title">{source.name}</h1>
+          <p class="source-hero-desc">{source.description}</p>
+
+          <div class="source-hero-metrics">
+            <div class="hero-metric-pill">
+              <span class="metric-num">{totalCourses}</span>
+              <span class="metric-name">Cursos</span>
+            </div>
+            <div class="hero-metric-pill">
+              <span class="metric-num">{totalLessons}</span>
+              <span class="metric-name">Aulas</span>
+            </div>
+            {totalHours > 0 && (
+              <div class="hero-metric-pill">
+                <span class="metric-num">{totalHours}h</span>
+                <span class="metric-name">de Conteúdo</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <!-- Source Identity Bar -->
+  <div class="source-identity-bar" style={`--source-color: ${source.color};`}>
+    <div class="container source-bar-inner">
+      <div class="source-bar-left">
+        <div class="source-bar-icon-wrap" style={`background: ${source.color}20; border-color: ${source.color}40; color: ${source.color};`}>
+          <span class="source-bar-dot" style={`background: ${source.color}; box-shadow: 0 0 12px ${source.color};`}></span>
+        </div>
+        <div class="source-bar-text">
+          <div class="source-bar-title-row">
+            <h2 class="source-bar-title">{source.name}</h2>
+            <span class="source-bar-pill">{source.badge}</span>
+          </div>
+          <p class="source-bar-desc">{source.description}</p>
+        </div>
+      </div>
+
+      <div class="source-bar-stats">
+        <div class="source-stat-item">
+          <strong>{totalCourses}</strong>
+          <span>Cursos</span>
+        </div>
+        <div class="source-stat-divider"></div>
+        <div class="source-stat-item">
+          <strong>{totalLessons}</strong>
+          <span>Aulas</span>
+        </div>
+        {totalHours > 0 && (
+          <>
+            <div class="source-stat-divider"></div>
+            <div class="source-stat-item">
+              <strong>{totalHours}h</strong>
+              <span>Duração</span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <!-- Trilhas Row (if Asimov, Hashtag, Hashtag Soft Skills, AI LAB or SCTEC) -->
+  {(source.id === 'asimov' || source.id === 'hashtag' || source.id === 'hashtag-soft-skills' || source.id === 'ailab' || source.id === 'sctec') && (
+    <TrilhasRow 
+      source={source.id}
+      title={source.id === 'sctec' ? "Trilhas de Formação SCTEC" : source.id === 'ailab' ? "Trilha de Formação AI LAB" : source.id === 'hashtag-soft-skills' ? "Trilhas de Soft Skills & Alta Performance" : source.id === 'hashtag' ? "Formações Impressionador" : "Trilhas de Aprendizado"}
+      badge={source.id === 'sctec' ? "Formações Oficiais SCTEC" : source.id === 'ailab' ? "Formação Oficial AI LAB" : source.id.startsWith('hashtag') ? "Formações Oficiais Hashtag" : "Formações Oficiais Asimov"}
+      subtitle={source.id === 'sctec' ? "Formações aceleradas em Carreira Tech, IA, Data Science, Front-End e Back-End." : source.id === 'ailab' ? "Trilha completa para criação e monetização de influenciadores digitais ultrarrealistas com IA." : source.id === 'hashtag-soft-skills' ? "Trilhas completas de desenvolvimento pessoal, inteligência emocional, oratória e liderança." : source.id === 'hashtag' ? "Formações completas de IA, Low-Code, Claude, Lovable, Supabase e automações da Hashtag." : "Sequências completas e cronológicas de cursos e projetos para dominar uma especialidade."}
+    />
+  )}
+
+  <div class="container source-page-content">
+    
+    <!-- Dynamic Priority Row: Continue Estudando nesta Fonte -->
+    <div id="continue-studying-section" class="dynamic-row" style="display: none;">
+      <div class="dynamic-row-header">
+        <div class="title-with-badge">
+          <h2 class="row-title">Continuar Estudando em {source.shortName}</h2>
+          <span class="badge badge-cyan">Retomar em 1 Clique</span>
+        </div>
+        <span class="row-subtitle">Aulas em andamento desta fonte</span>
+      </div>
+      <div class="dynamic-grid" id="continue-studying-grid"></div>
+    </div>
+
+    <!-- Categorized Streaming Rows for this Source -->
+    {categoryRows.length > 0 && (
+      <div class="source-category-rows">
+        {categoryRows.slice(0, 4).map(([catId, courses]) => (
+          <CourseRow
+            title={categoryLabels[catId] || catId}
+            courses={courses}
+            viewAllHref={`/courses?category=${catId}&source=${source.id}`}
+            eagerCount={2}
+          />
+        ))}
+      </div>
+    )}
+
+    <!-- Complete Catalog Section for this Source -->
+    <section class="source-catalog-section" id="source-all-courses">
+      <div class="catalog-section-header">
+        <div class="catalog-title-group">
+          <h2 class="catalog-heading">Todos os Cursos de {source.shortName}</h2>
+          <span class="catalog-counter" id="source-catalog-counter">
+            Exibindo {sourceCourses.length} cursos
+          </span>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div class="source-controls-row">
+          <div class="search-box-wrap">
+            <svg class="search-box-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="source-search-input" 
+              placeholder={`Buscar cursos em ${source.shortName}...`}
+              aria-label={`Buscar em ${source.shortName}`}
+            />
+          </div>
+
+          <div class="filter-selects-wrap">
+            <select id="source-category-select" aria-label="Filtrar por Categoria">
+              <option value="">Todas as Categorias</option>
+              {Array.from(categoryMap.keys()).map(catId => (
+                <option value={catId}>{categoryLabels[catId] || catId}</option>
+              ))}
+            </select>
+
+            <select id="source-status-select" aria-label="Filtrar por Status">
+              <option value="">Todos os Status</option>
+              <option value="in_progress">Em Andamento</option>
+              <option value="completed">Concluídos</option>
+              <option value="not_started">Não Iniciados</option>
+              <option value="favorited">Favoritados</option>
+            </select>
+
+            <select id="source-sort-select" aria-label="Ordenar Cursos">
+              <option value="recommended">Recomendados</option>
+              <option value="az">Nome (A - Z)</option>
+              <option value="za">Nome (Z - A)</option>
+              <option value="lessons">Mais Aulas</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Course Grid -->
+      <div class="source-courses-grid" id="source-courses-grid">
+        {sourceCourses.map((course, idx) => (
+          <div 
+            class="source-course-card-wrap"
+            data-course-id={course.id}
+            data-title={course.display_title || course.raw_title}
+            data-categories={course.categories.join(',')}
+            data-lessons-count={course.lessons_count || 0}
+          >
+            <CourseCard 
+              course={course} 
+              loading={idx < 8 ? 'eager' : 'lazy'}
+              fetchpriority={idx < 4 ? 'high' : 'auto'}
+            />
+          </div>
+        ))}
+      </div>
+
+      <!-- Empty Filter State -->
+      <div class="source-empty-state" id="source-empty-state" style="display: none;">
+        <div class="empty-icon">🔍</div>
+        <h3 class="empty-title">Nenhum curso encontrado</h3>
+        <p class="empty-desc">Tente ajustar seus termos de busca ou filtros.</p>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-filters">Limpar Filtros</button>
+      </div>
+    </section>
+
+  </div>
+
+</Layout>
+
+<script define:vars={{ currentSourceId: source.id }}>
+  // Client-side interactions for Source Page
+  import { getAllLocalProgress, getRecentCourseIds, isCourseFavorite, getCourseCompletionStats } from '../../lib/progress';
+  import { setActiveSource } from '../../lib/sources';
+
+  // Ensure active source is synchronized in navbar and local storage
+  setActiveSource(currentSourceId);
+
+  // 1. Render "Continuar Estudando nesta Fonte"
+  function renderContinueStudying() {
+    const continueSection = document.getElementById('continue-studying-section');
+    const continueGrid = document.getElementById('continue-studying-grid');
+    if (!continueSection || !continueGrid) return;
+
+    const allCards = Array.from(document.querySelectorAll<HTMLElement>('.source-course-card-wrap'));
+    const cardsToClone: HTMLElement[] = [];
+
+    allCards.forEach(cardWrapper => {
+      const courseId = cardWrapper.getAttribute('data-course-id');
+      if (!courseId) return;
+
+      const stats = getCourseCompletionStats(courseId, 100);
+      if (stats.percentage > 0 && stats.percentage < 90) {
+        const cloned = cardWrapper.cloneNode(true) as HTMLElement;
+        cloned.style.display = 'block';
+        cardsToClone.push(cloned);
+      }
+    });
+
+    continueGrid.innerHTML = '';
+    if (cardsToClone.length > 0) {
+      continueSection.style.display = 'block';
+      cardsToClone.slice(0, 4).forEach(card => continueGrid.appendChild(card));
+    } else {
+      continueSection.style.display = 'none';
+    }
+  }
+
+  // 2. Filter & Sort Source Courses Grid
+  const searchInput = document.getElementById('source-search-input') as HTMLInputElement | null;
+  const categorySelect = document.getElementById('source-category-select') as HTMLSelectElement | null;
+  const statusSelect = document.getElementById('source-status-select') as HTMLSelectElement | null;
+  const sortSelect = document.getElementById('source-sort-select') as HTMLSelectElement | null;
+  const counterEl = document.getElementById('source-catalog-counter');
+  const emptyEl = document.getElementById('source-empty-state');
+  const gridEl = document.getElementById('source-courses-grid');
+  const clearBtn = document.getElementById('btn-clear-filters');
+
+  function norm(str: string): string {
+    return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  }
+
+  function filterAndSortCourses() {
+    const query = norm(searchInput?.value || '');
+    const selectedCat = categorySelect?.value || '';
+    const selectedStatus = statusSelect?.value || '';
+    const selectedSort = sortSelect?.value || 'recommended';
+
+    const cardWrappers = Array.from(document.querySelectorAll<HTMLElement>('#source-courses-grid .source-course-card-wrap'));
+    let visibleCount = 0;
+
+    cardWrappers.forEach(wrapper => {
+      const title = norm(wrapper.getAttribute('data-title') || '');
+      const categories = (wrapper.getAttribute('data-categories') || '').split(',');
+      const courseId = wrapper.getAttribute('data-course-id') || '';
+
+      const matchesSearch = !query || title.includes(query);
+      const matchesCategory = !selectedCat || categories.includes(selectedCat);
+
+      let matchesStatus = true;
+      if (selectedStatus) {
+        const stats = getCourseCompletionStats(courseId, 100);
+        const isFav = isCourseFavorite(courseId);
+        if (selectedStatus === 'not_started') matchesStatus = stats.percentage === 0;
+        else if (selectedStatus === 'in_progress') matchesStatus = stats.percentage > 0 && stats.percentage < 90;
+        else if (selectedStatus === 'completed') matchesStatus = stats.percentage >= 90;
+        else if (selectedStatus === 'favorited') matchesStatus = isFav;
+      }
+
+      if (matchesSearch && matchesCategory && matchesStatus) {
+        wrapper.style.display = 'block';
+        visibleCount++;
+      } else {
+        wrapper.style.display = 'none';
+      }
+    });
+
+    if (counterEl) {
+      counterEl.textContent = `Exibindo ${visibleCount} curso(s)`;
+    }
+
+    if (emptyEl) {
+      emptyEl.style.display = visibleCount === 0 ? 'flex' : 'none';
+    }
+
+    // Sort visible items
+    if (gridEl && visibleCount > 0) {
+      const visibleItems = cardWrappers.filter(w => w.style.display !== 'none');
+      visibleItems.sort((a, b) => {
+        const titleA = a.getAttribute('data-title') || '';
+        const titleB = b.getAttribute('data-title') || '';
+        const lessonsA = parseInt(a.getAttribute('data-lessons-count') || '0', 10);
+        const lessonsB = parseInt(b.getAttribute('data-lessons-count') || '0', 10);
+
+        if (selectedSort === 'az') return titleA.localeCompare(titleB);
+        if (selectedSort === 'za') return titleB.localeCompare(titleA);
+        if (selectedSort === 'lessons') return lessonsB - lessonsA;
+        return 0; // recommended / original
+      });
+
+      visibleItems.forEach(item => gridEl.appendChild(item));
+    }
+  }
+
+  searchInput?.addEventListener('input', filterAndSortCourses);
+  categorySelect?.addEventListener('change', filterAndSortCourses);
+  statusSelect?.addEventListener('change', filterAndSortCourses);
+  sortSelect?.addEventListener('change', filterAndSortCourses);
+
+  clearBtn?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    if (categorySelect) categorySelect.value = '';
+    if (statusSelect) statusSelect.value = '';
+    if (sortSelect) sortSelect.value = 'recommended';
+    filterAndSortCourses();
+  });
+
+  document.addEventListener('astro:page-load', () => {
+    renderContinueStudying();
+    filterAndSortCourses();
+  });
+
+  renderContinueStudying();
+  filterAndSortCourses();
+</script>
+
+<style>
+  .source-header-hero {
+    position: relative;
+    padding: 140px 0 50px;
+    background: radial-gradient(ellipse at 50% 20%, rgba(var(--accent-primary-rgb), 0.15) 0%, rgba(10, 14, 22, 0.95) 75%);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow: hidden;
+  }
+
+  .source-header-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, var(--source-color) 0%, transparent 60%);
+    opacity: 0.12;
+    pointer-events: none;
+  }
+
+  .source-hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .source-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.25rem;
+  }
+
+  .source-hero-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .source-hero-title {
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.85rem;
+    color: #ffffff;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  }
+
+  .source-hero-desc {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .source-hero-metrics {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-metric-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-pill);
+    padding: 0.5rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    backdrop-filter: blur(12px);
+  }
+
+  .metric-num {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .metric-name {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  /* Source Identity Bar */
+  .source-identity-bar {
+    background: rgba(15, 20, 32, 0.85);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 1.5rem 0;
+    margin-bottom: 2.5rem;
+    backdrop-filter: blur(16px);
+  }
+
+  .source-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .source-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .source-bar-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .source-bar-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+  }
+
+  .source-bar-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .source-bar-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .source-bar-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+  }
+
+  .source-bar-pill {
+    padding: 0.2rem 0.6rem;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-pill);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .source-bar-desc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .source-bar-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .source-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+  }
+
+  .source-stat-item strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .source-stat-item span {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .source-stat-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Source Page Content */
+  .source-page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    padding-bottom: 5rem;
+  }
+
+  .dynamic-row {
+    margin-bottom: 2rem;
+  }
+
+  .dynamic-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .row-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+  }
+
+  .row-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .dynamic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .source-category-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* Catalog Section */
+  .source-catalog-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  }
+
+  .catalog-section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 1.5rem;
+  }
+
+  .catalog-title-group {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .catalog-heading {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .catalog-counter {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .source-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .search-box-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+    max-width: 400px;
+  }
+
+  .search-box-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .search-box-wrap input {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.25rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    color: #ffffff;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .search-box-wrap input:focus {
+    border-color: var(--accent-cyan);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+  }
+
+  .filter-selects-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-selects-wrap select {
+    padding: 0.6rem 0.85rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    outline: none;
+    cursor: pointer;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .filter-selects-wrap select:focus {
+    border-color: var(--accent-cyan);
+  }
+
+  .source-courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .source-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .empty-icon {
+    font-size: 2.5rem;
+  }
+
+  .empty-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .empty-desc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 768px) {
+    .source-hero-title {
+      font-size: 2.25rem;
+    }
+    .source-bar-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .source-bar-stats {
+      width: 100%;
+      justify-content: space-around;
+    }
+    .source-controls-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .search-box-wrap {
+      max-width: none;
+    }
+    .filter-selects-wrap {
+      width: 100%;
+    }
+    .filter-selects-wrap select {
+      flex: 1;
+    }
+  }
+</style>

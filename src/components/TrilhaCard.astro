@@ -20,7 +20,7 @@ const previewCourses = trilha.courses.slice(0, 3);
 const remainingCount = trilha.courses.length - previewCourses.length;
 ---
 
-<div class="trilha-card" data-trilha-id={trilha.id} data-total-lessons={trilha.total_lessons_count}>
+<div class="trilha-card" data-trilha-id={trilha.id} data-total-lessons={trilha.total_lessons_count} data-source={trilha.source}>
   <div class="trilha-card-inner">
     <!-- Card Media Header with Ambient Overlay -->
     <div class="trilha-cover-wrapper">

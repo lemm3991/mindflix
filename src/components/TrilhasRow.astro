@@ -1,13 +1,27 @@
 ---
-// TrilhasRow.astro - Fileira de Destaque para as Trilhas de Formação Asimov
-import { getAllTrilhas } from '../lib/trilhas';
+// TrilhasRow.astro - Fileira de Destaque para as Formações & Trilhas Oficiais
+import { getAllTrilhas, getTrilhasBySource } from '../lib/trilhas';
 import TrilhaCard from './TrilhaCard.astro';
 
-const trilhas = getAllTrilhas();
+interface Props {
+  source?: string;
+  title?: string;
+  badge?: string;
+  subtitle?: string;
+}
+
+const {
+  source,
+  title = "Trilhas de Aprendizado",
+  badge = "Formações Oficiais & Trilhas",
+  subtitle = "Sequências completas e cronológicas de cursos e projetos para dominar uma especialidade."
+} = Astro.props;
+
+const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAllTrilhas();
 ---
 
 {trilhas.length > 0 && (
-  <section class="trilhas-section" id="trilhas-asimov-section">
+  <section class="trilhas-section" id="trilhas-asimov-section" data-fixed-source={source || ''}>
     <div class="container">
       <div class="trilhas-header">
         <div class="trilhas-title-wrap">
@@ -15,10 +29,10 @@ const trilhas = getAllTrilhas();
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
             </svg>
-            <span>Formações Oficiais Asimov</span>
+            <span>{badge}</span>
           </div>
-          <h2 class="trilhas-main-title">Trilhas de Aprendizado</h2>
-          <p class="trilhas-subtitle">Sequências completas e cronológicas de cursos e projetos para dominar uma especialidade.</p>
+          <h2 class="trilhas-main-title">{title}</h2>
+          <p class="trilhas-subtitle">{subtitle}</p>
         </div>
 
         <div class="trilhas-nav-controls">
@@ -68,15 +82,22 @@ const trilhas = getAllTrilhas();
     const active = getActiveSource();
     if (!section) return;
 
-    if (active === 'asimov') {
-      section.style.display = 'block';
-      section.classList.add('highlight-asimov');
-    } else if (active === 'all') {
-      section.style.display = 'block';
-      section.classList.remove('highlight-asimov');
-    } else {
-      section.style.display = 'none';
-    }
+    if (section.dataset.fixedSource) return;
+
+    const cards = document.querySelectorAll<HTMLElement>('.trilha-card');
+    let visibleCount = 0;
+    cards.forEach(card => {
+      const src = card.getAttribute('data-source') || 'asimov';
+      const isMatch = active === 'all' || src === active || (active === 'hashtag' && src.startsWith('hashtag')) || (active === 'ailab' && (src === 'ailab' || src === 'ai-lab')) || (active === 'sctec' && src === 'sctec');
+      if (isMatch) {
+        card.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    section.style.display = visibleCount > 0 ? 'block' : 'none';
   }
 
   // Calculate progress for each trilha based on completed lessons across its courses

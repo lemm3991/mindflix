@@ -140,13 +140,51 @@ export function getCategoryById(id: string): Category | undefined {
   return getCatalog().categories.find(c => c.id === id);
 }
 
+export function isComecePorAqui(course: Course | undefined): boolean {
+  if (!course) return false;
+  if (course.is_comece_por_aqui) return true;
+  const title = (course.display_title || course.raw_title || '').toLowerCase();
+  const path = (course.relative_path || '').toLowerCase();
+  return (
+    title.startsWith('comece por aqui') ||
+    title.startsWith('comece aqui') ||
+    title.startsWith('01 - comece por aqui') ||
+    title.startsWith('01. comece por aqui') ||
+    title.startsWith('01 - comece aqui') ||
+    title.startsWith('01. comece aqui') ||
+    title.includes('comece por aqui') ||
+    title.includes('comece aqui') ||
+    path.includes('comece por aqui') ||
+    path.includes('comece aqui')
+  );
+}
+
+export function isProjectCourse(course: Course | undefined): boolean {
+  if (!course) return false;
+  const path = (course.relative_path || '').toLowerCase();
+  // Never treat courses in 'outros' or 'diversos' as Asimov projects
+  if (path.startsWith('outros') || path.startsWith('diversos') || course.source === 'outros' || course.source === 'diversos') {
+    return false;
+  }
+  if (course.is_project) return true;
+  const title = (course.display_title || course.raw_title || '').toLowerCase();
+  return (
+    path.includes('asimov/projetos') ||
+    path.includes('asimov\\projetos') ||
+    (path.startsWith('asimov') && title.startsWith('[projeto]')) ||
+    (Array.isArray(course.categories) && course.categories.includes('projetos') && path.includes('asimov'))
+  );
+}
+
 export function getCoursesByCategory(categoryId: string): Course[] {
-  return getCatalog().courses.filter(c => c.categories.includes(categoryId));
+  return getCatalog().courses.filter(c => 
+    c.categories.includes(categoryId) && !isComecePorAqui(c) && !isProjectCourse(c)
+  );
 }
 
 export function getFeaturedCourse(): Course {
   const catalog = getCatalog();
-  const featured = catalog.courses.find(c => c.is_featured);
+  const featured = catalog.courses.find(c => c.is_featured && !isComecePorAqui(c) && !isProjectCourse(c));
   return featured || catalog.courses[0];
 }
 

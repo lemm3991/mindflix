@@ -87,28 +87,58 @@ export function getTrilhaFullStructure(trilhaId: string): {
     const courseObj = getCourseById(item.course_id);
     if (!courseObj) continue;
 
-    coursesWithModules.push({
-      ordem: item.ordem,
-      tipo: item.tipo,
-      courseId: courseObj.id,
-      courseTitle: courseObj.display_title,
-      courseCover: courseObj.cover_image,
-      modules: courseObj.modules,
-      lessonsCount: courseObj.lessons_count
-    });
+    if (trilha.source === 'hashtag' || trilha.source === 'hashtag-soft-skills' || trilha.source === 'ailab' || trilha.source === 'ai-lab' || trilha.source === 'sctec') {
+      // For Hashtag, Soft Skills, AI LAB, and SCTEC Trilhas, each item corresponds to a specific subfolder/module
+      const targetMod = courseObj.modules[item.ordem - 1] || courseObj.modules.find(m => m.display_title === item.nome_trilha || m.raw_title === item.nome_trilha);
+      const modLessons = targetMod ? targetMod.lessons : [];
 
-    for (const mod of courseObj.modules) {
-      for (const les of mod.lessons) {
+      coursesWithModules.push({
+        ordem: item.ordem,
+        tipo: item.tipo,
+        courseId: courseObj.id,
+        courseTitle: item.course_title,
+        courseCover: courseObj.cover_image,
+        modules: targetMod ? [targetMod] : courseObj.modules,
+        lessonsCount: modLessons.length
+      });
+
+      for (const les of modLessons) {
         allLessons.push({
           lesson: les,
           courseId: courseObj.id,
-          courseTitle: courseObj.display_title,
+          courseTitle: item.course_title,
           courseOrder: item.ordem,
           courseType: item.tipo,
-          moduleId: mod.id,
-          moduleTitle: mod.display_title,
+          moduleId: targetMod ? targetMod.id : courseObj.id,
+          moduleTitle: targetMod ? targetMod.display_title : item.course_title,
           globalIndex: globalIndex++
         });
+      }
+    } else {
+      // For Asimov Trilhas, each item is a complete Course
+      coursesWithModules.push({
+        ordem: item.ordem,
+        tipo: item.tipo,
+        courseId: courseObj.id,
+        courseTitle: courseObj.display_title,
+        courseCover: courseObj.cover_image,
+        modules: courseObj.modules,
+        lessonsCount: courseObj.lessons_count
+      });
+
+      for (const mod of courseObj.modules) {
+        for (const les of mod.lessons) {
+          allLessons.push({
+            lesson: les,
+            courseId: courseObj.id,
+            courseTitle: courseObj.display_title,
+            courseOrder: item.ordem,
+            courseType: item.tipo,
+            moduleId: mod.id,
+            moduleTitle: mod.display_title,
+            globalIndex: globalIndex++
+          });
+        }
       }
     }
   }

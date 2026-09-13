@@ -162,10 +162,19 @@ CATEGORIES = [
         "name": "Formações & Trilhas",
         "icon": "compass",
         "description": "Jornadas completas e trilhas multi-curso para formação profissional acelerada."
+    },
+    {
+        "id": "projetos",
+        "name": "Projetos Práticos",
+        "icon": "folder-git-2",
+        "description": "Projetos práticos guiados, soluções completas de ponta a ponta e implementações reais."
     }
 ]
 
 CATEGORY_RULES = {
+    "projetos": [
+        "projeto", "[projeto]", "projetos"
+    ],
     "ia": [
         "ia", "inteligência artificial", "inteligencia artificial", "claude", "gpt", "chatgpt", 
         "gemini", "llm", "deep learning", "visão computacional", "prompt", "openai", "anthropic", 
@@ -641,6 +650,20 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         provider = infer_provider(raw_name, rel_path, is_asimov=is_asimov)
         categories, tags = classify_course(clean_title, raw_name, rel_path)
 
+        is_project = bool("asimov/projetos" in rel_path.lower() or "asimov\\projetos" in rel_path.lower() or raw_name.startswith("[Projeto]") or rel_path.lower().startswith("projetos"))
+        is_comece_por_aqui = bool(
+            raw_name.lower().startswith("comece") or 
+            clean_title.lower().startswith("comece") or
+            "comece por aqui" in raw_name.lower() or
+            "comece aqui" in raw_name.lower() or
+            "comece por aqui" in clean_title.lower() or
+            "comece aqui" in clean_title.lower() or
+            "comece por aqui" in rel_path.lower() or
+            "comece aqui" in rel_path.lower()
+        )
+        if is_project and "projetos" not in categories:
+            categories.insert(0, "projetos")
+
         # Check local cover image in folder
         local_cover = None
         for img_name in ["cover.jpg", "cover.png", "capa.jpg", "capa.png", "thumb.jpg"]:
@@ -929,6 +952,8 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
             "total_duration_formatted": f"{total_hours}h {total_mins:02d}m",
             "cover_image": final_cover,
             "is_featured": is_featured,
+            "is_project": is_project,
+            "is_comece_por_aqui": is_comece_por_aqui,
             "is_hidden": is_hidden,
             "classification_source": "manual" if course_id in overrides else "rule",
             "source": item.get("source") or infer_source(rel_path, raw_name),

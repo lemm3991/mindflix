@@ -1,17 +1,18 @@
 ---
-// index.astro - Mindflix Streaming Home with Continue Watching, Next in Path & Rotating Hero
+// index.astro - Mindflix Streaming Home com 4 Cards de Destaque por Fonte, Trilhas e Fileiras por Categoria
 import Layout from '../layouts/Layout.astro';
 import HeroCourse from '../components/HeroCourse.astro';
 import CourseRow from '../components/CourseRow.astro';
 import CourseCard from '../components/CourseCard.astro';
 import TrilhasRow from '../components/TrilhasRow.astro';
-import { getAllCourses, getCoursesByCategory, getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
+import { getAllCourses, getCoursesByCategory, getFirstPlayableLesson, isPlayableVideoLesson, isComecePorAqui, isProjectCourse } from '../lib/catalog';
+import { getCourseSourceId } from '../lib/sources';
 
 const allCourses = getAllCourses();
 
-// Eligible courses for hero showcase (must not be hidden/missing and must have real playable lesson videos)
+// Eligible courses for hero showcase (must not be hidden/missing, not comece por aqui, not project, and must have playable video)
 const eligibleHeroCourses = allCourses.filter(c => {
-  if (c.is_hidden || (c as any).missing) return false;
+  if (c.is_hidden || (c as any).missing || isComecePorAqui(c) || isProjectCourse(c)) return false;
   const firstVideo = getFirstPlayableLesson(c);
   return Boolean(firstVideo && isPlayableVideoLesson(firstVideo));
 });
@@ -29,28 +30,177 @@ function getRandomHeroCourses(list: typeof allCourses, count = 5) {
 // Randomly select 5 diverse courses on each page load/request
 const poolToSample = eligibleHeroCourses.length >= 5 
   ? eligibleHeroCourses 
-  : (eligibleHeroCourses.length > 0 ? eligibleHeroCourses : allCourses);
+  : (eligibleHeroCourses.length > 0 ? eligibleHeroCourses : allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c)));
 const featuredCourses = getRandomHeroCourses(poolToSample, Math.min(5, poolToSample.length));
 
-// Course slices by main categories
+// Course counts for the 4 featured source spotlight cards (excluding comece por aqui and projects)
+const ailabCourses = allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c) && getCourseSourceId(c) === 'ailab');
+const asimovCourses = allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c) && (getCourseSourceId(c) === 'asimov' || getCourseSourceId(c) === 'asimov-skills'));
+const hashtagCourses = allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c) && (getCourseSourceId(c) === 'hashtag' || getCourseSourceId(c) === 'hashtag-soft-skills'));
+const diversosCourses = allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c) && getCourseSourceId(c) === 'outros');
+
+// Course slices by main categories (getCoursesByCategory already excludes comece por aqui and projects)
 const iaCourses = getCoursesByCategory('ia');
 const automacaoCourses = getCoursesByCategory('automacao-agentes');
 const devCourses = getCoursesByCategory('programacao-dev');
 const webCourses = getCoursesByCategory('web-vibe-coding');
 const backendCourses = getCoursesByCategory('backend-infra');
 const dataCourses = getCoursesByCategory('dados-datascience');
+const pythonCourses = getCoursesByCategory('python');
 const tradingCourses = getCoursesByCategory('trading');
 const personalCourses = getCoursesByCategory('desenvolvimento-pessoal');
 
 // Recommended path courses (Section 65: "Próximo da sua Trilha")
 const nextInPathCourses = allCourses.filter(c => 
-  c.categories.includes('ia') || c.categories.includes('automacao-agentes') || c.categories.includes('web-vibe-coding')
+  !isComecePorAqui(c) && !isProjectCourse(c) &&
+  (c.categories.includes('ia') || c.categories.includes('automacao-agentes') || c.categories.includes('web-vibe-coding'))
 ).slice(0, 8);
 ---
 
 <Layout title="Mindflix — Biblioteca Pessoal de Cursos">
   <!-- Multi-featured Editorial Rotating Hero -->
   <HeroCourse featuredCourses={featuredCourses} />
+
+  <!-- 4 Featured Highlight Source Cards (AI LAB, Asimov, Hashtag, Diversos) -->
+  <section class="source-spotlight-section">
+    <div class="container">
+      <div class="spotlight-header">
+        <div class="spotlight-title-group">
+          <div class="spotlight-badge">
+            <span class="spotlight-pulse"></span>
+            <span>Explorar por Plataforma</span>
+          </div>
+          <h2 class="spotlight-main-title">Principais Fontes de Estudo</h2>
+        </div>
+        <span class="spotlight-desc">Acesse os ecossistemas completos e trilhas de cada formação</span>
+      </div>
+
+      <div class="source-spotlight-grid">
+        
+        <!-- 1. AI LAB -->
+        <a href="/source/ailab" class="source-spotlight-card card-ailab">
+          <div class="spotlight-card-glow"></div>
+          <div class="spotlight-top">
+            <div class="source-brand-icon-wrap icon-ailab">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93v2.14a2 2 0 0 1-1.5 1.93v2.14A4 4 0 1 1 12 2z"></path>
+                <circle cx="12" cy="18" r="2"></circle>
+                <path d="M6 8a6 6 0 0 1 12 0"></path>
+              </svg>
+            </div>
+            <span class="source-card-badge badge-ailab">AI LAB</span>
+          </div>
+
+          <div class="spotlight-body">
+            <h3 class="source-card-title">AI LAB</h3>
+            <span class="source-card-tagline">Inteligência Artificial & Agentes</span>
+            <p class="source-card-desc">Laboratório de LLMs, engenharia de prompts, automações e sistemas autônomos.</p>
+          </div>
+
+          <div class="spotlight-footer">
+            <span class="source-count-pill">{ailabCourses.length} Cursos</span>
+            <span class="source-card-action">
+              <span>Acessar</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        <!-- 2. Asimov -->
+        <a href="/source/asimov" class="source-spotlight-card card-asimov">
+          <div class="spotlight-card-glow"></div>
+          <div class="spotlight-top">
+            <div class="source-brand-icon-wrap icon-asimov">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="4 17 10 11 4 5"></polyline>
+                <line x1="12" y1="19" x2="20" y2="19"></line>
+              </svg>
+            </div>
+            <span class="source-card-badge badge-asimov">Asimov Academy</span>
+          </div>
+
+          <div class="spotlight-body">
+            <h3 class="source-card-title">Asimov</h3>
+            <span class="source-card-tagline">Cursos, Projetos & Trilhas</span>
+            <p class="source-card-desc">Biblioteca completa com Python, Data Science, Finanças, Web e Formações Oficiais.</p>
+          </div>
+
+          <div class="spotlight-footer">
+            <span class="source-count-pill">{asimovCourses.length} Cursos</span>
+            <span class="source-card-action">
+              <span>Acessar</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        <!-- 3. Hashtag -->
+        <a href="/source/hashtag" class="source-spotlight-card card-hashtag">
+          <div class="spotlight-card-glow"></div>
+          <div class="spotlight-top">
+            <div class="source-brand-icon-wrap icon-hashtag">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <span class="source-card-badge badge-hashtag">Hashtag Treinamentos</span>
+          </div>
+
+          <div class="spotlight-body">
+            <h3 class="source-card-title">Hashtag</h3>
+            <span class="source-card-tagline">Impressionadores & Soft Skills</span>
+            <p class="source-card-desc">Treinamentos práticos de IA, Claude, Lovable, Supabase, NoCode e Alta Performance.</p>
+          </div>
+
+          <div class="spotlight-footer">
+            <span class="source-count-pill">{hashtagCourses.length} Treinamentos</span>
+            <span class="source-card-action">
+              <span>Acessar</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        <!-- 4. Diversos -->
+        <a href="/source/outros" class="source-spotlight-card card-diversos">
+          <div class="spotlight-card-glow"></div>
+          <div class="spotlight-top">
+            <div class="source-brand-icon-wrap icon-diversos">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+            </div>
+            <span class="source-card-badge badge-diversos">Diversos</span>
+          </div>
+
+          <div class="spotlight-body">
+            <h3 class="source-card-title">Diversos</h3>
+            <span class="source-card-tagline">Especialidades & Desenvolvimento</span>
+            <p class="source-card-desc">Cursos complementares de alta performance pessoal, saúde, PNL e especializações.</p>
+          </div>
+
+          <div class="spotlight-footer">
+            <span class="source-count-pill">{diversosCourses.length} Cursos</span>
+            <span class="source-card-action">
+              <span>Acessar</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
 
   <!-- Formações Oficiais & Trilhas de Aprendizado Asimov -->
   <TrilhasRow />
@@ -81,58 +231,66 @@ const nextInPathCourses = allCourses.filter(c =>
     <CourseRow
       title="Próximo da sua Trilha — Especialização em IA & NoCode"
       courses={nextInPathCourses}
-      viewAllHref="/category/ia"
+      viewAllHref="/courses?category=ia"
       eagerCount={4}
     />
 
-    <!-- Categorized Streaming Carousels -->
+    <!-- Categorized Streaming Carousels (All Categories) -->
     <CourseRow
       title="Inteligência Artificial & LLMs"
       courses={iaCourses}
-      viewAllHref="/category/ia"
+      viewAllHref="/courses?category=ia"
       eagerCount={2}
     />
 
     <CourseRow
       title="Automação & Agentes Autônomos"
       courses={automacaoCourses}
-      viewAllHref="/category/automacao-agentes"
+      viewAllHref="/courses?category=automacao-agentes"
     />
 
     <CourseRow
       title="Web, Apps & Vibe Coding"
       courses={webCourses}
-      viewAllHref="/category/web-vibe-coding"
+      viewAllHref="/courses?category=web-vibe-coding"
     />
 
     <CourseRow
       title="Programação & Desenvolvimento"
       courses={devCourses}
-      viewAllHref="/category/programacao-dev"
+      viewAllHref="/courses?category=programacao-dev"
     />
 
     <CourseRow
       title="Backend, Bancos de Dados & Infraestrutura"
       courses={backendCourses}
-      viewAllHref="/category/backend-infra"
+      viewAllHref="/courses?category=backend-infra"
     />
 
     <CourseRow
       title="Dados & Data Science"
       courses={dataCourses}
-      viewAllHref="/category/dados-datascience"
+      viewAllHref="/courses?category=dados-datascience"
     />
+
+    {pythonCourses.length > 0 && (
+      <CourseRow
+        title="Ecossistema Python Aplicado"
+        courses={pythonCourses}
+        viewAllHref="/courses?category=python"
+      />
+    )}
 
     <CourseRow
       title="Trading & Mercado Financeiro"
       courses={tradingCourses}
-      viewAllHref="/category/trading"
+      viewAllHref="/courses?category=trading"
     />
 
     <CourseRow
       title="Desenvolvimento Pessoal & Soft Skills"
       courses={personalCourses}
-      viewAllHref="/category/desenvolvimento-pessoal"
+      viewAllHref="/courses?category=desenvolvimento-pessoal"
     />
   </div>
 </Layout>
@@ -216,6 +374,261 @@ const nextInPathCourses = allCourses.filter(c =>
 </script>
 
 <style>
+  /* 4 Source Spotlight Grid Section */
+  .source-spotlight-section {
+    padding: 2.25rem 0 1rem;
+    position: relative;
+  }
+
+  .spotlight-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .spotlight-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .spotlight-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-cyan);
+    background: rgba(0, 242, 254, 0.08);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-pill);
+    width: fit-content;
+  }
+
+  .spotlight-pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+  }
+
+  .spotlight-main-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+  }
+
+  .spotlight-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .source-spotlight-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+
+  .source-spotlight-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem;
+    text-decoration: none;
+    overflow: hidden;
+    transition: transform var(--motion-fast) ease, border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+  }
+
+  .source-spotlight-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .spotlight-card-glow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    filter: blur(50px);
+    opacity: 0.15;
+    pointer-events: none;
+    transition: opacity var(--motion-fast) ease;
+  }
+
+  .source-spotlight-card:hover .spotlight-card-glow {
+    opacity: 0.35;
+  }
+
+  /* Specific Card Themes */
+  .card-ailab {
+    border-color: rgba(0, 242, 254, 0.2);
+  }
+  .card-ailab .spotlight-card-glow {
+    background: #00f2fe;
+  }
+  .card-ailab:hover {
+    border-color: rgba(0, 242, 254, 0.5);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 254, 0.2);
+  }
+
+  .card-asimov {
+    border-color: rgba(99, 102, 241, 0.2);
+  }
+  .card-asimov .spotlight-card-glow {
+    background: #6366f1;
+  }
+  .card-asimov:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.2);
+  }
+
+  .card-hashtag {
+    border-color: rgba(236, 72, 153, 0.2);
+  }
+  .card-hashtag .spotlight-card-glow {
+    background: #ec4899;
+  }
+  .card-hashtag:hover {
+    border-color: rgba(236, 72, 153, 0.5);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(236, 72, 153, 0.2);
+  }
+
+  .card-diversos {
+    border-color: rgba(245, 158, 11, 0.2);
+  }
+  .card-diversos .spotlight-card-glow {
+    background: #f59e0b;
+  }
+  .card-diversos:hover {
+    border-color: rgba(245, 158, 11, 0.5);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.2);
+  }
+
+  /* Card Top */
+  .spotlight-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .source-brand-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .icon-ailab {
+    background: rgba(0, 242, 254, 0.12);
+    color: #00f2fe;
+    border: 1px solid rgba(0, 242, 254, 0.3);
+  }
+  .icon-asimov {
+    background: rgba(99, 102, 241, 0.12);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+  }
+  .icon-hashtag {
+    background: rgba(236, 72, 153, 0.12);
+    color: #f472b6;
+    border: 1px solid rgba(236, 72, 153, 0.3);
+  }
+  .icon-diversos {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fcd34d;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .source-card-badge {
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .badge-ailab { background: rgba(0, 242, 254, 0.12); color: #00f2fe; border: 1px solid rgba(0, 242, 254, 0.25); }
+  .badge-asimov { background: rgba(99, 102, 241, 0.12); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.25); }
+  .badge-hashtag { background: rgba(236, 72, 153, 0.12); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.25); }
+  .badge-diversos { background: rgba(245, 158, 11, 0.12); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.25); }
+
+  /* Card Body */
+  .spotlight-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .source-card-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+  }
+
+  .source-card-tagline {
+    font-size: 0.775rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .source-card-desc {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-top: 0.35rem;
+  }
+
+  /* Card Footer */
+  .spotlight-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 0.85rem;
+  }
+
+  .source-count-pill {
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .source-card-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    transition: transform var(--motion-fast) ease;
+  }
+
+  .source-spotlight-card:hover .source-card-action {
+    transform: translateX(3px);
+  }
+
+  /* Home Rows Container */
   .home-rows-container {
     display: flex;
     flex-direction: column;
@@ -267,5 +680,17 @@ const nextInPathCourses = allCourses.filter(c =>
 
   .view-all-link:hover {
     color: #38bdf8;
+  }
+
+  @media (max-width: 1024px) {
+    .source-spotlight-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .source-spotlight-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
