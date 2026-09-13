@@ -1,4 +1,3 @@
-// src/middleware.ts - Central Server Authentication & Multi-Tier Rate Limiting Guard
 import { defineMiddleware } from 'astro:middleware';
 import { verifySessionToken, COOKIE_NAME } from './lib/server/auth';
 import {
@@ -6,8 +5,14 @@ import {
   buildRateLimitKey,
   createRateLimitResponse,
   injectRateLimitHeaders,
+  getClientIp,
   RATE_LIMIT_PROFILES
 } from './lib/server/rate-limit';
+import {
+  inspectRequest,
+  isIpBanned,
+  renderBlockPage
+} from './lib/server/security-monitor';
 
 const PUBLIC_ROUTES = [
   '/login',
@@ -20,6 +25,50 @@ const PUBLIC_ROUTES = [
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, request, cookies, redirect } = context;
   const pathname = url.pathname;
+
+  // 0. Extract client IP & Cyber Threat Defense Guard (IPS Interceptor)
+  const clientIp = getClientIp(request);
+
+  // Check if IP is currently banned
+  const banStatus = isIpBanned(clientIp);
+  if (banStatus.banned && banStatus.record) {
+    if (pathname.startsWith('/api/')) {
+      return new Response(JSON.stringify({
+        error: 'Acesso bloqueado pelo Sistema de Prevenção de Intrusão (IPS).',
+        incidentId: banStatus.record.incidentId,
+        reason: banStatus.record.reason,
+        expiresAt: banStatus.record.expiresAt
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
+    }
+    return renderBlockPage(
+      clientIp,
+      banStatus.record.incidentId,
+      banStatus.record.reason,
+      banStatus.record.expiresAt
+    );
+  }
+
+  // Deep threat inspection (SQLi, XSS, Path Traversal, Scanners, Suspicious Payloads)
+  const inspection = await inspectRequest(request, url, clientIp);
+  if (inspection.blocked) {
+    if (pathname.startsWith('/api/')) {
+      return new Response(JSON.stringify({
+        error: inspection.reason || 'Requisição maliciosa bloqueada pelo Firewall/IPS.',
+        incidentId: inspection.incidentId || 'INC-THREAT-BLOCKED'
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
+    }
+    return renderBlockPage(
+      clientIp,
+      inspection.incidentId || 'INC-THREAT-BLOCKED',
+      inspection.reason || 'Padrão de ataque identificado e neutralizado.'
+    );
+  }
 
   // 1. Allow public static assets and system bundles immediately
   if (

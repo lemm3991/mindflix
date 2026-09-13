@@ -273,6 +273,34 @@ import { BACKGROUND_PRESETS } from '../lib/backgrounds';
         </div>
       </section>
 
+      <!-- Advanced Cyber Security / IPS Center -->
+      <section class="settings-card admin-only-section" id="sec-monitor-card" style="display: none;">
+        <h2 class="card-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Monitor de Ataques & Prevenção de Intrusão (IPS)</span>
+        </h2>
+        <p class="section-description">
+          Acesse o Centro de Operações de Segurança (SOC) para visualizar telemetria de ataques em tempo real, gerenciar regras de auto-bloqueio de IPs maliciosos e auditar incidentes.
+        </p>
+
+        <div class="setting-row" style="margin-top: 1rem;">
+          <div class="setting-text">
+            <span class="setting-name">Centro de Operações de Segurança (SOC)</span>
+            <span class="setting-hint">Painel em tempo real com DEFCON, simulador de ataques e gerenciador de bans.</span>
+          </div>
+          <div class="setting-control">
+            <a href="/security-monitor" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>Abrir Monitor de Segurança</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <div class="save-status-box" id="save-status-box" style="display: none;">
         <span>Preferências salvas e sincronizadas com sucesso!</span>
       </div>
@@ -291,6 +319,13 @@ import { BACKGROUND_PRESETS } from '../lib/backgrounds';
   const user = getLocalUser();
   if (!user) {
     window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+  } else {
+    const name = user.full_name || user.email || '';
+    const isLemmg = name.toLowerCase().includes('lemmg0800');
+    const secCard = document.getElementById('sec-monitor-card');
+    if (secCard && isLemmg) {
+      secCard.style.display = 'block';
+    }
   }
 
   let activeThemeId = getUserPreferences().theme_id || 'cyan-indigo';
