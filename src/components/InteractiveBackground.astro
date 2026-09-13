@@ -323,10 +323,11 @@ const { disableInteraction = false } = Astro.props;
         dataPackets.length = 0;
         junctionNodes.length = 0;
 
-        const hSpacing = isMobile ? 65 : 75;
-        const vSpacing = isMobile ? 90 : 110;
+        // Denser, closer grid lines for a precise technical canvas
+        const hSpacing = isMobile ? 32 : 38;
+        const vSpacing = isMobile ? 42 : 50;
 
-        // Horizontal Tracks
+        // Horizontal Tracks (subtle, sober opacity)
         const hCount = Math.floor(height / hSpacing);
         for (let i = 1; i <= hCount; i++) {
           const y = i * hSpacing;
@@ -336,12 +337,12 @@ const { disableInteraction = false } = Astro.props;
             coord: y,
             start: 0,
             end: width,
-            alpha: isMain ? 0.08 : 0.04,
+            alpha: isMain ? 0.045 : 0.022,
             isMain
           });
         }
 
-        // Vertical Tracks
+        // Vertical Tracks (subtle, sober opacity)
         const vCount = Math.floor(width / vSpacing);
         for (let j = 1; j <= vCount; j++) {
           const x = j * vSpacing;
@@ -351,26 +352,24 @@ const { disableInteraction = false } = Astro.props;
             coord: x,
             start: 0,
             end: height,
-            alpha: isMain ? 0.08 : 0.04,
+            alpha: isMain ? 0.045 : 0.022,
             isMain
           });
         }
 
-        // Create Intersection Nodes
-        for (let i = 1; i <= hCount; i++) {
-          for (let j = 1; j <= vCount; j++) {
-            if ((i + j) % 2 === 0 || (i % 2 === 0 && j % 2 === 0)) {
-              junctionNodes.push({
-                x: j * vSpacing,
-                y: i * hSpacing,
-                glow: 0
-              });
-            }
+        // Create Intersection Nodes (subtle tech grid dots)
+        for (let i = 1; i <= hCount; i += 2) {
+          for (let j = 1; j <= vCount; j += 2) {
+            junctionNodes.push({
+              x: j * vSpacing,
+              y: i * hSpacing,
+              glow: 0
+            });
           }
         }
 
-        // Spawn few ambient continuous energy flash packets (clean, minimal & fast)
-        const packetCount = isMobile ? 5 : 8;
+        // Spawn very rare ambient energy flash points (2 on mobile, 3 on desktop)
+        const packetCount = isMobile ? 2 : 3;
         for (let k = 0; k < packetCount; k++) {
           spawnRandomPacket();
         }
@@ -388,10 +387,10 @@ const { disableInteraction = false } = Astro.props;
         const axis = forceAxis || (Math.random() > 0.5 ? 'h' : 'v');
         const dir = forceDir !== undefined ? forceDir : (Math.random() > 0.5 ? 1 : -1);
         
-        // Fast energetic flash speed
+        // Accelerated high-speed energy flashes
         const speed = fromSurge 
-          ? (8.0 + Math.random() * 4.5)
-          : (4.5 + Math.random() * 4.0);
+          ? (15.0 + Math.random() * 7.0)
+          : (9.5 + Math.random() * 7.0);
 
         let px = 0;
         let py = 0;
@@ -404,13 +403,13 @@ const { disableInteraction = false } = Astro.props;
           const hTracks = dataTracks.filter(t => t.type === 'h');
           const chosen = hTracks[Math.floor(Math.random() * hTracks.length)];
           py = chosen ? chosen.coord : Math.random() * height;
-          px = dir === 1 ? -40 : width + 40;
+          px = dir === 1 ? -60 : width + 60;
         } else {
           // Pick a vertical track
           const vTracks = dataTracks.filter(t => t.type === 'v');
           const chosen = vTracks[Math.floor(Math.random() * vTracks.length)];
           px = chosen ? chosen.coord : Math.random() * width;
-          py = dir === 1 ? -40 : height + 40;
+          py = dir === 1 ? -60 : height + 60;
         }
 
         const isAlt = Math.random() > 0.35;
@@ -421,10 +420,10 @@ const { disableInteraction = false } = Astro.props;
           axis,
           dir,
           speed,
-          length: fromSurge ? (45 + Math.random() * 35) : (25 + Math.random() * 30),
-          headRadius: fromSurge ? 2.8 : (1.8 + Math.random() * 1.0),
+          length: fromSurge ? (55 + Math.random() * 40) : (40 + Math.random() * 35),
+          headRadius: fromSurge ? 2.4 : (1.6 + Math.random() * 0.8),
           color: isAlt ? currentTheme.accentPrimary : currentTheme.accentSecondary,
-          alpha: fromSurge ? 1.0 : (0.7 + Math.random() * 0.3),
+          alpha: fromSurge ? 1.0 : (0.75 + Math.random() * 0.25),
           isSurge: fromSurge,
           surgeEnergy: fromSurge ? 1.0 : 0
         };
@@ -960,7 +959,7 @@ const { disableInteraction = false } = Astro.props;
 
           if (isOut) {
             dataPackets.splice(i, 1);
-            if (!p.isSurge && dataPackets.filter(dp => !dp.isSurge).length < (isMobile ? 5 : 8)) {
+            if (!p.isSurge && dataPackets.filter(dp => !dp.isSurge).length < (isMobile ? 2 : 3)) {
               spawnRandomPacket();
             }
             continue;

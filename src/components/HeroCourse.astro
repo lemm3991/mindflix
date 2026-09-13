@@ -129,19 +129,44 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
       );
     })}
 
-    <!-- Slide Indicators / Dots -->
-    {courses.length > 1 && (
-      <div class="hero-indicators">
-        {courses.map((_, idx) => (
-          <button
-            type="button"
-            class={`indicator-dot ${idx === 0 ? 'active' : ''}`}
-            data-dot-index={idx}
-            aria-label={`Ir para destaque ${idx + 1}`}
-          ></button>
-        ))}
-      </div>
-    )}
+    <!-- Hero Footer Controls (Indicators + Sound Toggle) -->
+    <div class="hero-footer-controls">
+      {courses.length > 1 && (
+        <div class="hero-indicators">
+          {courses.map((_, idx) => (
+            <button
+              type="button"
+              class={`indicator-dot ${idx === 0 ? 'active' : ''}`}
+              data-dot-index={idx}
+              aria-label={`Ir para destaque ${idx + 1}`}
+            ></button>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        class="hero-sound-btn"
+        id="hero-sound-toggle"
+        aria-label="Ativar/Desativar som do trailer"
+        title="Clique para ativar som"
+      >
+        <span class="sound-icon sound-icon-muted">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </span>
+        <span class="sound-icon sound-icon-unmuted" style="display: none;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </span>
+        <span class="sound-label">Mudo</span>
+      </button>
+    </div>
   </div>
 </section>
 
@@ -158,9 +183,54 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
   const dots = document.querySelectorAll<HTMLElement>('.indicator-dot');
   const allCourses = getAllCourses();
   const videoItems = document.querySelectorAll<HTMLElement>('.hero-video-item');
+  const soundBtn = document.getElementById('hero-sound-toggle');
 
   let currentSlide = 0;
   let rotationTimer: any;
+  let isHeroMuted = true;
+
+  function updateSoundUI() {
+    if (!soundBtn) return;
+    const mutedIcon = soundBtn.querySelector<HTMLElement>('.sound-icon-muted');
+    const unmutedIcon = soundBtn.querySelector<HTMLElement>('.sound-icon-unmuted');
+    const soundLabel = soundBtn.querySelector<HTMLElement>('.sound-label');
+
+    if (isHeroMuted) {
+      if (mutedIcon) mutedIcon.style.display = 'inline-flex';
+      if (unmutedIcon) unmutedIcon.style.display = 'none';
+      if (soundLabel) soundLabel.textContent = 'Mudo';
+      soundBtn.classList.remove('unmuted');
+      soundBtn.title = 'Clique para ativar som';
+    } else {
+      if (mutedIcon) mutedIcon.style.display = 'none';
+      if (unmutedIcon) unmutedIcon.style.display = 'inline-flex';
+      if (soundLabel) soundLabel.textContent = 'Som Ativo';
+      soundBtn.classList.add('unmuted');
+      soundBtn.title = 'Clique para mutar';
+    }
+  }
+
+  function setHeroMuted(muted: boolean) {
+    isHeroMuted = muted;
+    videoItems.forEach((item) => {
+      const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
+      if (vid) {
+        vid.muted = isHeroMuted;
+        if (!isHeroMuted) {
+          vid.volume = 0.8;
+          vid.play().catch(() => {});
+        }
+      }
+    });
+    updateSoundUI();
+  }
+
+  if (soundBtn) {
+    soundBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setHeroMuted(!isHeroMuted);
+    });
+  }
 
   function updateVideoBackdrop(index: number) {
     videoItems.forEach((item, idx) => {
@@ -168,6 +238,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
       if (idx === index) {
         item.classList.add('active');
         if (vid) {
+          vid.muted = isHeroMuted;
           if (!vid.src && vid.dataset.src) {
             vid.src = vid.dataset.src;
           }
@@ -552,12 +623,21 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     background: rgba(244, 63, 94, 0.1);
   }
 
+  /* Hero Footer Controls (Indicators + Sound Toggle) */
+  .hero-footer-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    max-width: 740px;
+  }
+
   /* Slide Indicators */
   .hero-indicators {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    margin-top: 2rem;
   }
 
   .indicator-dot {
@@ -575,6 +655,45 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     width: 24px;
     background: var(--accent-cyan);
     box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+  }
+
+  /* Hero Sound Toggle Button */
+  .hero-sound-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all var(--motion-fast) var(--ease-out);
+    user-select: none;
+  }
+
+  .hero-sound-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .hero-sound-btn.unmuted {
+    background: rgba(0, 242, 254, 0.12);
+    border-color: rgba(0, 242, 254, 0.4);
+    color: var(--accent-cyan);
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+  }
+
+  .sound-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   @media (max-width: 768px) {
