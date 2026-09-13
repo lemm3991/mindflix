@@ -1,7 +1,7 @@
 // sources.ts - Motor de Classificação e Gestão das 5 Fontes de Estudo do Mindflix
 import type { Course } from '../types/catalog';
 
-export type StudySourceId = 'ailab' | 'asimov' | 'hashtag' | 'sctec' | 'outros';
+export type StudySourceId = 'ailab' | 'asimov' | 'asimov-skills' | 'hashtag' | 'hashtag-soft-skills' | 'sctec' | 'outros';
 
 export interface StudySource {
   id: StudySourceId;
@@ -30,10 +30,20 @@ export const STUDY_SOURCES: StudySource[] = [
     name: 'Asimov',
     shortName: 'Asimov',
     badge: 'Asimov Academy',
-    description: 'Biblioteca completa da Asimov Academy: Python, Automação, Data Science, Agentes e Soft Skills.',
+    description: 'Biblioteca completa da Asimov Academy: Cursos, Projetos práticos e Trilhas de Formação.',
     color: '#6366f1',
     gradient: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
     icon: 'terminal'
+  },
+  {
+    id: 'asimov-skills',
+    name: 'Asimov Skills',
+    shortName: 'Asimov Skills',
+    badge: 'Asimov Skills',
+    description: 'Cursos de soft skills, produtividade, gestão de tempo, oratória e desenvolvimento pessoal da Asimov.',
+    color: '#818cf8',
+    gradient: 'linear-gradient(135deg, #818cf8 0%, #c084fc 100%)',
+    icon: 'sparkles'
   },
   {
     id: 'hashtag',
@@ -44,6 +54,16 @@ export const STUDY_SOURCES: StudySource[] = [
     color: '#ec4899',
     gradient: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
     icon: 'zap'
+  },
+  {
+    id: 'hashtag-soft-skills',
+    name: 'Hashtag Soft Skills',
+    shortName: 'Soft Skills',
+    badge: 'Hashtag Soft Skills',
+    description: 'Formação em Soft Skills: Alta Performance, Autoconhecimento, Comunicação e Liderança da Hashtag.',
+    color: '#f43f5e',
+    gradient: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 100%)',
+    icon: 'heart'
   },
   {
     id: 'sctec',
@@ -70,8 +90,31 @@ export const STUDY_SOURCES: StudySource[] = [
 export function getCourseSourceId(course: Course | undefined | null): StudySourceId {
   if (!course) return 'outros';
   
-  // Direct source property check
+  const rel = (course.modules?.[0]?.lessons?.[0]?.relative_path || course.relative_path || '').toLowerCase();
   const directSrc = (course.source || '').toLowerCase();
+
+  // 1. Hashtag Soft Skills
+  if (
+    directSrc === 'hashtag-soft-skills' || 
+    directSrc === 'hashtag_soft_skills' || 
+    rel.includes('hashtag/soft skills') || 
+    rel.includes('hashtag\\soft skills')
+  ) {
+    return 'hashtag-soft-skills';
+  }
+
+  // 2. Asimov Skills
+  if (
+    directSrc === 'asimov-skills' || 
+    directSrc === 'asimov_skills' || 
+    rel.includes('asimov skills') || 
+    rel.includes('asimov/asimov skills') || 
+    rel.includes('asimov\\asimov skills')
+  ) {
+    return 'asimov-skills';
+  }
+
+  // Direct source property check
   if (directSrc === 'ailab' || directSrc === 'ai-lab') return 'ailab';
   if (directSrc === 'asimov') return 'asimov';
   if (directSrc === 'hashtag') return 'hashtag';
@@ -79,11 +122,10 @@ export function getCourseSourceId(course: Course | undefined | null): StudySourc
   if (directSrc === 'outros') return 'outros';
 
   const p = (course.provider || '').toLowerCase();
-  const rel = (course.modules?.[0]?.lessons?.[0]?.relative_path || course.relative_path || '').toLowerCase();
   const slug = (course.slug || course.id || '').toLowerCase();
   const title = (course.display_title || course.raw_title || '').toLowerCase();
 
-  // 1. AI LAB
+  // AI LAB
   if (
     p.includes('ai lab') || 
     rel.startsWith('ai lab') || 
@@ -96,7 +138,7 @@ export function getCourseSourceId(course: Course | undefined | null): StudySourc
     return 'ailab';
   }
 
-  // 2. Asimov
+  // Asimov Cursos & Projetos
   if (
     p.includes('asimov') || 
     rel.startsWith('asimov') || 
@@ -107,7 +149,7 @@ export function getCourseSourceId(course: Course | undefined | null): StudySourc
     return 'asimov';
   }
 
-  // 3. Hashtag
+  // Hashtag Treinamentos Impressionadores
   if (
     p.includes('hashtag') || 
     rel.includes('hashtag') ||

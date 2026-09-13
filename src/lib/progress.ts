@@ -483,3 +483,46 @@ export async function syncProgressFromSupabase(): Promise<void> {
     console.warn('Failed syncing remote progress, preserving local:', err);
   }
 }
+
+// CONVENIENCE HELPERS FOR SIDEBARS & TRILHAS
+export function isLessonCompleted(lessonId: string): boolean {
+  if (typeof window === 'undefined') return false;
+  const all = getAllLocalProgress();
+  return Boolean(all[lessonId]?.completed);
+}
+
+export async function toggleLessonCompleted(lessonId: string, courseId?: string): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  const all = getAllLocalProgress();
+  const current = all[lessonId];
+  const newCompleted = !current?.completed;
+  const cId = courseId || current?.course_id || 'unknown';
+
+  await saveLessonProgress(cId, lessonId, newCompleted ? 100 : 0, 100, newCompleted);
+
+  // Dispatch global event for reactive UI update
+  window.dispatchEvent(new CustomEvent('mindflix:progress-updated', {
+    detail: { lessonId, courseId: cId, completed: newCompleted }
+  }));
+
+  return newCompleted;
+}
+
+export function getUserProgress(): { completed_lessons: Record<string, boolean>; lesson_positions: Record<string, number> } {
+  if (typeof window === 'undefined') return { completed_lessons: {}, lesson_positions: {} };
+  const all = getAllLocalProgress();
+  const completed_lessons: Record<string, boolean> = {};
+  const lesson_positions: Record<string, number> = {};
+
+  for (const [id, item] of Object.entries(all)) {
+    if (item.completed) {
+      completed_lessons[id] = true;
+    }
+    if (item.position_seconds > 0) {
+      lesson_positions[id] = item.position_seconds;
+    }
+  }
+
+  return { completed_lessons, lesson_positions };
+}
+

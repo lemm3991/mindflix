@@ -552,7 +552,23 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
     if os.path.isdir(hashtag_dir):
         for entry in sorted(os.listdir(hashtag_dir), key=natural_sort_key):
             full = os.path.join(hashtag_dir, entry)
-            if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+            if not os.path.isdir(full) or entry.lower() in DEFAULT_IGNORE:
+                continue
+
+            # Soft Skills subfolders as individual courses (ignoring 'introdução')
+            if entry.lower() == "soft skills" or entry.lower() == "especialização soft skills":
+                for sub in sorted(os.listdir(full), key=natural_sort_key):
+                    sub_full = os.path.join(full, sub)
+                    # Ignore 'introdução' / '01. Introdução'
+                    if os.path.isdir(sub_full) and "introdu" not in sub.lower() and sub.lower() not in DEFAULT_IGNORE:
+                        course_candidates.append({
+                            "raw_name": sub,
+                            "rel_path": f"Hashtag/Soft Skills/{sub}",
+                            "full_path": sub_full,
+                            "is_asimov": False,
+                            "source": "hashtag-soft-skills"
+                        })
+            else:
                 course_candidates.append({
                     "raw_name": entry,
                     "rel_path": f"Hashtag/{entry}",

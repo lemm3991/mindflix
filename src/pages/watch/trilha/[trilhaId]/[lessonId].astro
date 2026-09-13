@@ -1,0 +1,472 @@
+---
+// src/pages/watch/trilha/[trilhaId]/[lessonId].astro - Sala de Aula da Trilha de Formação
+import Layout from '../../../../layouts/Layout.astro';
+import VideoPlayer from '../../../../components/VideoPlayer.astro';
+import TrilhaSidebar from '../../../../components/TrilhaSidebar.astro';
+import ChallengeModal from '../../../../components/ChallengeModal.astro';
+import { getTrilhaFullStructure, getFirstPlayableLessonInTrilha } from '../../../../lib/trilhas';
+
+const { trilhaId, lessonId } = Astro.params;
+
+if (!trilhaId) {
+  return Astro.redirect('/courses');
+}
+
+const struct = getTrilhaFullStructure(trilhaId);
+if (!struct || struct.allLessons.length === 0) {
+  return Astro.redirect('/404');
+}
+
+const { trilha, coursesWithModules, allLessons } = struct;
+
+// Find current lesson in trilha
+let currentLessonItem = allLessons.find(item => item.lesson.id === lessonId);
+
+if (!currentLessonItem) {
+  const firstPlayable = getFirstPlayableLessonInTrilha(trilha.id);
+  currentLessonItem = firstPlayable || allLessons[0];
+}
+
+const currentLesson = currentLessonItem.lesson;
+const currentIdx = allLessons.findIndex(item => item.lesson.id === currentLesson.id);
+
+const prevLessonItem = currentIdx > 0 ? allLessons[currentIdx - 1] : null;
+const nextLessonItem = currentIdx < allLessons.length - 1 ? allLessons[currentIdx + 1] : null;
+
+const prevLessonHref = prevLessonItem ? `/watch/trilha/${trilha.id}/${prevLessonItem.lesson.id}` : undefined;
+const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLessonItem.lesson.id}` : undefined;
+---
+
+<Layout title={`${currentLesson.display_title} — Trilha: ${trilha.title}`} hideNavbar={false}>
+  <!-- Background Overlay for Focus Mode (60% dark) -->
+  <div class="focus-backdrop" id="focus-backdrop" aria-hidden="true"></div>
+
+  <!-- Focus Mode Floating Bar -->
+  <div class="focus-mode-bar" id="focus-mode-bar">
+    <div class="focus-pill">
+      <span class="focus-pulse-dot"></span>
+      <span>Modo Foco Zen</span>
+    </div>
+    <div class="focus-actions">
+      <button type="button" class="focus-action-btn" id="btn-focus-toggle-sidebar" title="Alternar Playlist de Cursos">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        <span>Playlist da Trilha</span>
+      </button>
+      <button type="button" class="focus-action-btn focus-action-exit" id="btn-exit-focus" title="Sair do Modo Foco (ESC)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        <span>Sair do Foco (ESC)</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="watch-layout">
+    <!-- Main Content Area: Video and Details -->
+    <div class="watch-main-column">
+      <div class="watch-video-section">
+        <VideoPlayer
+          courseId={currentLessonItem.courseId}
+          lesson={currentLesson}
+          prevLessonHref={prevLessonHref}
+          nextLessonHref={nextLessonHref}
+          nextLessonTitle={nextLessonItem?.lesson.display_title}
+        />
+      </div>
+
+      <!-- Lesson Metadata and Materials -->
+      <div class="lesson-details-section">
+        <div class="lesson-header-row">
+          <div class="lesson-info">
+            <div class="trilha-context-breadcrumb">
+              <span class="trilha-name-tag">Trilha: {trilha.title}</span>
+              <span class="sep">›</span>
+              <span class="course-name-tag">{currentLessonItem.courseType} {currentLessonItem.courseOrder}: {currentLessonItem.courseTitle}</span>
+            </div>
+            <h1 class="lesson-main-title">{currentLesson.display_title}</h1>
+          </div>
+
+          <div class="lesson-actions-group">
+            <!-- Desafio da Aula Button -->
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm btn-challenge-trigger"
+              data-challenge-mode="lesson"
+              data-course-id={currentLessonItem.courseId}
+              data-lesson-id={currentLesson.id}
+              data-lesson-title={currentLesson.display_title}
+              title="Iniciar teste interativo desta aula com IA"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>Desafio com IA</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Materials (if any) -->
+        {(() => {
+          const validMaterials = (currentLesson.materials || []).filter((mat: any) => {
+            const t = (mat.title || '').toLowerCase();
+            const p = (mat.relative_path || '').toLowerCase();
+            return !t.includes('artigo') && !t.includes('transcri') && !t.includes('transcript') && !t.includes('article') &&
+                   !p.includes('artigo') && !p.includes('transcri') && !p.includes('transcript') && !p.includes('article');
+          });
+
+          return validMaterials.length > 0 ? (
+            <div class="materials-box">
+              <h3 class="materials-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Materiais Complementares</span>
+              </h3>
+
+              <div class="materials-grid">
+                {validMaterials.map((mat: any) => (
+                  <div class="material-item-card">
+                    <div class="material-icon-badge">
+                      <span class="type-badge">{mat.type.toUpperCase()}</span>
+                    </div>
+                    <div class="material-meta">
+                      <strong class="material-name">{mat.title}</strong>
+                      <span class="material-path">{mat.relative_path}</span>
+                    </div>
+                    <a
+                      href={`/api/video?path=${encodeURIComponent(mat.relative_path)}`}
+                      target="_blank"
+                      class="btn btn-secondary btn-sm"
+                      download
+                    >
+                      Baixar / Visualizar
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null;
+        })()}
+      </div>
+    </div>
+
+    <!-- Trilha Playlist Sidebar (Collapsible Courses) -->
+    <TrilhaSidebar
+      trilha={trilha}
+      coursesWithModules={coursesWithModules}
+      currentLessonId={currentLesson.id}
+      currentCourseId={currentLessonItem.courseId}
+    />
+  </div>
+
+  <!-- AI Challenge Engine Modal -->
+  <ChallengeModal />
+</Layout>
+
+<script>
+  // Focus Mode Logic
+  const focusBackdrop = document.getElementById('focus-backdrop');
+  const focusBar = document.getElementById('focus-mode-bar');
+  const exitFocusBtn = document.getElementById('btn-exit-focus');
+  const toggleSidebarBtn = document.getElementById('btn-focus-toggle-sidebar');
+  const sidebar = document.getElementById('trilha-study-sidebar');
+
+  let isFocusMode = false;
+
+  function setFocusMode(active: boolean) {
+    isFocusMode = active;
+    document.body.classList.toggle('focus-mode-active', isFocusMode);
+    if (focusBackdrop) focusBackdrop.classList.toggle('visible', isFocusMode);
+    if (focusBar) focusBar.classList.toggle('visible', isFocusMode);
+
+    if (isFocusMode && sidebar) {
+      sidebar.classList.add('collapsed');
+    }
+  }
+
+  function toggleFocusMode() {
+    setFocusMode(!isFocusMode);
+  }
+
+  exitFocusBtn?.addEventListener('click', () => setFocusMode(false));
+  toggleSidebarBtn?.addEventListener('click', () => {
+    if (sidebar) sidebar.classList.toggle('collapsed');
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isFocusMode) {
+      setFocusMode(false);
+    }
+    if ((e.key === 'f' || e.key === 'F') && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+      toggleFocusMode();
+    }
+  });
+
+  // Challenge Trigger Listeners
+  document.querySelectorAll<HTMLButtonElement>('.btn-challenge-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = (btn.getAttribute('data-challenge-mode') || 'lesson') as 'lesson' | 'module';
+      const cId = btn.getAttribute('data-course-id') || '';
+      const lId = btn.getAttribute('data-lesson-id') || undefined;
+      const lTitle = btn.getAttribute('data-lesson-title') || undefined;
+
+      window.dispatchEvent(new CustomEvent('mindflix:open-challenge', {
+        detail: {
+          mode,
+          courseId: cId,
+          lessonId: lId,
+          lessonTitle: lTitle
+        }
+      }));
+    });
+  });
+</script>
+
+<style>
+  .watch-layout {
+    display: flex;
+    min-height: calc(100vh - 72px);
+    background: var(--bg-dark);
+    position: relative;
+  }
+
+  .watch-main-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .watch-video-section {
+    background: #000000;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+  }
+
+  .lesson-details-section {
+    padding: 2rem 2.5rem 4rem;
+    max-width: 1200px;
+    width: 100%;
+  }
+
+  .lesson-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 2rem;
+  }
+
+  .trilha-context-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    margin-bottom: 0.4rem;
+  }
+
+  .trilha-name-tag {
+    color: var(--accent-cyan);
+    background: rgba(0, 242, 254, 0.1);
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .course-name-tag {
+    color: var(--text-secondary);
+  }
+
+  .sep {
+    color: var(--text-muted);
+  }
+
+  .lesson-main-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  .lesson-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  /* Focus Mode Backdrops */
+  .focus-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 99;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--motion-normal) ease;
+  }
+
+  .focus-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .focus-mode-bar {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    border-radius: var(--radius-full);
+    padding: 0.4rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    z-index: 101;
+    opacity: 0;
+    pointer-events: none;
+    transition: all var(--motion-normal) ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  }
+
+  .focus-mode-bar.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .focus-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--accent-cyan);
+    font-weight: 700;
+  }
+
+  .focus-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 10px var(--accent-cyan);
+  }
+
+  .focus-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .focus-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .focus-action-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .focus-action-exit:hover {
+    background: rgba(244, 63, 94, 0.2);
+    border-color: rgba(244, 63, 94, 0.4);
+    color: var(--accent-rose);
+  }
+
+  /* Materials */
+  .materials-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .materials-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.0625rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+  }
+
+  .materials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .material-item-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .type-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-xs);
+    background: rgba(0, 242, 254, 0.15);
+    color: var(--accent-cyan);
+  }
+
+  .material-name {
+    display: block;
+    font-size: 0.875rem;
+    color: #ffffff;
+    margin-bottom: 0.2rem;
+  }
+
+  .material-path {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    word-break: break-all;
+  }
+
+  @media (max-width: 1024px) {
+    .watch-layout {
+      flex-direction: column;
+    }
+    .lesson-details-section {
+      padding: 1.5rem 1rem 3rem;
+    }
+    .lesson-header-row {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+</style>

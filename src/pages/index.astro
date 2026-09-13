@@ -4,6 +4,7 @@ import Layout from '../layouts/Layout.astro';
 import HeroCourse from '../components/HeroCourse.astro';
 import CourseRow from '../components/CourseRow.astro';
 import CourseCard from '../components/CourseCard.astro';
+import TrilhasRow from '../components/TrilhasRow.astro';
 import { getAllCourses, getCoursesByCategory, getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
 
 const allCourses = getAllCourses();
@@ -50,6 +51,9 @@ const nextInPathCourses = allCourses.filter(c =>
 <Layout title="Mindflix — Biblioteca Pessoal de Cursos">
   <!-- Multi-featured Editorial Rotating Hero -->
   <HeroCourse featuredCourses={featuredCourses} />
+
+  <!-- Formações Oficiais & Trilhas de Aprendizado Asimov -->
+  <TrilhasRow />
 
   <div class="container home-rows-container">
     <!-- Dynamic Priority Row: Continue Estudando (1-click resume) -->

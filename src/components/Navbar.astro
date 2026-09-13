@@ -42,7 +42,7 @@ const navItems = [
       </nav>
     </div>
 
-    <!-- Center: 5 Study Sources Switcher (AI LAB, Asimov, Hashtag, SCTEC, Outros) -->
+    <!-- Center: 5 Study Sources Switcher with Asimov & Asimov Skills Sub-selector -->
     <div class="source-switcher-wrapper">
       <div class="source-switcher" id="header-source-switcher" role="tablist" aria-label="Fontes de Estudo">
         <button
@@ -51,25 +51,136 @@ const navItems = [
           data-source-id="all"
           role="tab"
           aria-selected="true"
-          title="Ver cursos de todas as 5 fontes de estudo"
+          title="Ver cursos de todas as fontes de estudo"
         >
           <span class="source-pill-dot dot-all"></span>
           <span class="source-pill-label">Todas</span>
         </button>
-        {STUDY_SOURCES.map(source => (
-          <button
-            type="button"
-            class="source-pill-btn"
-            data-source-id={source.id}
-            data-color={source.color}
-            role="tab"
-            aria-selected="false"
-            title={source.description}
-          >
-            <span class="source-pill-dot" style={`background-color: ${source.color}; box-shadow: 0 0 8px ${source.color}80;`}></span>
-            <span class="source-pill-label">{source.shortName}</span>
-          </button>
-        ))}
+
+        {STUDY_SOURCES.filter(s => s.id !== 'asimov-skills' && s.id !== 'hashtag-soft-skills').map(source => {
+          if (source.id === 'asimov') {
+            return (
+              <div class="source-dropdown-group" id="asimov-dropdown-group">
+                <button
+                  type="button"
+                  class="source-pill-btn has-dropdown"
+                  data-source-id="asimov"
+                  data-color={source.color}
+                  id="asimov-pill-btn"
+                  role="tab"
+                  aria-selected="false"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Clique para escolher entre Cursos/Projetos ou Asimov Skills"
+                >
+                  <span class="source-pill-dot" style={`background-color: ${source.color}; box-shadow: 0 0 8px ${source.color}80;`}></span>
+                  <span class="source-pill-label" id="asimov-pill-label">Asimov</span>
+                  <svg class="source-dropdown-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div class="source-dropdown-menu" id="asimov-dropdown-menu" role="menu">
+                  <button type="button" class="dropdown-item active" data-subsource="asimov" role="menuitem">
+                    <div class="dropdown-item-left">
+                      <span class="dropdown-dot dot-asimov"></span>
+                      <div class="dropdown-texts">
+                        <span class="dropdown-item-title">Asimov</span>
+                        <span class="dropdown-item-desc">Cursos, Projetos & Trilhas</span>
+                      </div>
+                    </div>
+                    <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+
+                  <button type="button" class="dropdown-item" data-subsource="asimov-skills" role="menuitem">
+                    <div class="dropdown-item-left">
+                      <span class="dropdown-dot dot-skills"></span>
+                      <div class="dropdown-texts">
+                        <span class="dropdown-item-title">Asimov Skills</span>
+                        <span class="dropdown-item-desc">Produtividade, Oratória & Soft Skills</span>
+                      </div>
+                    </div>
+                    <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (source.id === 'hashtag') {
+            return (
+              <div class="source-dropdown-group" id="hashtag-dropdown-group">
+                <button
+                  type="button"
+                  class="source-pill-btn has-dropdown"
+                  data-source-id="hashtag"
+                  data-color={source.color}
+                  id="hashtag-pill-btn"
+                  role="tab"
+                  aria-selected="false"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Clique para escolher entre Treinamentos Impressionadores ou Soft Skills"
+                >
+                  <span class="source-pill-dot" style={`background-color: ${source.color}; box-shadow: 0 0 8px ${source.color}80;`}></span>
+                  <span class="source-pill-label" id="hashtag-pill-label">Hashtag</span>
+                  <svg class="source-dropdown-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div class="source-dropdown-menu" id="hashtag-dropdown-menu" role="menu">
+                  <button type="button" class="dropdown-item active" data-subsource="hashtag" role="menuitem">
+                    <div class="dropdown-item-left">
+                      <span class="dropdown-dot dot-hashtag"></span>
+                      <div class="dropdown-texts">
+                        <span class="dropdown-item-title">Hashtag</span>
+                        <span class="dropdown-item-desc">Impressionador: IA, Claude, Lovable, Supabase & NoCode</span>
+                      </div>
+                    </div>
+                    <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+
+                  <button type="button" class="dropdown-item" data-subsource="hashtag-soft-skills" role="menuitem">
+                    <div class="dropdown-item-left">
+                      <span class="dropdown-dot dot-hashtag-skills"></span>
+                      <div class="dropdown-texts">
+                        <span class="dropdown-item-title">Hashtag Soft Skills</span>
+                        <span class="dropdown-item-desc">Alta Performance, Autoconhecimento, Comunicação & Liderança</span>
+                      </div>
+                    </div>
+                    <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <button
+              type="button"
+              class="source-pill-btn"
+              data-source-id={source.id}
+              data-color={source.color}
+              role="tab"
+              aria-selected="false"
+              title={source.description}
+            >
+              <span class="source-pill-dot" style={`background-color: ${source.color}; box-shadow: 0 0 8px ${source.color}80;`}></span>
+              <span class="source-pill-label">{source.shortName}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
 
@@ -104,14 +215,60 @@ const navItems = [
 
   function updateActiveSourceUI(currentSource: string) {
     const buttons = document.querySelectorAll<HTMLButtonElement>('.source-pill-btn');
+    const asimovBtn = document.getElementById('asimov-pill-btn');
+    const asimovLabel = document.getElementById('asimov-pill-label');
+    const hashtagBtn = document.getElementById('hashtag-pill-btn');
+    const hashtagLabel = document.getElementById('hashtag-pill-label');
+    const dropdownItems = document.querySelectorAll<HTMLButtonElement>('.dropdown-item');
+
     buttons.forEach(btn => {
       const sId = btn.getAttribute('data-source-id');
-      if (sId === currentSource) {
+      const isAsimovFamily = (currentSource === 'asimov' || currentSource === 'asimov-skills') && sId === 'asimov';
+      const isHashtagFamily = (currentSource === 'hashtag' || currentSource === 'hashtag-soft-skills') && sId === 'hashtag';
+      const isMatch = sId === currentSource || isAsimovFamily || isHashtagFamily;
+
+      if (isMatch) {
         btn.classList.add('active');
         btn.setAttribute('aria-selected', 'true');
       } else {
         btn.classList.remove('active');
         btn.setAttribute('aria-selected', 'false');
+      }
+    });
+
+    // Update Asimov Dropdown specific state
+    if (asimovLabel && asimovBtn) {
+      if (currentSource === 'asimov-skills') {
+        asimovLabel.textContent = 'Asimov Skills';
+        asimovBtn.classList.add('active');
+      } else if (currentSource === 'asimov') {
+        asimovLabel.textContent = 'Asimov';
+        asimovBtn.classList.add('active');
+      } else {
+        asimovLabel.textContent = 'Asimov';
+      }
+    }
+
+    // Update Hashtag Dropdown specific state
+    if (hashtagLabel && hashtagBtn) {
+      if (currentSource === 'hashtag-soft-skills') {
+        hashtagLabel.textContent = 'Hashtag Soft Skills';
+        hashtagBtn.classList.add('active');
+      } else if (currentSource === 'hashtag') {
+        hashtagLabel.textContent = 'Hashtag';
+        hashtagBtn.classList.add('active');
+      } else {
+        hashtagLabel.textContent = 'Hashtag';
+      }
+    }
+
+    // Update checkmark in dropdown items
+    dropdownItems.forEach(item => {
+      const sub = item.getAttribute('data-subsource');
+      if (sub === currentSource) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
       }
     });
   }
@@ -166,14 +323,84 @@ const navItems = [
   // Handle Source Switcher Click (Event Delegation)
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
+    const asimovGroup = document.getElementById('asimov-dropdown-group');
+    const hashtagGroup = document.getElementById('hashtag-dropdown-group');
+
+    // 1. Click on dropdown item (Asimov, Asimov Skills, Hashtag, Hashtag Soft Skills)
+    const dropdownItem = target.closest<HTMLButtonElement>('.dropdown-item');
+    if (dropdownItem) {
+      e.preventDefault();
+      e.stopPropagation();
+      const subsource = dropdownItem.getAttribute('data-subsource') || 'all';
+      
+      asimovGroup?.classList.remove('open');
+      hashtagGroup?.classList.remove('open');
+      document.getElementById('asimov-pill-btn')?.setAttribute('aria-expanded', 'false');
+      document.getElementById('hashtag-pill-btn')?.setAttribute('aria-expanded', 'false');
+
+      setActiveSource(subsource);
+      updateActiveSourceUI(subsource);
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('source', subsource);
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+
+    // 2. Click on Asimov pill with dropdown toggle
+    const asimovPill = target.closest<HTMLButtonElement>('#asimov-pill-btn');
+    if (asimovPill && asimovGroup) {
+      e.preventDefault();
+      e.stopPropagation();
+      hashtagGroup?.classList.remove('open');
+      document.getElementById('hashtag-pill-btn')?.setAttribute('aria-expanded', 'false');
+
+      const isOpen = asimovGroup.classList.contains('open');
+      if (isOpen) {
+        asimovGroup.classList.remove('open');
+        asimovPill.setAttribute('aria-expanded', 'false');
+      } else {
+        asimovGroup.classList.add('open');
+        asimovPill.setAttribute('aria-expanded', 'true');
+      }
+      return;
+    }
+
+    // 3. Click on Hashtag pill with dropdown toggle
+    const hashtagPill = target.closest<HTMLButtonElement>('#hashtag-pill-btn');
+    if (hashtagPill && hashtagGroup) {
+      e.preventDefault();
+      e.stopPropagation();
+      asimovGroup?.classList.remove('open');
+      document.getElementById('asimov-pill-btn')?.setAttribute('aria-expanded', 'false');
+
+      const isOpen = hashtagGroup.classList.contains('open');
+      if (isOpen) {
+        hashtagGroup.classList.remove('open');
+        hashtagPill.setAttribute('aria-expanded', 'false');
+      } else {
+        hashtagGroup.classList.add('open');
+        hashtagPill.setAttribute('aria-expanded', 'true');
+      }
+      return;
+    }
+
+    // Close any open dropdowns if clicked elsewhere
+    if (asimovGroup?.classList.contains('open') || hashtagGroup?.classList.contains('open')) {
+      asimovGroup?.classList.remove('open');
+      hashtagGroup?.classList.remove('open');
+      document.getElementById('asimov-pill-btn')?.setAttribute('aria-expanded', 'false');
+      document.getElementById('hashtag-pill-btn')?.setAttribute('aria-expanded', 'false');
+    }
+
+    // 4. Regular source pills
     const pill = target.closest<HTMLButtonElement>('.source-pill-btn');
-    if (pill) {
+    if (pill && !pill.classList.contains('has-dropdown')) {
       e.preventDefault();
       const sourceId = pill.getAttribute('data-source-id') || 'all';
       setActiveSource(sourceId);
       updateActiveSourceUI(sourceId);
 
-      // Update URL search param seamlessly without full page refresh
       const url = new URL(window.location.href);
       if (sourceId === 'all') {
         url.searchParams.delete('source');
@@ -420,6 +647,158 @@ const navItems = [
   .source-pill-dot.dot-all {
     background: var(--grad-primary);
     box-shadow: 0 0 8px rgba(var(--accent-primary-rgb), 0.6);
+  }
+
+  /* --- Asimov Dropdown Selector --- */
+  .source-dropdown-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .source-dropdown-arrow {
+    margin-left: 2px;
+    color: inherit;
+    opacity: 0.7;
+    transition: transform var(--motion-fast) ease;
+  }
+
+  .source-dropdown-group.open .source-dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  .source-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 20, 32, 0.96);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(99, 102, 241, 0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    min-width: 270px;
+    padding: 0.4rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    z-index: 120;
+    animation: dropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes dropdownFade {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .source-dropdown-group.open .source-dropdown-menu {
+    display: flex;
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  #hashtag-dropdown-menu {
+    border-color: rgba(236, 72, 153, 0.35);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(236, 72, 153, 0.18);
+  }
+
+  .dropdown-item.active {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.35);
+  }
+
+  #hashtag-dropdown-menu .dropdown-item.active {
+    background: rgba(236, 72, 153, 0.15);
+    border-color: rgba(236, 72, 153, 0.35);
+  }
+
+  .dropdown-item-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .dropdown-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .dropdown-dot.dot-asimov {
+    background: #6366f1;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+  }
+
+  .dropdown-dot.dot-skills {
+    background: #818cf8;
+    box-shadow: 0 0 8px rgba(129, 140, 248, 0.6);
+  }
+
+  .dropdown-dot.dot-hashtag {
+    background: #ec4899;
+    box-shadow: 0 0 8px rgba(236, 72, 153, 0.6);
+  }
+
+  .dropdown-dot.dot-hashtag-skills {
+    background: #f472b6;
+    box-shadow: 0 0 8px rgba(244, 114, 182, 0.6);
+  }
+
+  .dropdown-texts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .dropdown-item-title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .dropdown-item-desc {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+    white-space: normal;
+  }
+
+  .dropdown-check {
+    color: var(--accent-cyan);
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity var(--motion-fast) ease;
+  }
+
+  .dropdown-item.active .dropdown-check {
+    opacity: 1;
   }
 
   .nav-right {
