@@ -86,5 +86,6 @@ export interface UserPreferences {
   interactive_bg_enabled: boolean;
   reduce_motion: boolean;
   theme_id?: string;
+  background_style?: string;
   gemini_api_key?: string;
 }

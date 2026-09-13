@@ -16,10 +16,11 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   auto_preview: false,
   auto_resume: true,
   remember_speed_per_course: false,
-  parallax_enabled: true,
+  parallax_enabled: false,
   interactive_bg_enabled: true,
   reduce_motion: false,
   theme_id: 'cyan-indigo',
+  background_style: 'waves',
   gemini_api_key: ''
 };
 
@@ -164,7 +165,7 @@ export async function saveLessonProgress(
 
     if (!current || !current.last_watched_at || new Date(now) >= new Date(current.last_watched_at)) {
       existing[lessonId] = progress;
-      localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(existing));
+      saveAllLocalProgress(existing);
     }
 
     // Update recent courses list
@@ -242,14 +243,29 @@ export function getLessonProgress(lessonId: string): UserProgress | null {
   return all[lessonId] || null;
 }
 
+function getUserScopedKey(baseKey: string): string {
+  const user = getLocalUser();
+  return user ? `${baseKey}_${user.id}` : baseKey;
+}
+
 export function getAllLocalProgress(): Record<string, UserProgress> {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.PROGRESS);
+    const key = getUserScopedKey(STORAGE_KEYS.PROGRESS);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.PROGRESS);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
   }
+}
+
+export function saveAllLocalProgress(progressMap: Record<string, UserProgress>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = getUserScopedKey(STORAGE_KEYS.PROGRESS);
+    localStorage.setItem(key, JSON.stringify(progressMap));
+    localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(progressMap));
+  } catch {}
 }
 
 export function getCourseCompletionStats(courseId: string, totalLessons: number): { completedCount: number; percentage: number } {
@@ -264,9 +280,11 @@ export function getCourseCompletionStats(courseId: string, totalLessons: number)
 export function trackRecentCourse(courseId: string): void {
   if (typeof window === 'undefined') return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.RECENT_COURSES);
+    const key = getUserScopedKey(STORAGE_KEYS.RECENT_COURSES);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.RECENT_COURSES);
     let list: string[] = raw ? JSON.parse(raw) : [];
     list = [courseId, ...list.filter(id => id !== courseId)].slice(0, 10);
+    localStorage.setItem(key, JSON.stringify(list));
     localStorage.setItem(STORAGE_KEYS.RECENT_COURSES, JSON.stringify(list));
   } catch (err) {
     console.warn(err);
@@ -276,7 +294,8 @@ export function trackRecentCourse(courseId: string): void {
 export function getRecentCourseIds(): string[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.RECENT_COURSES);
+    const key = getUserScopedKey(STORAGE_KEYS.RECENT_COURSES);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.RECENT_COURSES);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -287,7 +306,8 @@ export function getRecentCourseIds(): string[] {
 export function getFavoriteCourseIds(): string[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.FAVORITES);
+    const key = getUserScopedKey(STORAGE_KEYS.FAVORITES);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.FAVORITES);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -300,6 +320,8 @@ export async function toggleFavorite(courseId: string): Promise<boolean> {
   const isFav = favorites.includes(courseId);
   const updated = isFav ? favorites.filter(id => id !== courseId) : [...favorites, courseId];
   
+  const key = getUserScopedKey(STORAGE_KEYS.FAVORITES);
+  localStorage.setItem(key, JSON.stringify(updated));
   localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updated));
 
   const user = getLocalUser();
@@ -324,14 +346,39 @@ export function isCourseFavorite(courseId: string): boolean {
 }
 
 function getPrefStorageKey(): string {
-  const user = getLocalUser();
-  return user ? `${STORAGE_KEYS.PREFERENCES}_${user.id}` : STORAGE_KEYS.PREFERENCES;
+  return getUserScopedKey(STORAGE_KEYS.PREFERENCES);
+}
+
+function checkParallaxDefaultMigration(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const MIGRATION_KEY = 'mindflix_parallax_disabled_v1';
+    if (!localStorage.getItem(MIGRATION_KEY)) {
+      const keys = [
+        STORAGE_KEYS.PREFERENCES,
+        `${STORAGE_KEYS.PREFERENCES}_user-lemmg0800`,
+        `${STORAGE_KEYS.PREFERENCES}_user-tamydoagro`
+      ];
+      for (const k of keys) {
+        const raw = localStorage.getItem(k);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            parsed.parallax_enabled = false;
+            localStorage.setItem(k, JSON.stringify(parsed));
+          } catch {}
+        }
+      }
+      localStorage.setItem(MIGRATION_KEY, 'true');
+    }
+  } catch {}
 }
 
 // PREFERENCES
 export function getUserPreferences(): UserPreferences {
   if (typeof window === 'undefined') return DEFAULT_PREFERENCES;
   try {
+    checkParallaxDefaultMigration();
     const key = getPrefStorageKey();
     const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.PREFERENCES);
     return raw ? { ...DEFAULT_PREFERENCES, ...JSON.parse(raw) } : DEFAULT_PREFERENCES;

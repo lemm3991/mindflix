@@ -6,9 +6,11 @@ import ProgressBar from './ProgressBar.astro';
 
 interface Props {
   course: Course;
+  loading?: 'lazy' | 'eager';
+  fetchpriority?: 'high' | 'auto' | 'low';
 }
 
-const { course } = Astro.props;
+const { course, loading = 'lazy', fetchpriority = 'auto' } = Astro.props;
 
 // Default first playable lesson for SSR fallback
 const firstLesson = getFirstPlayableLesson(course);
@@ -49,8 +51,9 @@ const sampleVideoPath = isPlayableVideoLesson(firstLesson) ? (firstLesson?.relat
           src={course.cover_image} 
           alt={course.display_title} 
           class="card-cover-img" 
-          loading="lazy" 
-          decoding="async" 
+          loading={loading} 
+          fetchpriority={fetchpriority}
+          decoding={loading === 'eager' ? 'sync' : 'async'} 
         />
       )}
       <div class="cover-overlay"></div>
@@ -707,7 +710,7 @@ const sampleVideoPath = isPlayableVideoLesson(firstLesson) ? (firstLesson?.relat
       if (!item.isVisible) continue;
 
       const prefs = getUserPreferences();
-      if (globalMouse.active && isDesktop && prefs.parallax_enabled !== false) {
+      if (globalMouse.active && isDesktop && prefs.parallax_enabled === true) {
         if (item.isHovered) {
           // O card sob o cursor fica 100% estático (sem inclinação angular)
           item.targetX = 0;

@@ -205,3 +205,14 @@ export function searchCourses(query: string): Course[] {
   });
 }
 
+export {
+  STUDY_SOURCES,
+  getCourseSourceId,
+  getSourceById,
+  filterCoursesBySource,
+  getActiveSource,
+  setActiveSource,
+  type StudySourceId,
+  type StudySource
+} from './sources';
+

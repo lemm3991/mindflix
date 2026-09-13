@@ -30,6 +30,8 @@ pnpm-debug.log*
 
 # Local caches and temporary files
 scanner_cache.json
+custom_passwords.json
+src/data/custom_passwords.json
 *.log
 *credentials*.json
 service_account.json

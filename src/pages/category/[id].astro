@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import CourseCard from '../../components/CourseCard.astro';
 import EmptyState from '../../components/EmptyState.astro';
 import { getCategoryById, getCoursesByCategory } from '../../lib/catalog';
+import { getCourseSourceId } from '../../lib/sources';
 
 const { id } = Astro.params;
 const category = id ? getCategoryById(id) : undefined;
@@ -26,15 +27,17 @@ const courses = getCoursesByCategory(category.id);
     <header class="category-header">
       <div class="cat-title-row">
         <h1 class="cat-title">{category.name}</h1>
-        <span class="badge badge-cyan">{courses.length} cursos</span>
+        <span class="badge badge-cyan" id="cat-count-badge">{courses.length} cursos</span>
       </div>
       <p class="cat-desc">{category.description}</p>
     </header>
 
     {courses.length > 0 ? (
-      <div class="courses-grid">
+      <div class="courses-grid" id="category-grid">
         {courses.map(course => (
-          <CourseCard course={course} />
+          <div class="cat-course-item" data-source={getCourseSourceId(course)}>
+            <CourseCard course={course} />
+          </div>
         ))}
       </div>
     ) : (
@@ -47,6 +50,35 @@ const courses = getCoursesByCategory(category.id);
     )}
   </div>
 </Layout>
+
+<script>
+  import { getActiveSource } from '../../lib/sources';
+
+  function filterCategoryCourses() {
+    const activeSource = getActiveSource();
+    const items = document.querySelectorAll<HTMLElement>('.cat-course-item');
+    const badge = document.getElementById('cat-count-badge');
+    let visibleCount = 0;
+
+    items.forEach(item => {
+      const s = item.getAttribute('data-source') || '';
+      if (activeSource === 'all' || s === activeSource) {
+        item.style.display = 'block';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    if (badge) {
+      badge.textContent = `${visibleCount} ${visibleCount === 1 ? 'curso' : 'cursos'}`;
+    }
+  }
+
+  window.addEventListener('mindflix:source-changed', filterCategoryCourses);
+  document.addEventListener('astro:page-load', filterCategoryCourses);
+  filterCategoryCourses();
+</script>
 
 <style>
   .category-page {

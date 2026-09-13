@@ -2,6 +2,7 @@
 // HeroCourse.astro - Rotating editorial showcase with mouse parallax and smooth crossfade
 import type { Course } from '../types/catalog';
 import { getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
+import { getCourseSourceId } from '../lib/sources';
 import ProgressBar from './ProgressBar.astro';
 
 interface Props {
@@ -26,10 +27,12 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
       const firstLesson = getFirstPlayableLesson(course);
       const isVideo = isPlayableVideoLesson(firstLesson);
       const videoPath = isVideo ? (firstLesson?.relative_path || '') : '';
+      const sourceId = getCourseSourceId(course);
       return (
         <div
           class={`hero-video-item ${idx === 0 ? 'active' : ''}`}
           data-video-index={idx}
+          data-source={sourceId}
         >
           {course.cover_image && (
             <img
@@ -37,6 +40,8 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
               src={course.cover_image}
               alt={course.display_title}
               loading={idx === 0 ? 'eager' : 'lazy'}
+              fetchpriority={idx === 0 ? 'high' : 'auto'}
+              decoding={idx === 0 ? 'sync' : 'async'}
             />
           )}
           {videoPath && !videoPath.startsWith('drive:') && (
@@ -62,11 +67,13 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     {courses.map((course, idx) => {
       const firstLesson = getFirstPlayableLesson(course);
       const watchUrl = firstLesson ? `/watch/${course.id}/${firstLesson.id}` : '/courses';
+      const sourceId = getCourseSourceId(course);
       return (
         <div
           class={`hero-slide ${idx === 0 ? 'active' : ''}`}
           data-slide-index={idx}
           data-course-id={course.id}
+          data-source={sourceId}
         >
           <div class="hero-meta">
             <div class="badges-row">
@@ -140,6 +147,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
 
 <script>
   import { getAllCourses } from '../lib/catalog';
+  import { getActiveSource } from '../lib/sources';
   import { getCourseCompletionStats, isCourseFavorite, toggleFavorite, getUserPreferences, getNextLessonToWatch } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
@@ -149,8 +157,10 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
   const slides = document.querySelectorAll<HTMLElement>('.hero-slide');
   const dots = document.querySelectorAll<HTMLElement>('.indicator-dot');
   const allCourses = getAllCourses();
-
   const videoItems = document.querySelectorAll<HTMLElement>('.hero-video-item');
+
+  let currentSlide = 0;
+  let rotationTimer: any;
 
   function updateVideoBackdrop(index: number) {
     videoItems.forEach((item, idx) => {
@@ -182,16 +192,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     }
   });
 
-  // Initial video start
-  updateVideoBackdrop(0);
-
-  // Multi-slide rotation
-  let currentSlide = 0;
-  const totalSlides = slides.length;
-  let rotationTimer: any;
-
   function setSlide(index: number) {
-    if (index === currentSlide) return;
     slides[currentSlide]?.classList.remove('active');
     dots[currentSlide]?.classList.remove('active');
 
@@ -202,23 +203,50 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     updateVideoBackdrop(currentSlide);
   }
 
-  function nextSlide() {
-    const next = (currentSlide + 1) % totalSlides;
-    setSlide(next);
-  }
+  function setupHeroRotation() {
+    clearInterval(rotationTimer);
+    const activeSource = getActiveSource();
 
-  if (totalSlides > 1) {
-    rotationTimer = setInterval(nextSlide, 12000);
-
-    dots.forEach(dot => {
-      dot.addEventListener('click', () => {
-        clearInterval(rotationTimer);
-        const idx = parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-        setSlide(idx);
-        rotationTimer = setInterval(nextSlide, 12000);
-      });
+    // Find eligible slide indices for the current source
+    const eligibleIndices: number[] = [];
+    slides.forEach((slide, idx) => {
+      const s = slide.getAttribute('data-source') || 'outros';
+      if (activeSource === 'all' || s === activeSource) {
+        eligibleIndices.push(idx);
+      }
     });
+
+    if (eligibleIndices.length > 0) {
+      // Activate the first matching slide
+      setSlide(eligibleIndices[0]);
+
+      if (eligibleIndices.length > 1) {
+        let eligiblePos = 0;
+        rotationTimer = setInterval(() => {
+          eligiblePos = (eligiblePos + 1) % eligibleIndices.length;
+          setSlide(eligibleIndices[eligiblePos]);
+        }, 12000);
+      }
+    } else {
+      // Fallback to slide 0 if no match
+      setSlide(0);
+    }
   }
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      clearInterval(rotationTimer);
+      const idx = parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+      setSlide(idx);
+    });
+  });
+
+  // Listen to source changes
+  window.addEventListener('mindflix:source-changed', () => {
+    setupHeroRotation();
+  });
+
+  setupHeroRotation();
 
   // Mouse Parallax on Hero
   const prefs = getUserPreferences();

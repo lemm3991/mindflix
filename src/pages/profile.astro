@@ -258,15 +258,16 @@ import Layout from '../layouts/Layout.astro';
 
   renderProfileStatsAndActivity();
 
+  import { logoutUser } from '../lib/auth';
+
   // Sync latest progress from Supabase if configured
   syncProgressFromSupabase().then(() => {
     renderProfileStatsAndActivity();
   });
 
   // Logout button
-  document.getElementById('btn-logout')?.addEventListener('click', () => {
-    setLocalUser(null);
-    window.location.href = '/login';
+  document.getElementById('btn-logout')?.addEventListener('click', async () => {
+    await logoutUser();
   });
 </script>
 

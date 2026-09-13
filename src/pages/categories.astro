@@ -103,16 +103,19 @@ const categoryMeta: Record<string, {
   }
 };
 
+import { getCourseSourceId } from '../lib/sources';
+
 const categories = rawCategories.map(cat => {
   const catCourses = allCourses.filter(c => (c.categories || []).includes(cat.id));
   const count = catCourses.length;
   const totalLessons = catCourses.reduce((acc, c) => acc + (c.lessons_count || 0), 0);
-  const sampleCourseObjects = catCourses.slice(0, 4).map(c => ({
+  const sampleCourseObjects = catCourses.map(c => ({
     id: c.id,
     title: c.display_title,
     cover: c.cover_image || `/covers/${c.id}.png`,
     provider: c.provider,
-    lessonsCount: c.lessons_count || 0
+    lessonsCount: c.lessons_count || 0,
+    sourceId: getCourseSourceId(c)
   }));
   const meta = categoryMeta[cat.id] || {
     accent: '#00f2fe',
@@ -122,11 +125,14 @@ const categories = rawCategories.map(cat => {
     icon: 'folder'
   };
 
+  const sourcesList = Array.from(new Set(catCourses.map(c => getCourseSourceId(c)))).join(',');
+
   return {
     ...cat,
     count,
     totalLessons,
     sampleCourses: sampleCourseObjects,
+    sourcesList,
     ...meta
   };
 });
@@ -226,6 +232,7 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
           class={`bento-cat-card ${cat.featured ? 'bento-featured' : ''}`}
           data-cat-id={cat.id}
           data-cat-group={cat.group}
+          data-sources={cat.sourcesList}
           data-search-content={`${cat.name} ${cat.description} ${cat.sampleCourses.map(c => c.title).join(' ')}`.toLowerCase()}
           style={`--cat-accent: ${cat.accent}; --cat-accent-soft: ${cat.accentSoft}; --cat-grad: ${cat.grad};`}
         >
@@ -350,7 +357,7 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
                 </div>
                 <div class="preview-courses-grid">
                   {cat.sampleCourses.map(course => (
-                    <div class="preview-course-card" title={course.title}>
+                    <div class="preview-course-card" title={course.title} data-source={course.sourceId}>
                       <div class="preview-cover-box">
                         <img 
                           src={course.cover} 
@@ -1031,6 +1038,8 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
 </style>
 
 <script>
+  import { getUserPreferences } from '../lib/progress';
+
   // --- Coordinated Multi-Card 3D Parallax & Dynamic Spotlight Border Engine ---
   const cards = document.querySelectorAll<HTMLElement>('.bento-cat-card');
   const isDesktop = window.matchMedia('(min-width: 640px)').matches;
@@ -1145,7 +1154,8 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
       const item = parallaxItems[i];
       if (!item.isVisible) continue;
 
-      if (globalMouse.active && isDesktop) {
+      const prefs = getUserPreferences();
+      if (globalMouse.active && isDesktop && prefs.parallax_enabled === true) {
         if (item.isHovered) {
           // O card sob o mouse fica estático (sem inclinação distorcida)
           item.targetX = 0;
@@ -1202,18 +1212,36 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
       .trim();
   }
 
+  import { getActiveSource } from '../lib/sources';
+
   function applyFilters() {
     let visibleCount = 0;
     const query = normalize(searchQuery);
+    const activeSource = getActiveSource();
 
     cards.forEach(card => {
       const cardGroup = card.getAttribute('data-cat-group') || 'other';
       const searchContent = normalize(card.getAttribute('data-search-content') || '');
+      const sources = (card.getAttribute('data-sources') || '').split(',');
 
       const matchesGroup = currentGroup === 'all' || cardGroup === currentGroup;
       const matchesSearch = !query || searchContent.includes(query);
+      const matchesSource = activeSource === 'all' || sources.includes(activeSource);
 
-      if (matchesGroup && matchesSearch) {
+      // Filter previews inside card
+      const previews = card.querySelectorAll<HTMLElement>('.preview-course-card');
+      let matchingPreviews = 0;
+      previews.forEach(prev => {
+        const prevSource = prev.getAttribute('data-source') || '';
+        if (activeSource === 'all' || prevSource === activeSource) {
+          prev.style.display = 'flex';
+          matchingPreviews++;
+        } else {
+          prev.style.display = 'none';
+        }
+      });
+
+      if (matchesGroup && matchesSearch && matchesSource) {
         card.style.display = 'flex';
         visibleCount++;
       } else {
@@ -1269,4 +1297,11 @@ const totalLessonsCount = allCourses.reduce((acc, c) => acc + (c.lessons_count |
       applyFilters();
     });
   }
+
+  window.addEventListener('mindflix:source-changed', () => {
+    applyFilters();
+  });
+
+  document.addEventListener('astro:page-load', applyFilters);
+  applyFilters();
 </script>

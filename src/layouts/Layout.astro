@@ -1,6 +1,7 @@
 ---
 // Layout.astro - Main Layout with Background, Navbar, CommandPalette and Toasts
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import Navbar from '../components/Navbar.astro';
 import InteractiveBackground from '../components/InteractiveBackground.astro';
 import CommandPalette from '../components/CommandPalette.astro';
@@ -34,6 +35,7 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <ClientRouter />
     <script is:inline>
       (function() {
         var THEMES = {
@@ -58,37 +60,55 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
           root.setAttribute('data-theme', tId);
         }
 
-        var path = window.location.pathname;
-        if (path !== '/login' && path !== '/register') {
-          try {
-            var user = localStorage.getItem('mindflix_user');
-            if (!user) {
-              document.documentElement.classList.add('auth-pending');
-              window.location.href = '/login?redirect=' + encodeURIComponent(path + window.location.search);
-              return;
-            }
-            var uData = JSON.parse(user);
-            var prefKey = uData.id ? 'mindflix_preferences_' + uData.id : 'mindflix_preferences';
-            var prefsStr = localStorage.getItem(prefKey) || localStorage.getItem('mindflix_preferences');
-            if (prefsStr) {
-              var prefs = JSON.parse(prefsStr);
-              if (prefs.reduce_motion) {
-                document.documentElement.classList.add('reduce-motion');
-              }
-              if (prefs.theme_id) {
-                applyInlineTheme(prefs.theme_id);
-              }
-            }
-          } catch (e) {}
-        } else {
-          try {
-            var prefsStr = localStorage.getItem('mindflix_preferences');
-            if (prefsStr) {
-              var prefs = JSON.parse(prefsStr);
-              if (prefs.theme_id) applyInlineTheme(prefs.theme_id);
-            }
-          } catch (e) {}
+        function applyInlineBg(bgStyle) {
+          var s = bgStyle || 'waves';
+          document.documentElement.setAttribute('data-bg-style', s);
         }
+
+        function checkAuthAndTheme() {
+          var path = window.location.pathname;
+          if (path !== '/login' && path !== '/register') {
+            try {
+              var user = localStorage.getItem('mindflix_user');
+              if (!user) {
+                document.documentElement.classList.add('auth-pending');
+                window.location.href = '/login?redirect=' + encodeURIComponent(path + window.location.search);
+                return;
+              }
+              document.documentElement.classList.remove('auth-pending');
+              var uData = JSON.parse(user);
+              var prefKey = uData.id ? 'mindflix_preferences_' + uData.id : 'mindflix_preferences';
+              var prefsStr = localStorage.getItem(prefKey) || localStorage.getItem('mindflix_preferences');
+              if (prefsStr) {
+                var prefs = JSON.parse(prefsStr);
+                if (prefs.reduce_motion) {
+                  document.documentElement.classList.add('reduce-motion');
+                } else {
+                  document.documentElement.classList.remove('reduce-motion');
+                }
+                if (prefs.theme_id) {
+                  applyInlineTheme(prefs.theme_id);
+                }
+                if (prefs.background_style) {
+                  applyInlineBg(prefs.background_style);
+                }
+              }
+            } catch (e) {}
+          } else {
+            document.documentElement.classList.remove('auth-pending');
+            try {
+              var prefsStr = localStorage.getItem('mindflix_preferences');
+              if (prefsStr) {
+                var prefs = JSON.parse(prefsStr);
+                if (prefs.theme_id) applyInlineTheme(prefs.theme_id);
+                if (prefs.background_style) applyInlineBg(prefs.background_style);
+              }
+            } catch (e) {}
+          }
+        }
+
+        checkAuthAndTheme();
+        document.addEventListener('astro:after-swap', checkAuthAndTheme);
       })();
     </script>
     <style is:inline>
@@ -98,28 +118,28 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
     </style>
   </head>
   <body>
-    <!-- Plano 1: Interactive Canvas Background -->
-    <InteractiveBackground disableInteraction={isWatchPage} />
+    <!-- Plano 1: Interactive Canvas Background (Persistent across navigation) -->
+    <InteractiveBackground disableInteraction={isWatchPage} transition:persist="interactive-bg" />
     
-    <!-- Plano 3: Navbar -->
-    {!hideNavbar && <Navbar currentPath={currentPath} />}
+    <!-- Plano 3: Navbar (Persistent across navigation, zero flicker) -->
+    {!hideNavbar && <Navbar currentPath={currentPath} transition:persist="main-navbar" />}
 
-    <!-- Main Content Area -->
-    <main id="main-content">
+    <!-- Main Content Area (Smooth content transition) -->
+    <main id="main-content" transition:animate="fade">
       <slot />
     </main>
 
     <!-- Global Command Palette Modal (Ctrl+K) -->
-    <CommandPalette />
+    <CommandPalette transition:persist="command-palette" />
 
     <!-- Global Course Detail Modal (Glassmorphism & Background Blur) -->
-    <CourseDetailModal />
+    <CourseDetailModal transition:persist="course-detail-modal" />
 
     <!-- Global Toast Container -->
-    <Toast />
+    <Toast transition:persist="global-toast" />
 
     {!hideNavbar && (
-      <footer class="app-footer">
+      <footer class="app-footer" transition:persist="app-footer">
         <div class="container footer-content">
           <div class="footer-left">
             <span class="footer-logo">MIND<span>FLIX</span></span>

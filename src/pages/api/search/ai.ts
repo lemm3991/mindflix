@@ -1,13 +1,14 @@
-// src/pages/api/search/ai.ts - API endpoint for AI Subject Search over transcripts
 import type { APIRoute } from 'astro';
 import { searchSubjectInTranscripts, synthesizeAiAnswer, type AiSearchResponse } from '../../../lib/rag';
+import { decryptSensitiveData } from '../../../lib/server/crypto';
 
 export const POST: APIRoute = async ({ request }) => {
   const startTime = Date.now();
   try {
     const body = await request.json().catch(() => ({}));
     const query = (body.query || body.q || '').trim();
-    const apiKey = body.apiKey || request.headers.get('x-gemini-api-key') || undefined;
+    const rawKey = body.apiKey || request.headers.get('x-gemini-api-key') || undefined;
+    const resolvedKey = rawKey ? (decryptSensitiveData(rawKey) || rawKey) : (process.env.GEMINI_API_KEY || undefined);
 
     if (!query) {
       return new Response(JSON.stringify({ error: 'Parâmetro query é obrigatório.' }), {
@@ -20,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
     const { matches, totalMatches } = searchSubjectInTranscripts(query, 8);
 
     // Synthesize structured AI answer (Gemini if key provided, otherwise smart local digest)
-    const { summary, hasGeminiKey } = await synthesizeAiAnswer(query, matches, apiKey);
+    const { summary, hasGeminiKey } = await synthesizeAiAnswer(query, matches, resolvedKey);
 
     const searchTimeMs = Date.now() - startTime;
 
@@ -54,7 +55,8 @@ export const POST: APIRoute = async ({ request }) => {
 
 export const GET: APIRoute = async ({ url, request }) => {
   const query = url.searchParams.get('q') || url.searchParams.get('query') || '';
-  const apiKey = url.searchParams.get('apiKey') || request.headers.get('x-gemini-api-key') || undefined;
+  const rawKey = url.searchParams.get('apiKey') || request.headers.get('x-gemini-api-key') || undefined;
+  const resolvedKey = rawKey ? (decryptSensitiveData(rawKey) || rawKey) : (process.env.GEMINI_API_KEY || undefined);
 
   if (!query.trim()) {
     return new Response(JSON.stringify({ error: 'Parâmetro q ou query é obrigatório.' }), {
@@ -65,7 +67,7 @@ export const GET: APIRoute = async ({ url, request }) => {
 
   const startTime = Date.now();
   const { matches, totalMatches } = searchSubjectInTranscripts(query.trim(), 8);
-  const { summary, hasGeminiKey } = await synthesizeAiAnswer(query.trim(), matches, apiKey);
+  const { summary, hasGeminiKey } = await synthesizeAiAnswer(query.trim(), matches, resolvedKey);
 
   return new Response(JSON.stringify({
     query: query.trim(),

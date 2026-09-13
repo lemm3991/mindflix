@@ -3,7 +3,7 @@
 import Layout from '../layouts/Layout.astro';
 import CourseCard from '../components/CourseCard.astro';
 import EmptyState from '../components/EmptyState.astro';
-import { getAllCourses } from '../lib/catalog';
+import { getAllCourses, getCourseSourceId, getActiveSource } from '../lib/catalog';
 
 const courses = getAllCourses();
 ---
@@ -17,7 +17,12 @@ const courses = getAllCourses();
 
     <div class="courses-grid" id="my-list-container">
       {courses.map(course => (
-        <div class="my-list-item" data-course-id={course.id} style="display: none;">
+        <div 
+          class="my-list-item" 
+          data-course-id={course.id} 
+          data-source={getCourseSourceId(course)}
+          style="display: none;"
+        >
           <CourseCard course={course} />
         </div>
       ))}
@@ -37,30 +42,45 @@ const courses = getAllCourses();
 <script>
   import { getFavoriteCourseIds } from '../lib/progress';
   import { getLocalUser } from '../lib/supabase';
+  import { getActiveSource } from '../lib/catalog';
 
-  const user = getLocalUser();
-  if (!user) {
-    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-  }
-
-  const favIds = getFavoriteCourseIds();
-  const items = document.querySelectorAll<HTMLElement>('.my-list-item');
-  const emptyState = document.getElementById('empty-list-state');
-
-  let visibleCount = 0;
-  items.forEach(item => {
-    const id = item.getAttribute('data-course-id');
-    if (id && favIds.includes(id)) {
-      item.style.display = 'block';
-      visibleCount++;
-    } else {
-      item.style.display = 'none';
+  function initMyList() {
+    const user = getLocalUser();
+    if (!user) {
+      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      return;
     }
-  });
 
-  if (emptyState) {
-    emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    const favIds = getFavoriteCourseIds();
+    const activeSource = getActiveSource();
+    const items = document.querySelectorAll<HTMLElement>('.my-list-item');
+    const emptyState = document.getElementById('empty-list-state');
+
+    let visibleCount = 0;
+    items.forEach(item => {
+      const id = item.getAttribute('data-course-id');
+      const itemSource = item.getAttribute('data-source');
+      const matchesFav = id && favIds.includes(id);
+      const matchesSource = !activeSource || activeSource === 'all' || itemSource === activeSource;
+
+      if (matchesFav && matchesSource) {
+        item.style.display = 'block';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    if (emptyState) {
+      emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
   }
+
+  document.addEventListener('astro:page-load', initMyList);
+  window.addEventListener('mindflix:source-changed', () => {
+    initMyList();
+  });
+  initMyList();
 </script>
 
 <style>

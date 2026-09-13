@@ -1,11 +1,12 @@
 ---
-// courses.astro - Catálogo Geral de Cursos com Active Filter Chips
+// courses.astro - Catálogo Geral de Cursos com Active Filter Chips e Suporte às 5 Fontes de Estudo
 import Layout from '../layouts/Layout.astro';
 import CourseCard from '../components/CourseCard.astro';
 import SearchBar from '../components/SearchBar.astro';
 import CourseFilters from '../components/CourseFilters.astro';
 import EmptyState from '../components/EmptyState.astro';
 import { getAllCourses, getCategories, getAllProviders } from '../lib/catalog';
+import { getCourseSourceId } from '../lib/sources';
 
 const courses = getAllCourses();
 const categories = getCategories();
@@ -16,7 +17,7 @@ const providers = getAllProviders();
   <div class="container catalog-page-container">
     <header class="catalog-header">
       <h1 class="catalog-title">Catálogo de Cursos</h1>
-      <p class="catalog-subtitle">Explore sua biblioteca completa com mais de {courses.length} cursos organizados por especialidade.</p>
+      <p class="catalog-subtitle" id="catalog-subtitle">Explore sua biblioteca completa com mais de {courses.length} cursos organizados por especialidade.</p>
     </header>
 
     <div class="catalog-controls">
@@ -32,7 +33,7 @@ const providers = getAllProviders();
 
     <!-- Course Grid -->
     <div class="courses-grid" id="catalog-grid">
-      {courses.map(course => {
+      {courses.map((course, idx) => {
         const corpus = [
           course.display_title,
           course.provider,
@@ -40,6 +41,7 @@ const providers = getAllProviders();
           ...course.modules.map(m => m.display_title),
           ...course.modules.flatMap(m => m.lessons.map(l => l.display_title))
         ].join(' ');
+        const sourceId = getCourseSourceId(course);
         return (
           <div
             class="course-grid-item"
@@ -49,8 +51,13 @@ const providers = getAllProviders();
             data-tags={course.tags.join(',').toLowerCase()}
             data-corpus={corpus}
             data-course-id={course.id}
+            data-source={sourceId}
           >
-            <CourseCard course={course} />
+            <CourseCard 
+              course={course} 
+              loading={idx < 4 ? 'eager' : 'lazy'}
+              fetchpriority={idx < 2 ? 'high' : 'auto'}
+            />
           </div>
         );
       })}
@@ -60,7 +67,7 @@ const providers = getAllProviders();
     <div id="no-results-state" style="display: none;">
       <EmptyState
         title="Nenhum curso encontrado"
-        description="Tente ajustar os termos de pesquisa ou resetar os filtros selecionados para ver mais resultados."
+        description="Tente ajustar os termos de pesquisa ou selecionar outra fonte de estudos no menu superior."
         actionText="Ver Todos os Cursos"
         actionHref="/courses"
       />
@@ -70,6 +77,7 @@ const providers = getAllProviders();
 
 <script>
   import { getCourseCompletionStats, isCourseFavorite } from '../lib/progress';
+  import { getActiveSource, getSourceById, setActiveSource } from '../lib/sources';
 
   const searchInput = document.getElementById('global-search-input') as HTMLInputElement | null;
   const categorySelect = document.getElementById('filter-category') as HTMLSelectElement | null;
@@ -81,6 +89,7 @@ const providers = getAllProviders();
   const noResults = document.getElementById('no-results-state');
   const chipsContainer = document.getElementById('active-filter-chips');
   const chipsList = document.getElementById('chips-list');
+  const subtitleEl = document.getElementById('catalog-subtitle');
 
   // Check URL query param for initial category or search
   const urlParams = new URLSearchParams(window.location.search);
@@ -98,6 +107,23 @@ const providers = getAllProviders();
     if (!chipsContainer || !chipsList) return;
     chipsList.innerHTML = '';
     const activeFilters: { label: string; clear: () => void }[] = [];
+    const activeSource = getActiveSource();
+
+    if (activeSource !== 'all') {
+      const srcObj = getSourceById(activeSource);
+      if (srcObj) {
+        activeFilters.push({
+          label: `Fonte: ${srcObj.name}`,
+          clear: () => {
+            setActiveSource('all');
+            const url = new URL(window.location.href);
+            url.searchParams.delete('source');
+            window.history.replaceState({}, '', url.toString());
+            filterAndSort();
+          }
+        });
+      }
+    }
 
     if (searchInput?.value.trim()) {
       activeFilters.push({
@@ -156,6 +182,7 @@ const providers = getAllProviders();
     const selectedProvider = providerSelect?.value || '';
     const selectedStatus = statusSelect?.value || '';
     const selectedSort = sortSelect?.value || 'recent';
+    const activeSource = getActiveSource();
 
     let visibleCount = 0;
 
@@ -164,7 +191,9 @@ const providers = getAllProviders();
       const provider = item.getAttribute('data-provider') || '';
       const categories = (item.getAttribute('data-categories') || '').split(',');
       const courseId = item.getAttribute('data-course-id') || '';
+      const itemSource = item.getAttribute('data-source') || 'outros';
 
+      const matchesSource = activeSource === 'all' || itemSource === activeSource;
       const matchesSearch = !query || corpus.includes(query);
       const matchesCategory = !selectedCategory || categories.includes(selectedCategory);
       const matchesProvider = !selectedProvider || provider === selectedProvider;
@@ -180,13 +209,22 @@ const providers = getAllProviders();
         else if (selectedStatus === 'favorited') matchesStatus = isFav;
       }
 
-      if (matchesSearch && matchesCategory && matchesProvider && matchesStatus) {
+      if (matchesSource && matchesSearch && matchesCategory && matchesProvider && matchesStatus) {
         item.style.display = 'block';
         visibleCount++;
       } else {
         item.style.display = 'none';
       }
     });
+
+    if (subtitleEl) {
+      if (activeSource !== 'all') {
+        const src = getSourceById(activeSource);
+        subtitleEl.textContent = `Exibindo ${visibleCount} curso(s) da fonte selecionada: ${src?.name || activeSource}.`;
+      } else {
+        subtitleEl.textContent = `Exibindo ${visibleCount} cursos em todas as fontes de estudo da biblioteca.`;
+      }
+    }
 
     // Sorting visible items
     const grid = document.getElementById('catalog-grid');
@@ -206,7 +244,7 @@ const providers = getAllProviders();
     }
 
     if (resetBtn) {
-      const hasFilters = Boolean(query || selectedCategory || selectedProvider || selectedStatus);
+      const hasFilters = Boolean(query || selectedCategory || selectedProvider || selectedStatus || activeSource !== 'all');
       resetBtn.style.display = hasFilters ? 'inline-flex' : 'none';
     }
 
@@ -224,9 +262,15 @@ const providers = getAllProviders();
     if (categorySelect) categorySelect.value = '';
     if (providerSelect) providerSelect.value = '';
     if (statusSelect) statusSelect.value = '';
+    setActiveSource('all');
     filterAndSort();
   });
 
+  window.addEventListener('mindflix:source-changed', () => {
+    filterAndSort();
+  });
+
+  document.addEventListener('astro:page-load', filterAndSort);
   filterAndSort();
 </script>
 

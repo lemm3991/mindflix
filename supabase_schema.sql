@@ -1,15 +1,27 @@
 -- ==============================================================================
--- MINDFLIX - DATABASE SCHEMA & ROW LEVEL SECURITY (RLS)
+-- MINDFLIX - DATABASE SCHEMA & HARDENED ROW LEVEL SECURITY (RLS)
+-- ==============================================================================
+-- Principle: Deny by default, explicitly allow only authorized operations.
+-- No user can read, create, modify, or delete another user's records.
 -- ==============================================================================
 
 -- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 2. ENUMS
-CREATE TYPE lesson_type AS ENUM ('video', 'audio', 'pdf', 'article', 'file', 'link');
-CREATE TYPE course_status AS ENUM ('not_started', 'in_progress', 'completed');
+DO $$ BEGIN
+    CREATE TYPE lesson_type AS ENUM ('video', 'audio', 'pdf', 'article', 'file', 'link');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- 3. PROFILES TABLE (Linked to auth.users)
+DO $$ BEGIN
+    CREATE TYPE course_status AS ENUM ('not_started', 'in_progress', 'completed');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- 3. PROFILES TABLE (Linked strictly to auth.users)
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT UNIQUE NOT NULL,
@@ -41,6 +53,8 @@ CREATE TABLE IF NOT EXISTS public.courses (
     relative_path TEXT NOT NULL,
     tags TEXT[] DEFAULT '{}',
     is_featured BOOLEAN DEFAULT FALSE,
+    is_hidden BOOLEAN DEFAULT FALSE,
+    classification_source TEXT DEFAULT 'auto',
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -132,9 +146,12 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
     auto_preview BOOLEAN DEFAULT FALSE,
     auto_resume BOOLEAN DEFAULT TRUE,
     remember_speed_per_course BOOLEAN DEFAULT FALSE,
-    parallax_enabled BOOLEAN DEFAULT TRUE,
+    parallax_enabled BOOLEAN DEFAULT FALSE,
     interactive_bg_enabled BOOLEAN DEFAULT TRUE,
     reduce_motion BOOLEAN DEFAULT FALSE,
+    theme_id TEXT DEFAULT 'cyan-indigo',
+    background_style TEXT DEFAULT 'waves',
+    gemini_api_key TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -151,10 +168,10 @@ CREATE TABLE IF NOT EXISTS public.playback_sessions (
 );
 
 -- ==============================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) ENFORCEMENT
 -- ==============================================================================
 
--- Enable RLS on all tables
+-- Enable and force RLS on all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
@@ -168,48 +185,118 @@ ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.playback_sessions ENABLE ROW LEVEL SECURITY;
 
--- 1. Public Read Policies for Catalog (Anyone authenticated or anonymous can read catalog)
+-- Clean existing policies to ensure idempotency
+DROP POLICY IF EXISTS "Allow public read access on categories" ON public.categories;
+DROP POLICY IF EXISTS "Allow public read access on courses" ON public.courses;
+DROP POLICY IF EXISTS "Allow public read access on course_categories" ON public.course_categories;
+DROP POLICY IF EXISTS "Allow public read access on modules" ON public.modules;
+DROP POLICY IF EXISTS "Allow public read access on lessons" ON public.lessons;
+DROP POLICY IF EXISTS "Allow public read access on lesson_materials" ON public.lesson_materials;
+
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+
+DROP POLICY IF EXISTS "Users can view own user_courses" ON public.user_courses;
+DROP POLICY IF EXISTS "Users can insert own user_courses" ON public.user_courses;
+DROP POLICY IF EXISTS "Users can update own user_courses" ON public.user_courses;
+DROP POLICY IF EXISTS "Users can delete own user_courses" ON public.user_courses;
+
+DROP POLICY IF EXISTS "Users can view own progress" ON public.user_progress;
+DROP POLICY IF EXISTS "Users can insert own progress" ON public.user_progress;
+DROP POLICY IF EXISTS "Users can update own progress" ON public.user_progress;
+DROP POLICY IF EXISTS "Users can delete own progress" ON public.user_progress;
+
+DROP POLICY IF EXISTS "Users can view own favorites" ON public.favorites;
+DROP POLICY IF EXISTS "Users can insert own favorites" ON public.favorites;
+DROP POLICY IF EXISTS "Users can delete own favorites" ON public.favorites;
+
+DROP POLICY IF EXISTS "Users can view own preferences" ON public.user_preferences;
+DROP POLICY IF EXISTS "Users can insert own preferences" ON public.user_preferences;
+DROP POLICY IF EXISTS "Users can update own preferences" ON public.user_preferences;
+
+DROP POLICY IF EXISTS "Users can view own playback_sessions" ON public.playback_sessions;
+DROP POLICY IF EXISTS "Users can insert own playback_sessions" ON public.playback_sessions;
+
+-- ------------------------------------------------------------------------------
+-- 1. CATALOG POLICIES (Read-Only for clients; Mutations restricted to Service Role)
+-- ------------------------------------------------------------------------------
 CREATE POLICY "Allow public read access on categories" ON public.categories FOR SELECT USING (true);
-CREATE POLICY "Allow public read access on courses" ON public.courses FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on courses" ON public.courses FOR SELECT USING (is_hidden IS NOT TRUE);
 CREATE POLICY "Allow public read access on course_categories" ON public.course_categories FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on modules" ON public.modules FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on lessons" ON public.lessons FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on lesson_materials" ON public.lesson_materials FOR SELECT USING (true);
 
--- 2. User-Specific RLS Policies (auth.uid() = user_id)
--- Profiles: Users can view and update only their own profile
-CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+-- ------------------------------------------------------------------------------
+-- 2. USER-SPECIFIC RLS POLICIES (Strict Tenant Isolation with WITH CHECK validation)
+-- ------------------------------------------------------------------------------
 
--- User Courses
-CREATE POLICY "Users can view own user_courses" ON public.user_courses FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own user_courses" ON public.user_courses FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own user_courses" ON public.user_courses FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own user_courses" ON public.user_courses FOR DELETE USING (auth.uid() = user_id);
+-- Profiles Table
+CREATE POLICY "Users can view own profile" ON public.profiles
+    FOR SELECT TO authenticated USING (auth.uid() = id);
 
--- User Progress
-CREATE POLICY "Users can view own progress" ON public.user_progress FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own progress" ON public.user_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own progress" ON public.user_progress FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own progress" ON public.user_progress FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own profile" ON public.profiles
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
--- Favorites
-CREATE POLICY "Users can view own favorites" ON public.favorites FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own favorites" ON public.favorites FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own favorites" ON public.favorites FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own profile" ON public.profiles
+    FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
--- User Preferences
-CREATE POLICY "Users can view own preferences" ON public.user_preferences FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own preferences" ON public.user_preferences FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own preferences" ON public.user_preferences FOR UPDATE USING (auth.uid() = user_id);
+-- User Courses Table
+CREATE POLICY "Users can view own user_courses" ON public.user_courses
+    FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
--- Playback Sessions
-CREATE POLICY "Users can view own playback_sessions" ON public.playback_sessions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own playback_sessions" ON public.playback_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can insert own user_courses" ON public.user_courses
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own user_courses" ON public.user_courses
+    FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own user_courses" ON public.user_courses
+    FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- User Progress Table
+CREATE POLICY "Users can view own progress" ON public.user_progress
+    FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own progress" ON public.user_progress
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own progress" ON public.user_progress
+    FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own progress" ON public.user_progress
+    FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- Favorites / My List Table
+CREATE POLICY "Users can view own favorites" ON public.favorites
+    FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own favorites" ON public.favorites
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own favorites" ON public.favorites
+    FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- User Preferences Table
+CREATE POLICY "Users can view own preferences" ON public.user_preferences
+    FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own preferences" ON public.user_preferences
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own preferences" ON public.user_preferences
+    FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- Playback Sessions Table
+CREATE POLICY "Users can view own playback_sessions" ON public.playback_sessions
+    FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own playback_sessions" ON public.playback_sessions
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 -- ==============================================================================
--- PROFILE AUTO-CREATION TRIGGER
+-- TRIGGER FOR AUTOMATIC PROFILE & PREFERENCE CREATION ON REGISTRATION
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -220,13 +307,16 @@ BEGIN
         new.email,
         coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
         coalesce(new.raw_user_meta_data->>'avatar_url', '')
-    );
+    )
+    ON CONFLICT (id) DO NOTHING;
+
     INSERT INTO public.user_preferences (user_id)
     VALUES (new.id)
     ON CONFLICT (user_id) DO NOTHING;
+
     RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -234,7 +324,7 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- ==============================================================================
--- 15. PERFORMANCE INDEXES
+-- PERFORMANCE & RLS QUERY INDEXES
 -- ==============================================================================
 CREATE INDEX IF NOT EXISTS idx_courses_slug ON public.courses(slug);
 CREATE INDEX IF NOT EXISTS idx_modules_course_order ON public.modules(course_id, order_index);
@@ -244,4 +334,3 @@ CREATE INDEX IF NOT EXISTS idx_user_progress_course ON public.user_progress(user
 CREATE INDEX IF NOT EXISTS idx_favorites_user ON public.favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_playback_sessions_user_time ON public.playback_sessions(user_id, started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_course_categories_cat ON public.course_categories(category_id);
-

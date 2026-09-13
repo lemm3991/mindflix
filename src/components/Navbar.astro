@@ -1,5 +1,7 @@
 ---
-// Navbar.astro - Premium progressive glass navbar with Command Palette trigger
+// Navbar.astro - Premium progressive glass navbar with Command Palette trigger & Study Sources Switcher
+import { STUDY_SOURCES } from '../lib/sources';
+
 interface Props {
   currentPath?: string;
 }
@@ -7,7 +9,6 @@ interface Props {
 const { currentPath = '/' } = Astro.props;
 
 const navItems = [
-  { label: 'Início', href: '/' },
   { label: 'Cursos', href: '/courses' },
   { label: 'Categorias', href: '/categories' },
   { label: 'Minha Lista', href: '/my-list' },
@@ -15,7 +16,7 @@ const navItems = [
 ];
 ---
 
-<header class="navbar" id="main-navbar">
+<header class="navbar" id="main-navbar" transition:persist="main-navbar">
   <div class="container nav-content">
     <div class="nav-left">
       <a href="/" class="brand-logo" aria-label="Mindflix Home">
@@ -39,6 +40,37 @@ const navItems = [
           </a>
         ))}
       </nav>
+    </div>
+
+    <!-- Center: 5 Study Sources Switcher (AI LAB, Asimov, Hashtag, SCTEC, Outros) -->
+    <div class="source-switcher-wrapper">
+      <div class="source-switcher" id="header-source-switcher" role="tablist" aria-label="Fontes de Estudo">
+        <button
+          type="button"
+          class="source-pill-btn active"
+          data-source-id="all"
+          role="tab"
+          aria-selected="true"
+          title="Ver cursos de todas as 5 fontes de estudo"
+        >
+          <span class="source-pill-dot dot-all"></span>
+          <span class="source-pill-label">Todas</span>
+        </button>
+        {STUDY_SOURCES.map(source => (
+          <button
+            type="button"
+            class="source-pill-btn"
+            data-source-id={source.id}
+            data-color={source.color}
+            role="tab"
+            aria-selected="false"
+            title={source.description}
+          >
+            <span class="source-pill-dot" style={`background-color: ${source.color}; box-shadow: 0 0 8px ${source.color}80;`}></span>
+            <span class="source-pill-label">{source.shortName}</span>
+          </button>
+        ))}
+      </div>
     </div>
 
     <div class="nav-right">
@@ -68,11 +100,62 @@ const navItems = [
 </header>
 
 <script>
-  // Progressive glass & height adjustment on scroll (72px -> 64px)
-  const navbar = document.getElementById('main-navbar');
-  const triggerSearchBtn = document.getElementById('open-search-modal-btn');
+  import { getActiveSource, setActiveSource } from '../lib/sources';
 
+  function updateActiveSourceUI(currentSource: string) {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.source-pill-btn');
+    buttons.forEach(btn => {
+      const sId = btn.getAttribute('data-source-id');
+      if (sId === currentSource) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+      } else {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      }
+    });
+  }
+
+  function initNavbar() {
+    const currentPath = window.location.pathname;
+
+    // Update active link state on navigation
+    const links = document.querySelectorAll<HTMLAnchorElement>('.nav-link');
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === currentPath || (href && href !== '/' && currentPath.startsWith(href))) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+
+    // Update active source pill
+    const activeSource = getActiveSource();
+    updateActiveSourceUI(activeSource);
+
+    // Check logged user and control admin-only menu visibility
+    try {
+      const user = localStorage.getItem('mindflix_user');
+      if (user) {
+        const data = JSON.parse(user);
+        const name = data.full_name || data.email || '';
+        const isLemmg = name.toLowerCase().includes('lemmg0800');
+
+        const adminLinks = document.querySelectorAll('[data-admin-only="true"]');
+        adminLinks.forEach(link => {
+          (link as HTMLElement).style.display = isLemmg ? 'inline-block' : 'none';
+        });
+
+        const el = document.getElementById('user-initials');
+        if (el) el.textContent = name.substring(0, 2).toUpperCase();
+      }
+    } catch (err) {}
+  }
+
+  // Progressive glass & height adjustment on scroll (72px -> 64px)
   window.addEventListener('scroll', () => {
+    const navbar = document.getElementById('main-navbar');
     if (window.scrollY > 25) {
       navbar?.classList.add('scrolled');
     } else {
@@ -80,33 +163,47 @@ const navItems = [
     }
   }, { passive: true });
 
-  // Open Command Palette event
-  triggerSearchBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (typeof (window as any).openSearchModal === 'function') {
-      (window as any).openSearchModal('all', '');
-    } else {
-      window.dispatchEvent(new CustomEvent('mindflix:open-search', { detail: { type: 'all' } }));
+  // Handle Source Switcher Click (Event Delegation)
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const pill = target.closest<HTMLButtonElement>('.source-pill-btn');
+    if (pill) {
+      e.preventDefault();
+      const sourceId = pill.getAttribute('data-source-id') || 'all';
+      setActiveSource(sourceId);
+      updateActiveSourceUI(sourceId);
+
+      // Update URL search param seamlessly without full page refresh
+      const url = new URL(window.location.href);
+      if (sourceId === 'all') {
+        url.searchParams.delete('source');
+        url.searchParams.delete('fonte');
+      } else {
+        url.searchParams.set('source', sourceId);
+      }
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+
+    if (target && target.closest('#open-search-modal-btn')) {
+      e.preventDefault();
+      if (typeof (window as any).openSearchModal === 'function') {
+        (window as any).openSearchModal('all', '');
+      } else {
+        window.dispatchEvent(new CustomEvent('mindflix:open-search', { detail: { type: 'all' } }));
+      }
     }
   });
 
-  // Check logged user and control admin-only menu visibility
-  try {
-    const user = localStorage.getItem('mindflix_user');
-    if (user) {
-      const data = JSON.parse(user);
-      const name = data.full_name || data.email || '';
-      const isLemmg = name.toLowerCase().includes('lemmg0800');
-
-      const adminLinks = document.querySelectorAll('[data-admin-only="true"]');
-      adminLinks.forEach(link => {
-        (link as HTMLElement).style.display = isLemmg ? 'inline-block' : 'none';
-      });
-
-      const el = document.getElementById('user-initials');
-      if (el) el.textContent = name.substring(0, 2).toUpperCase();
+  // Listen to external source changes
+  window.addEventListener('mindflix:source-changed', (e: any) => {
+    if (e?.detail?.sourceId) {
+      updateActiveSourceUI(e.detail.sourceId);
     }
-  } catch (err) {}
+  });
+
+  document.addEventListener('astro:page-load', initNavbar);
+  initNavbar();
 </script>
 
 <style>
@@ -140,12 +237,13 @@ const navItems = [
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
   }
 
   .nav-left {
     display: flex;
     align-items: center;
-    gap: 2.5rem;
+    gap: 2rem;
   }
 
   .brand-logo {
@@ -153,6 +251,7 @@ const navItems = [
     align-items: center;
     gap: 0.6rem;
     text-decoration: none;
+    flex-shrink: 0;
   }
 
   .logo-icon {
@@ -189,7 +288,7 @@ const navItems = [
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 1.75rem;
+    gap: 1.5rem;
   }
 
   .nav-link {
@@ -199,6 +298,7 @@ const navItems = [
     position: relative;
     padding: 0.35rem 0;
     transition: color var(--motion-fast) var(--ease-out);
+    white-space: nowrap;
   }
 
   .nav-link:hover {
@@ -221,10 +321,112 @@ const navItems = [
     border-radius: var(--radius-full);
   }
 
+  /* --- 5 Study Sources Switcher --- */
+  .source-switcher-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .source-switcher {
+    display: flex;
+    align-items: center;
+    background: rgba(18, 22, 32, 0.85);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    padding: 3px;
+    gap: 3px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  }
+
+  .source-pill-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--radius-full);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.785rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--motion-fast) var(--ease-out);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .source-pill-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .source-pill-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+
+  .source-pill-btn[data-source-id="ailab"].active {
+    background: rgba(0, 242, 254, 0.16);
+    border-color: rgba(0, 242, 254, 0.45);
+    color: #38bdf8;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+  }
+
+  .source-pill-btn[data-source-id="asimov"].active {
+    background: rgba(99, 102, 241, 0.18);
+    border-color: rgba(99, 102, 241, 0.45);
+    color: #a5b4fc;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+  }
+
+  .source-pill-btn[data-source-id="hashtag"].active {
+    background: rgba(236, 72, 153, 0.18);
+    border-color: rgba(236, 72, 153, 0.45);
+    color: #f472b6;
+    box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
+  }
+
+  .source-pill-btn[data-source-id="sctec"].active {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #6ee7b7;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  }
+
+  .source-pill-btn[data-source-id="outros"].active {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.45);
+    color: #fcd34d;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+  }
+
+  .source-pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: transform var(--motion-fast) var(--ease-spring);
+  }
+
+  .source-pill-btn.active .source-pill-dot {
+    transform: scale(1.3);
+  }
+
+  .source-pill-dot.dot-all {
+    background: var(--grad-primary);
+    box-shadow: 0 0 8px rgba(var(--accent-primary-rgb), 0.6);
+  }
+
   .nav-right {
     display: flex;
     align-items: center;
     gap: 1.25rem;
+    flex-shrink: 0;
   }
 
   /* Command Palette Trigger */
@@ -286,7 +488,22 @@ const navItems = [
     transform: scale(1.04);
   }
 
-  @media (max-width: 800px) {
+  @media (max-width: 1200px) {
+    .source-switcher {
+      overflow-x: auto;
+      max-width: 380px;
+      scrollbar-width: none;
+    }
+    .source-switcher::-webkit-scrollbar {
+      display: none;
+    }
+    .source-pill-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.725rem;
+    }
+  }
+
+  @media (max-width: 900px) {
     .nav-links {
       display: none;
     }
@@ -299,6 +516,32 @@ const navItems = [
       width: 36px;
       height: 36px;
       justify-content: center;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .source-switcher-wrapper {
+      order: 3;
+      width: 100%;
+      margin-top: 0.25rem;
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+    }
+    .source-switcher {
+      max-width: 100%;
+      width: 100%;
+      justify-content: space-between;
+    }
+    .navbar {
+      height: auto;
+      padding: 0.5rem 0;
+    }
+    .navbar.scrolled {
+      height: auto;
+    }
+    .nav-content {
+      flex-wrap: wrap;
     }
   }
 </style>
