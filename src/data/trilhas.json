@@ -22,7 +22,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Comece por aqui - Agentes com GPT"
         },
         {
@@ -48,7 +48,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Criando nosso primeiro agente com ChatGPT"
         }
       ]
@@ -88,7 +88,7 @@
           "modules_count": 1,
           "lessons_count": 9,
           "total_duration_seconds": 1762,
-          "total_duration_formatted": "0h 29m",
+          "total_duration_formatted": "29m",
           "relative_path": "Asimov/Cursos/Fundamentos de análise de dados com IA"
         },
         {
@@ -101,7 +101,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 1186,
-          "total_duration_formatted": "0h 19m",
+          "total_duration_formatted": "19m",
           "relative_path": "Asimov/Cursos/Masterclass Claude Code"
         },
         {
@@ -114,7 +114,7 @@
           "modules_count": 1,
           "lessons_count": 10,
           "total_duration_seconds": 1991,
-          "total_duration_formatted": "0h 33m",
+          "total_duration_formatted": "33m",
           "relative_path": "Asimov/Cursos/Análise de dados em 10 minutos com Claude Code"
         }
       ]
@@ -124,28 +124,15 @@
       "title": "Análise de Dados com Python",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 11 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 11,
-      "total_lessons_count": 204,
-      "total_duration_seconds": 42286,
-      "total_duration_formatted": "11h 44min",
-      "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
+      "description": "Trilha de formação estruturada contendo 9 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 9,
+      "total_lessons_count": 193,
+      "total_duration_seconds": 40306,
+      "total_duration_formatted": "11h 11min",
+      "cover_image": "/covers/course-python-para-dados.jpg",
       "courses": [
         {
           "ordem": 1,
-          "tipo": "Curso",
-          "nome_trilha": "Analista de Dados Comece por Aqui",
-          "course_id": "course-aplicacoes-ia-comece-por-aqui",
-          "course_title": "Aplicações IA - Comece por aqui",
-          "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
-          "modules_count": 1,
-          "lessons_count": 4,
-          "total_duration_seconds": 720,
-          "total_duration_formatted": "0h 12m",
-          "relative_path": "Asimov/Cursos/Aplicações IA - Comece por aqui"
-        },
-        {
-          "ordem": 2,
           "tipo": "Curso",
           "nome_trilha": "Python para Dados",
           "course_id": "course-python-para-dados",
@@ -158,7 +145,7 @@
           "relative_path": "Asimov/Cursos/Python para Dados"
         },
         {
-          "ordem": 3,
+          "ordem": 2,
           "tipo": "Curso",
           "nome_trilha": "Introducao A Logica de Programacao",
           "course_id": "course-introducao-a-logica-de-programacao",
@@ -167,11 +154,11 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
-          "ordem": 4,
+          "ordem": 3,
           "tipo": "Curso",
           "nome_trilha": "Aprendendo Python Conceitos Basicos",
           "course_id": "course-aprendendo-python-conceitos-basicos",
@@ -184,7 +171,7 @@
           "relative_path": "Asimov/Cursos/Aprendendo Python Conceitos Básicos"
         },
         {
-          "ordem": 5,
+          "ordem": 4,
           "tipo": "Curso",
           "nome_trilha": "Criando Seu Setup para Programacao Python",
           "course_id": "course-criando-seu-setup-para-programacao-python",
@@ -197,7 +184,7 @@
           "relative_path": "Asimov/Cursos/Criando seu Setup para Programação Python"
         },
         {
-          "ordem": 6,
+          "ordem": 5,
           "tipo": "Curso",
           "nome_trilha": "Analisando Dados com Pandas SQL",
           "course_id": "course-analisando-dados-com-pandas-sql",
@@ -210,7 +197,7 @@
           "relative_path": "Asimov/Cursos/Analisando Dados com Pandas & SQL"
         },
         {
-          "ordem": 7,
+          "ordem": 6,
           "tipo": "Curso",
           "nome_trilha": "Visualizacao de Dados com Matplotlib",
           "course_id": "course-visualizacao-de-dados-com-matplotlib",
@@ -219,24 +206,11 @@
           "modules_count": 1,
           "lessons_count": 7,
           "total_duration_seconds": 1260,
-          "total_duration_formatted": "0h 21m",
+          "total_duration_formatted": "21m",
           "relative_path": "Asimov/Cursos/Visualização de Dados com Matplotlib"
         },
         {
-          "ordem": 8,
-          "tipo": "Curso",
-          "nome_trilha": "Visualizacao de Dados Avancada com Seaborn",
-          "course_id": "course-visualizacao-de-dados-com-matplotlib",
-          "course_title": "Visualização de Dados com Matplotlib",
-          "cover_image": "/covers/course-visualizacao-de-dados-com-matplotlib.jpg",
-          "modules_count": 1,
-          "lessons_count": 7,
-          "total_duration_seconds": 1260,
-          "total_duration_formatted": "0h 21m",
-          "relative_path": "Asimov/Cursos/Visualização de Dados com Matplotlib"
-        },
-        {
-          "ordem": 9,
+          "ordem": 7,
           "tipo": "Curso",
           "nome_trilha": "Estatistica para Iniciantes Aprenda A Pensar Como um Analista",
           "course_id": "course-estatistica-para-iniciantes-aprenda-a-pensar-como-um-analista",
@@ -249,7 +223,7 @@
           "relative_path": "Asimov/Cursos/Estatística para iniciantes - aprenda a pensar como um analista"
         },
         {
-          "ordem": 10,
+          "ordem": 8,
           "tipo": "Projeto",
           "nome_trilha": "Montando Seu Primeiro Relatorio Profissional em Dados",
           "course_id": "course-projeto-montando-seu-primeiro-relatorio-profissional-em-dados",
@@ -258,11 +232,11 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Projetos/[Projeto] Montando seu primeiro relatório profissional em dados"
         },
         {
-          "ordem": 11,
+          "ordem": 9,
           "tipo": "Curso",
           "nome_trilha": "Analise Exploratoria de Dados",
           "course_id": "course-analise-exploratoria-de-dados",
@@ -298,7 +272,7 @@
           "modules_count": 1,
           "lessons_count": 2,
           "total_duration_seconds": 360,
-          "total_duration_formatted": "0h 06m",
+          "total_duration_formatted": "6m",
           "relative_path": "Asimov/Cursos/Comece por aqui - Aplicações IA com Python"
         },
         {
@@ -324,7 +298,7 @@
           "modules_count": 1,
           "lessons_count": 11,
           "total_duration_seconds": 2104,
-          "total_duration_formatted": "0h 35m",
+          "total_duration_formatted": "35m",
           "relative_path": "Asimov/Cursos/Por Dentro das LLMs"
         },
         {
@@ -337,7 +311,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -376,7 +350,7 @@
           "modules_count": 1,
           "lessons_count": 15,
           "total_duration_seconds": 3074,
-          "total_duration_formatted": "0h 51m",
+          "total_duration_formatted": "51m",
           "relative_path": "Asimov/Cursos/Engenharia de Prompts"
         },
         {
@@ -402,7 +376,7 @@
           "modules_count": 1,
           "lessons_count": 6,
           "total_duration_seconds": 1571,
-          "total_duration_formatted": "0h 26m",
+          "total_duration_formatted": "26m",
           "relative_path": "Asimov/Projetos/[Projeto] Agente de Curadoria de Notícias"
         },
         {
@@ -415,7 +389,7 @@
           "modules_count": 1,
           "lessons_count": 7,
           "total_duration_seconds": 1550,
-          "total_duration_formatted": "0h 25m",
+          "total_duration_formatted": "25m",
           "relative_path": "Asimov/Projetos/[Projeto] Agente de IA para criação de conteúdo"
         },
         {
@@ -428,7 +402,7 @@
           "modules_count": 1,
           "lessons_count": 8,
           "total_duration_seconds": 2790,
-          "total_duration_formatted": "0h 46m",
+          "total_duration_formatted": "46m",
           "relative_path": "Asimov/Projetos/[Projeto] FilmPro - Agente para Recomendação de Filmes"
         },
         {
@@ -451,28 +425,15 @@
       "title": "Aplicações Inteligentes com IA",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 7 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 7,
-      "total_lessons_count": 38,
-      "total_duration_seconds": 8392,
-      "total_duration_formatted": "2h 19min",
-      "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
+      "description": "Trilha de formação estruturada contendo 1 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 1,
+      "total_lessons_count": 34,
+      "total_duration_seconds": 7672,
+      "total_duration_formatted": "2h 7min",
+      "cover_image": "/covers/course-fundamentos-da-ia-generativa.jpg",
       "courses": [
         {
           "ordem": 1,
-          "tipo": "Curso",
-          "nome_trilha": "Comece por Aqui Trilha Aplicacoes Inteligente com IA",
-          "course_id": "course-aplicacoes-ia-comece-por-aqui",
-          "course_title": "Aplicações IA - Comece por aqui",
-          "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
-          "modules_count": 1,
-          "lessons_count": 4,
-          "total_duration_seconds": 720,
-          "total_duration_formatted": "0h 12m",
-          "relative_path": "Asimov/Cursos/Aplicações IA - Comece por aqui"
-        },
-        {
-          "ordem": 2,
           "tipo": "Curso",
           "nome_trilha": "Fundamentos da IA Generativa",
           "course_id": "course-fundamentos-da-ia-generativa",
@@ -483,71 +444,6 @@
           "total_duration_seconds": 7672,
           "total_duration_formatted": "2h 07m",
           "relative_path": "Asimov/Cursos/Fundamentos da IA Generativa"
-        },
-        {
-          "ordem": 3,
-          "tipo": "Curso",
-          "nome_trilha": "Pensando Como um Programador Usando Python e IA",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Pensando Como um Programador Usando Python e IA",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 4,
-          "tipo": "Curso",
-          "nome_trilha": "Coder Toolbox Conceitos Essenciais para Programar com IA",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Coder Toolbox Conceitos Essenciais para Programar com IA",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 5,
-          "tipo": "Curso",
-          "nome_trilha": "Masterclass Criando Interfaces Absurdas com IA",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Masterclass Criando Interfaces Absurdas com IA",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 6,
-          "tipo": "Curso",
-          "nome_trilha": "Criando Sistemas Agenticos com LangChain",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Criando Sistemas Agenticos com LangChain",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 7,
-          "tipo": "Projeto",
-          "nome_trilha": "LangClean um Agente de Limpeza do Computador",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "LangClean um Agente de Limpeza do Computador",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
         }
       ]
     },
@@ -556,11 +452,11 @@
       "title": "Aprendendo Python",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 6 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 6,
-      "total_lessons_count": 137,
-      "total_duration_seconds": 27177,
-      "total_duration_formatted": "7h 32min",
+      "description": "Trilha de formação estruturada contendo 5 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 5,
+      "total_lessons_count": 96,
+      "total_duration_seconds": 19754,
+      "total_duration_formatted": "5h 29min",
       "cover_image": "/covers/course-introducao-a-logica-de-programacao.jpg",
       "courses": [
         {
@@ -573,7 +469,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -625,21 +521,8 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Introducao A Programacao Orientada A Objetos com Python"
-        },
-        {
-          "ordem": 6,
-          "tipo": "Curso",
-          "nome_trilha": "Aprendendo Python Conceitos Intermediarios",
-          "course_id": "course-aprendendo-python-conceitos-basicos",
-          "course_title": "Aprendendo Python Conceitos Básicos",
-          "cover_image": "/covers/course-aprendendo-python-conceitos-basicos.jpg",
-          "modules_count": 1,
-          "lessons_count": 41,
-          "total_duration_seconds": 7423,
-          "total_duration_formatted": "2h 03m",
-          "relative_path": "Asimov/Cursos/Aprendendo Python Conceitos Básicos"
         }
       ]
     },
@@ -648,28 +531,15 @@
       "title": "Automatizando Tudo com n8n",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 7 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 7,
-      "total_lessons_count": 21,
-      "total_duration_seconds": 7144,
-      "total_duration_formatted": "1h 59min",
-      "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
+      "description": "Trilha de formação estruturada contendo 3 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 3,
+      "total_lessons_count": 17,
+      "total_duration_seconds": 6424,
+      "total_duration_formatted": "1h 47min",
+      "cover_image": "/covers/course-automacoes-com-n8n-introducao-pratica.jpg",
       "courses": [
         {
           "ordem": 1,
-          "tipo": "Curso",
-          "nome_trilha": "Comece por Aqui n8n",
-          "course_id": "course-aplicacoes-ia-comece-por-aqui",
-          "course_title": "Aplicações IA - Comece por aqui",
-          "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
-          "modules_count": 1,
-          "lessons_count": 4,
-          "total_duration_seconds": 720,
-          "total_duration_formatted": "0h 12m",
-          "relative_path": "Asimov/Cursos/Aplicações IA - Comece por aqui"
-        },
-        {
-          "ordem": 2,
           "tipo": "Curso",
           "nome_trilha": "Automacoes com n8n Introducao Pratica",
           "course_id": "course-automacoes-com-n8n-introducao-pratica",
@@ -678,37 +548,11 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Automacoes com n8n Introducao Pratica"
         },
         {
-          "ordem": 3,
-          "tipo": "Curso",
-          "nome_trilha": "N8n Open Source Auto Hospedagem e Deploy na Hostinger",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "N8n Open Source Auto Hospedagem e Deploy na Hostinger",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 4,
-          "tipo": "Curso",
-          "nome_trilha": "Estrutura no Code para Automacoes Profissionais",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Estrutura no Code para Automacoes Profissionais",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 5,
+          "ordem": 2,
           "tipo": "Curso",
           "nome_trilha": "Banco de Integracoes com n8n",
           "course_id": "course-banco-de-integracoes-conectando-n8n-com-qualquer-ferramenta",
@@ -717,24 +561,11 @@
           "modules_count": 1,
           "lessons_count": 9,
           "total_duration_seconds": 1905,
-          "total_duration_formatted": "0h 31m",
+          "total_duration_formatted": "31m",
           "relative_path": "Asimov/Cursos/Banco de Integrações conectando n8n com qualquer ferramenta"
         },
         {
-          "ordem": 6,
-          "tipo": "Curso",
-          "nome_trilha": "Domine A API Oficial do Whatsapp com n8n",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Domine A API Oficial do Whatsapp com n8n",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 7,
+          "ordem": 3,
           "tipo": "Curso",
           "nome_trilha": "Consumindo APIs com n8n",
           "course_id": "course-consumindo-apis-com-n8n",
@@ -770,7 +601,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 184,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Comece por aqui - Criando Agentes Pessoais com Hermes Agent"
         },
         {
@@ -806,11 +637,11 @@
       "title": "Criando agentes de atendimento no N8N",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 8 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 8,
-      "total_lessons_count": 28,
-      "total_duration_seconds": 9137,
-      "total_duration_formatted": "2h 32min",
+      "description": "Trilha de formação estruturada contendo 4 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 4,
+      "total_lessons_count": 18,
+      "total_duration_seconds": 6604,
+      "total_duration_formatted": "1h 50min",
       "cover_image": "/covers/course-comece-aqui-nivel-intermediario-engenheiros-de-agentes-de-ia.jpg",
       "courses": [
         {
@@ -823,7 +654,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Comece aqui - Nível intermediário Engenheiros de Agentes de IA"
         },
         {
@@ -836,24 +667,11 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Automacoes com n8n Introducao Pratica"
         },
         {
           "ordem": 3,
-          "tipo": "Curso",
-          "nome_trilha": "N8n Open Source Auto Hospedagem e Deploy na Hostinger",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "N8n Open Source Auto Hospedagem e Deploy na Hostinger",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 4,
           "tipo": "Curso",
           "nome_trilha": "Banco de Integracoes com n8n",
           "course_id": "course-banco-de-integracoes-conectando-n8n-com-qualquer-ferramenta",
@@ -862,50 +680,11 @@
           "modules_count": 1,
           "lessons_count": 9,
           "total_duration_seconds": 1905,
-          "total_duration_formatted": "0h 31m",
+          "total_duration_formatted": "31m",
           "relative_path": "Asimov/Cursos/Banco de Integrações conectando n8n com qualquer ferramenta"
         },
         {
-          "ordem": 5,
-          "tipo": "Curso",
-          "nome_trilha": "Domine A API Oficial do Whatsapp com n8n",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Domine A API Oficial do Whatsapp com n8n",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 6,
-          "tipo": "Projeto",
-          "nome_trilha": "IA de Agendamento no Google Agenda",
-          "course_id": "course-projeto-assistente-de-agendamento-online-com-n8n-calcom-e-ia",
-          "course_title": "[Projeto] Assistente De Agendamento Online Com N8N Calcom E Ia",
-          "cover_image": "/covers/course-projeto-assistente-de-agendamento-online-com-n8n-calcom-e-ia.jpg",
-          "modules_count": 1,
-          "lessons_count": 10,
-          "total_duration_seconds": 2533,
-          "total_duration_formatted": "0h 42m",
-          "relative_path": "Asimov/Projetos/[Projeto] Assistente De Agendamento Online Com N8N Calcom E Ia"
-        },
-        {
-          "ordem": 7,
-          "tipo": "Projeto",
-          "nome_trilha": "Ugc Factory Crie um Fluxo para Produzir Videos Ugc",
-          "course_id": "course-projeto-ugc-factory-videos-ugc-nao-n8n",
-          "course_title": "[Projeto] UGC Factory - Vídeos UGC não n8n",
-          "cover_image": null,
-          "modules_count": 1,
-          "lessons_count": 0,
-          "total_duration_seconds": 0,
-          "total_duration_formatted": "0h 00m",
-          "relative_path": "Asimov/Projetos/[Projeto] UGC Factory - Vídeos UGC não n8n"
-        },
-        {
-          "ordem": 8,
+          "ordem": 4,
           "tipo": "Curso",
           "nome_trilha": "Consumindo APIs com n8n",
           "course_id": "course-consumindo-apis-com-n8n",
@@ -954,7 +733,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -1006,7 +785,7 @@
           "modules_count": 1,
           "lessons_count": 11,
           "total_duration_seconds": 2323,
-          "total_duration_formatted": "0h 38m",
+          "total_duration_formatted": "38m",
           "relative_path": "Asimov/Cursos/Gráficos Interativos com Plotly"
         },
         {
@@ -1045,7 +824,7 @@
           "modules_count": 1,
           "lessons_count": 10,
           "total_duration_seconds": 2021,
-          "total_duration_formatted": "0h 33m",
+          "total_duration_formatted": "33m",
           "relative_path": "Asimov/Projetos/[Projeto] Deploy na Google Cloud Platform (GCP) usando Cloud Run"
         }
       ]
@@ -1055,11 +834,11 @@
       "title": "Data Science & Machine Learning",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 12 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 12,
-      "total_lessons_count": 253,
-      "total_duration_seconds": 53313,
-      "total_duration_formatted": "14h 48min",
+      "description": "Trilha de formação estruturada contendo 9 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 9,
+      "total_lessons_count": 228,
+      "total_duration_seconds": 47482,
+      "total_duration_formatted": "13h 11min",
       "cover_image": "/covers/course-introducao-a-logica-de-programacao.jpg",
       "courses": [
         {
@@ -1072,7 +851,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -1163,7 +942,7 @@
           "modules_count": 1,
           "lessons_count": 13,
           "total_duration_seconds": 3128,
-          "total_duration_formatted": "0h 52m",
+          "total_duration_formatted": "52m",
           "relative_path": "Asimov/Cursos/Modelos Não Supervisionados"
         },
         {
@@ -1178,45 +957,6 @@
           "total_duration_seconds": 3785,
           "total_duration_formatted": "1h 03m",
           "relative_path": "Asimov/Cursos/Árvores de Decisão e Ensemble Learning"
-        },
-        {
-          "ordem": 10,
-          "tipo": "Projeto",
-          "nome_trilha": "Prevendo Risco de Doencas Cardiacas com Machine Learning",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Prevendo Risco de Doencas Cardiacas com Machine Learning",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 11,
-          "tipo": "Projeto",
-          "nome_trilha": "Analise de Vendas do Marketplace Wish",
-          "course_id": "course-projeto-dashboard-de-analise-de-vendas-em-supermercados",
-          "course_title": "[Projeto] Dashboard de análise de vendas em supermercados",
-          "cover_image": "/covers/course-projeto-dashboard-de-analise-de-vendas-em-supermercados.jpg",
-          "modules_count": 1,
-          "lessons_count": 4,
-          "total_duration_seconds": 881,
-          "total_duration_formatted": "0h 14m",
-          "relative_path": "Asimov/Projetos/[Projeto] Dashboard de análise de vendas em supermercados"
-        },
-        {
-          "ordem": 12,
-          "tipo": "Projeto",
-          "nome_trilha": "Analise de Acoes com Machine Learning",
-          "course_id": "course-fundamentos-de-ai-e-machine-learning",
-          "course_title": "Fundamentos de AI e Machine Learning",
-          "cover_image": "/covers/course-fundamentos-de-ai-e-machine-learning.jpg",
-          "modules_count": 1,
-          "lessons_count": 21,
-          "total_duration_seconds": 4950,
-          "total_duration_formatted": "1h 22m",
-          "relative_path": "Asimov/Cursos/Fundamentos de AI e Machine Learning"
         }
       ]
     },
@@ -1295,7 +1035,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 1186,
-          "total_duration_formatted": "0h 19m",
+          "total_duration_formatted": "19m",
           "relative_path": "Asimov/Cursos/Comece por aqui - Dominando o ecossistema Claude"
         },
         {
@@ -1334,7 +1074,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 1186,
-          "total_duration_formatted": "0h 19m",
+          "total_duration_formatted": "19m",
           "relative_path": "Asimov/Cursos/Masterclass Claude Code"
         }
       ]
@@ -1361,7 +1101,7 @@
           "modules_count": 1,
           "lessons_count": 9,
           "total_duration_seconds": 2130,
-          "total_duration_formatted": "0h 35m",
+          "total_duration_formatted": "35m",
           "relative_path": "Asimov/Cursos/Conceitos De Engenharia De Dados"
         },
         {
@@ -1374,7 +1114,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -1452,7 +1192,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Projetos/[Projeto] ETL básico acessando API de aeroporto com Python e Postman"
         },
         {
@@ -1490,9 +1230,9 @@
       "provider": "Asimov Academy",
       "description": "Trilha de formação estruturada contendo 6 cursos e projetos em sequência cronológica recomendada.",
       "total_cursos": 6,
-      "total_lessons_count": 54,
-      "total_duration_seconds": 20631,
-      "total_duration_formatted": "5h 43min",
+      "total_lessons_count": 65,
+      "total_duration_seconds": 24694,
+      "total_duration_formatted": "6h 51min",
       "cover_image": "/covers/course-comece-por-aqui-ferramentas-de-ai-para-desenvolvedores.jpg",
       "courses": [
         {
@@ -1505,7 +1245,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Comece por aqui - Ferramentas de AI para Desenvolvedores"
         },
         {
@@ -1531,21 +1271,21 @@
           "modules_count": 1,
           "lessons_count": 4,
           "total_duration_seconds": 1006,
-          "total_duration_formatted": "0h 16m",
+          "total_duration_formatted": "16m",
           "relative_path": "Asimov/Cursos/Cursor 3 - Desenvolvimento Assistido por IA"
         },
         {
           "ordem": 4,
           "tipo": "Curso",
           "nome_trilha": "Ide Cursorai",
-          "course_id": "course-cursor-3-desenvolvimento-assistido-por-ia",
-          "course_title": "Cursor 3 - Desenvolvimento Assistido por IA",
-          "cover_image": "/covers/course-cursor-3-desenvolvimento-assistido-por-ia.jpg",
+          "course_id": "course-cursorai-ganhe-10x-mais-produtividade-com-a-ide-de-ia",
+          "course_title": "CursorAI - ganhe 10x mais produtividade com a IDE de IA",
+          "cover_image": "/covers/course-cursorai-ganhe-10x-mais-produtividade-com-a-ide-de-ia.jpg",
           "modules_count": 1,
-          "lessons_count": 4,
-          "total_duration_seconds": 1006,
-          "total_duration_formatted": "0h 16m",
-          "relative_path": "Asimov/Cursos/Cursor 3 - Desenvolvimento Assistido por IA"
+          "lessons_count": 15,
+          "total_duration_seconds": 5069,
+          "total_duration_formatted": "1h 24m",
+          "relative_path": "Asimov/Cursos/CursorAI - ganhe 10x mais produtividade com a IDE de IA"
         },
         {
           "ordem": 5,
@@ -1557,7 +1297,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 1186,
-          "total_duration_formatted": "0h 19m",
+          "total_duration_formatted": "19m",
           "relative_path": "Asimov/Cursos/Masterclass Claude Code"
         },
         {
@@ -1649,7 +1389,7 @@
           "modules_count": 1,
           "lessons_count": 6,
           "total_duration_seconds": 1568,
-          "total_duration_formatted": "0h 26m",
+          "total_duration_formatted": "26m",
           "relative_path": "Asimov/Cursos/Automatizando Excel"
         },
         {
@@ -1662,7 +1402,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 246,
-          "total_duration_formatted": "0h 04m",
+          "total_duration_formatted": "4m",
           "relative_path": "Asimov/Projetos/[Projeto] Gerando Relatórios PDF via Excel"
         }
       ]
@@ -1741,7 +1481,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Projetos/[Projeto] Criando Base de Dados com SQLAlchemy – Um CRUD completo"
         }
       ]
@@ -1751,11 +1491,11 @@
       "title": "Python Office: Automações com Python",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 13 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 13,
-      "total_lessons_count": 125,
-      "total_duration_seconds": 26293,
-      "total_duration_formatted": "7h 18min",
+      "description": "Trilha de formação estruturada contendo 6 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 6,
+      "total_lessons_count": 112,
+      "total_duration_seconds": 23847,
+      "total_duration_formatted": "6h 37min",
       "cover_image": "/covers/course-introducao-a-automacoes-com-python.jpg",
       "courses": [
         {
@@ -1768,7 +1508,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Introducao A Automacoes com Python"
         },
         {
@@ -1781,7 +1521,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -1826,32 +1566,6 @@
         {
           "ordem": 6,
           "tipo": "Curso",
-          "nome_trilha": "Automatizando Tudo no Seu Computador com Pyautogui",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Automatizando Tudo no Seu Computador com Pyautogui",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 7,
-          "tipo": "Projeto",
-          "nome_trilha": "Setup de Desktop Iniciando um Dia de Trabalho",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Setup de Desktop Iniciando um Dia de Trabalho",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 8,
-          "tipo": "Curso",
           "nome_trilha": "Execucao Automatizada de Programas",
           "course_id": "course-algotrading-execucao-automatizada",
           "course_title": "Algotrading - Execução Automatizada",
@@ -1861,71 +1575,6 @@
           "total_duration_seconds": 4093,
           "total_duration_formatted": "1h 08m",
           "relative_path": "Asimov/Cursos/Algotrading - Execução Automatizada"
-        },
-        {
-          "ordem": 9,
-          "tipo": "Projeto",
-          "nome_trilha": "Onboarding de Funcionarios",
-          "course_id": "course-onboarding-engenheiro-de-agentes-de-ia",
-          "course_title": "Onboarding — Engenheiro de Agentes de IA",
-          "cover_image": "/covers/course-onboarding-engenheiro-de-agentes-de-ia.png",
-          "modules_count": 1,
-          "lessons_count": 4,
-          "total_duration_seconds": 720,
-          "total_duration_formatted": "0h 12m",
-          "relative_path": "Asimov/Cursos/Onboarding - Engenheiro de Agentes de IA"
-        },
-        {
-          "ordem": 10,
-          "tipo": "Curso",
-          "nome_trilha": "Web Scraping Extraindo Dados da Web",
-          "course_id": "course-projeto-docstoteles-rag-web-scraping",
-          "course_title": "[Projeto] Docstóteles (RAG + Web Scraping)",
-          "cover_image": "/covers/course-projeto-docstoteles-rag-web-scraping.jpg",
-          "modules_count": 1,
-          "lessons_count": 9,
-          "total_duration_seconds": 1726,
-          "total_duration_formatted": "0h 28m",
-          "relative_path": "Asimov/Projetos/[Projeto] Docstóteles (RAG + Web Scraping)"
-        },
-        {
-          "ordem": 11,
-          "tipo": "Curso",
-          "nome_trilha": "Navegando na Internet Automaticamente com Selenium",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Navegando na Internet Automaticamente com Selenium",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 12,
-          "tipo": "Projeto",
-          "nome_trilha": "Bot Whatsapp Automatizando Whatsapp com Selenium",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Bot Whatsapp Automatizando Whatsapp com Selenium",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 13,
-          "tipo": "Projeto",
-          "nome_trilha": "Automatizando Pedidos no Ifood por Comando de Voz",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Automatizando Pedidos no Ifood por Comando de Voz",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
         }
       ]
     },
@@ -1934,11 +1583,11 @@
       "title": "Python Office: Python para empresas",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 10 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 10,
-      "total_lessons_count": 156,
-      "total_duration_seconds": 36046,
-      "total_duration_formatted": "10h 0min",
+      "description": "Trilha de formação estruturada contendo 8 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 8,
+      "total_lessons_count": 136,
+      "total_duration_seconds": 30386,
+      "total_duration_formatted": "8h 26min",
       "cover_image": "/covers/course-introducao-a-python-para-empresas.jpg",
       "courses": [
         {
@@ -1951,7 +1600,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Introducao A Python para Empresas"
         },
         {
@@ -1964,7 +1613,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -2042,34 +1691,8 @@
           "modules_count": 1,
           "lessons_count": 6,
           "total_duration_seconds": 1568,
-          "total_duration_formatted": "0h 26m",
+          "total_duration_formatted": "26m",
           "relative_path": "Asimov/Cursos/Automatizando Excel"
-        },
-        {
-          "ordem": 9,
-          "tipo": "Curso",
-          "nome_trilha": "Lendo e Manipulando Arquivos Pdf",
-          "course_id": "course-lendo-e-escrevendo-arquivos",
-          "course_title": "Lendo e Escrevendo Arquivos",
-          "cover_image": "/covers/course-lendo-e-escrevendo-arquivos.jpg",
-          "modules_count": 1,
-          "lessons_count": 20,
-          "total_duration_seconds": 5660,
-          "total_duration_formatted": "1h 34m",
-          "relative_path": "Asimov/Cursos/Lendo e Escrevendo Arquivos"
-        },
-        {
-          "ordem": 10,
-          "tipo": "Curso",
-          "nome_trilha": "Lendo e Enviando Emails",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Lendo e Enviando Emails",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
         }
       ]
     },
@@ -2078,11 +1701,11 @@
       "title": "Python para Web",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 10 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 10,
-      "total_lessons_count": 118,
-      "total_duration_seconds": 21697,
-      "total_duration_formatted": "6h 1min",
+      "description": "Trilha de formação estruturada contendo 5 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 5,
+      "total_lessons_count": 77,
+      "total_duration_seconds": 14274,
+      "total_duration_formatted": "3h 57min",
       "cover_image": "/covers/course-introducao-a-python-para-web.jpg",
       "courses": [
         {
@@ -2095,7 +1718,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Introducao A Python para Web"
         },
         {
@@ -2108,7 +1731,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -2147,73 +1770,8 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Introducao A Programacao Orientada A Objetos com Python"
-        },
-        {
-          "ordem": 6,
-          "tipo": "Curso",
-          "nome_trilha": "Django Conceitos Basicos",
-          "course_id": "course-aprendendo-python-conceitos-basicos",
-          "course_title": "Aprendendo Python Conceitos Básicos",
-          "cover_image": "/covers/course-aprendendo-python-conceitos-basicos.jpg",
-          "modules_count": 1,
-          "lessons_count": 41,
-          "total_duration_seconds": 7423,
-          "total_duration_formatted": "2h 03m",
-          "relative_path": "Asimov/Cursos/Aprendendo Python Conceitos Básicos"
-        },
-        {
-          "ordem": 7,
-          "tipo": "Projeto",
-          "nome_trilha": "Meu Portfolio Portfolio de Projetos com Django IA",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Meu Portfolio Portfolio de Projetos com Django IA",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 8,
-          "tipo": "Curso",
-          "nome_trilha": "Django Models Admin e Formularios",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Django Models Admin e Formularios",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 9,
-          "tipo": "Projeto",
-          "nome_trilha": "Meu Portfolio Trabalhando com Banco de Dados",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Meu Portfolio Trabalhando com Banco de Dados",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
-        },
-        {
-          "ordem": 10,
-          "tipo": "Projeto",
-          "nome_trilha": "Deploy Simples Publique Seu Projeto Django no Pythonanywhere",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Deploy Simples Publique Seu Projeto Django no Pythonanywhere",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
         }
       ]
     },
@@ -2291,7 +1849,7 @@
           "modules_count": 1,
           "lessons_count": 15,
           "total_duration_seconds": 3283,
-          "total_duration_formatted": "0h 54m",
+          "total_duration_formatted": "54m",
           "relative_path": "Asimov/Cursos/Backtesting - Avaliando Estratégias de Trading com Dados Históricos"
         },
         {
@@ -2314,8 +1872,8 @@
       "title": "Visão Computacional com Python",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 3 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 3,
+      "description": "Trilha de formação estruturada contendo 2 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 2,
       "total_lessons_count": 71,
       "total_duration_seconds": 13637,
       "total_duration_formatted": "3h 47min",
@@ -2344,21 +1902,8 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Cursos/Introducao A Biblioteca Numpy"
-        },
-        {
-          "ordem": 3,
-          "tipo": "Curso",
-          "nome_trilha": "Visao Computacional com Opencv",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Visao Computacional com Opencv",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
         }
       ]
     },
@@ -2397,7 +1942,7 @@
           "modules_count": 1,
           "lessons_count": 14,
           "total_duration_seconds": 2635,
-          "total_duration_formatted": "0h 43m",
+          "total_duration_formatted": "43m",
           "relative_path": "Asimov/Cursos/Introdução à Lógica de Programação"
         },
         {
@@ -2449,7 +1994,7 @@
           "modules_count": 1,
           "lessons_count": 11,
           "total_duration_seconds": 2323,
-          "total_duration_formatted": "0h 38m",
+          "total_duration_formatted": "38m",
           "relative_path": "Asimov/Cursos/Gráficos Interativos com Plotly"
         },
         {
@@ -2475,7 +2020,7 @@
           "modules_count": 1,
           "lessons_count": 1,
           "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
+          "total_duration_formatted": "3m",
           "relative_path": "Asimov/Projetos/[Projeto] SalesApp – WebApp para controle e análise de vendas"
         }
       ]
@@ -2485,28 +2030,15 @@
       "title": "Webdesign com IA",
       "source": "asimov",
       "provider": "Asimov Academy",
-      "description": "Trilha de formação estruturada contendo 7 cursos e projetos em sequência cronológica recomendada.",
-      "total_cursos": 7,
-      "total_lessons_count": 167,
-      "total_duration_seconds": 35934,
-      "total_duration_formatted": "9h 58min",
-      "cover_image": "/covers/course-comece-por-aqui-ferramentas-de-ai-para-desenvolvedores.jpg",
+      "description": "Trilha de formação estruturada contendo 4 cursos e projetos em sequência cronológica recomendada.",
+      "total_cursos": 4,
+      "total_lessons_count": 139,
+      "total_duration_seconds": 28613,
+      "total_duration_formatted": "7h 56min",
+      "cover_image": "/covers/course-fundamentos-do-vibe-design.jpg",
       "courses": [
         {
           "ordem": 1,
-          "tipo": "Curso",
-          "nome_trilha": "Comece por Aqui Trilha Ai Designer",
-          "course_id": "course-comece-por-aqui-ferramentas-de-ai-para-desenvolvedores",
-          "course_title": "Comece por aqui - Ferramentas de AI para Desenvolvedores",
-          "cover_image": "/covers/course-comece-por-aqui-ferramentas-de-ai-para-desenvolvedores.jpg",
-          "modules_count": 1,
-          "lessons_count": 1,
-          "total_duration_seconds": 180,
-          "total_duration_formatted": "0h 03m",
-          "relative_path": "Asimov/Cursos/Comece por aqui - Ferramentas de AI para Desenvolvedores"
-        },
-        {
-          "ordem": 2,
           "tipo": "Curso",
           "nome_trilha": "Fundamentos do Vibe Design",
           "course_id": "course-fundamentos-do-vibe-design",
@@ -2519,7 +2051,7 @@
           "relative_path": "Asimov/Cursos/Fundamentos do Vibe Design"
         },
         {
-          "ordem": 3,
+          "ordem": 2,
           "tipo": "Curso",
           "nome_trilha": "Criando Sites Estaticos com IA",
           "course_id": "course-construindo-sites-estaticos-de-alto-nivel-com-ia",
@@ -2532,7 +2064,7 @@
           "relative_path": "Asimov/Cursos/Construindo Sites Estáticos de Alto Nível com IA"
         },
         {
-          "ordem": 4,
+          "ordem": 3,
           "tipo": "Curso",
           "nome_trilha": "Construindo Sites Profissionais com Astro",
           "course_id": "course-construindo-sites-profissionais-com-astro",
@@ -2545,7 +2077,7 @@
           "relative_path": "Asimov/Cursos/Construindo Sites Profissionais com Astro"
         },
         {
-          "ordem": 5,
+          "ordem": 4,
           "tipo": "Projeto",
           "nome_trilha": "Site 3D Redbull",
           "course_id": "course-projeto-site-3d-do-redbull-com-threejs-e-gsap",
@@ -2554,34 +2086,8 @@
           "modules_count": 1,
           "lessons_count": 3,
           "total_duration_seconds": 540,
-          "total_duration_formatted": "0h 09m",
+          "total_duration_formatted": "9m",
           "relative_path": "Asimov/Projetos/[Projeto] Site 3D do Redbull com Three.js e GSAP"
-        },
-        {
-          "ordem": 6,
-          "tipo": "Projeto",
-          "nome_trilha": "Relogio Venezianico",
-          "course_id": "course-fundamentos-do-vibe-design",
-          "course_title": "Fundamentos do Vibe Design",
-          "cover_image": "/covers/course-fundamentos-do-vibe-design.jpg",
-          "modules_count": 1,
-          "lessons_count": 27,
-          "total_duration_seconds": 7141,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Fundamentos do Vibe Design"
-        },
-        {
-          "ordem": 7,
-          "tipo": "Projeto",
-          "nome_trilha": "Site Magico do Harry Potter com Astro e Gsap",
-          "course_id": "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose",
-          "course_title": "Site Magico do Harry Potter com Astro e Gsap",
-          "cover_image": "/covers/course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose.jpg",
-          "modules_count": 1,
-          "lessons_count": 22,
-          "total_duration_seconds": 7186,
-          "total_duration_formatted": "1h 59m",
-          "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
         }
       ]
     },
