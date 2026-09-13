@@ -1,13 +1,13 @@
 {
-  "last_scan_at": "2026-09-12T21:11:11.706023-03:00",
-  "courses_root": "D:\\projetos antigravity",
-  "total_courses": 45,
-  "total_modules": 3,
-  "total_lessons": 7,
-  "new_courses": 2,
-  "new_lessons": 7,
-  "missing_courses": 43,
-  "missing_lessons": 3954,
+  "last_scan_at": "2026-09-12T21:42:01.141366-03:00",
+  "courses_root": "G:\\Meu Drive\\Cursos\\Cursos Mindflix",
+  "total_courses": 220,
+  "total_modules": 389,
+  "total_lessons": 3817,
+  "new_courses": 177,
+  "new_lessons": 2182,
+  "missing_courses": 16,
+  "missing_lessons": 1996,
   "dry_run": false,
   "status": "success"
 }

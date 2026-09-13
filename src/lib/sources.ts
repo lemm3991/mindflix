@@ -70,6 +70,14 @@ export const STUDY_SOURCES: StudySource[] = [
 export function getCourseSourceId(course: Course | undefined | null): StudySourceId {
   if (!course) return 'outros';
   
+  // Direct source property check
+  const directSrc = (course.source || '').toLowerCase();
+  if (directSrc === 'ailab' || directSrc === 'ai-lab') return 'ailab';
+  if (directSrc === 'asimov') return 'asimov';
+  if (directSrc === 'hashtag') return 'hashtag';
+  if (directSrc === 'sctec') return 'sctec';
+  if (directSrc === 'outros') return 'outros';
+
   const p = (course.provider || '').toLowerCase();
   const rel = (course.modules?.[0]?.lessons?.[0]?.relative_path || course.relative_path || '').toLowerCase();
   const slug = (course.slug || course.id || '').toLowerCase();
@@ -102,6 +110,7 @@ export function getCourseSourceId(course: Course | undefined | null): StudySourc
   // 3. Hashtag
   if (
     p.includes('hashtag') || 
+    rel.includes('hashtag') ||
     rel.includes('impressionador') || 
     slug.includes('impressionador') || 
     title.includes('impressionador') ||

@@ -25,7 +25,7 @@ except ImportError as e:
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MINDFLIX_DIR = CURRENT_DIR
 
-# Read COURSES_ROOT from env or .env file, default to parent directory
+# Read COURSES_ROOT from env or .env file, default to Google Drive path if available
 def resolve_courses_root():
     env_root = os.environ.get("COURSES_ROOT")
     if env_root and os.path.isdir(env_root):
@@ -39,9 +39,23 @@ def resolve_courses_root():
                 line = line.strip()
                 if line.startswith("COURSES_ROOT=") and not line.startswith("#"):
                     val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    if os.path.isdir(val):
+                        return os.path.abspath(val)
                     candidate = os.path.abspath(os.path.join(MINDFLIX_DIR, val))
                     if os.path.isdir(candidate):
                         return candidate
+
+    # Google Drive default paths
+    candidates = [
+        r"G:\Meu Drive\Cursos\Cursos Mindflix",
+        r"I:\Meu Drive\Cursos\Cursos Mindflix",
+        r"G:\Meu Drive\Cursos",
+        r"I:\Meu Drive\Cursos",
+        os.path.abspath(os.path.join(MINDFLIX_DIR, ".."))
+    ]
+    for c in candidates:
+        if os.path.isdir(c):
+            return os.path.abspath(c)
 
     return os.path.abspath(os.path.join(MINDFLIX_DIR, ".."))
 
@@ -399,8 +413,24 @@ def extract_thumbnail_if_needed(video_full_path, course_id, cache):
         pass
     return None
 
+def infer_source(rel_path, raw_folder):
+    p = (rel_path + "/" + raw_folder).lower()
+    if p.startswith("ai lab") or "/ai lab" in p or "ai lab" in p:
+        return "ai-lab"
+    if p.startswith("asimov") or "/asimov" in p or "asimov" in p:
+        return "asimov"
+    if p.startswith("hashtag") or "/hashtag" in p or "hashtag" in p or "impressionador" in p:
+        return "hashtag"
+    if p.startswith("sctec") or "/sctec" in p or "sctec" in p:
+        return "sctec"
+    if p.startswith("outros") or "/outros" in p or "outros" in p:
+        return "outros"
+    return "outros"
+
 def infer_provider(raw_folder, rel_path, is_asimov=False):
     lower = (raw_folder + " " + rel_path).lower()
+    if "ai lab" in lower:
+        return "AI LAB"
     if is_asimov or "asimov" in lower:
         return "Asimov Academy"
     if "sctec" in lower:
@@ -473,20 +503,65 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
 
     course_candidates = []
 
-    # 1. Asimov directory courses
+    # 1. AI LAB
+    ai_lab_dir = os.path.join(courses_root, "AI LAB")
+    if os.path.isdir(ai_lab_dir):
+        for entry in sorted(os.listdir(ai_lab_dir), key=natural_sort_key):
+            full = os.path.join(ai_lab_dir, entry)
+            if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+                course_candidates.append({
+                    "raw_name": entry,
+                    "rel_path": f"AI LAB/{entry}",
+                    "full_path": full,
+                    "is_asimov": False,
+                    "source": "ai-lab"
+                })
+
+    # 2. Asimov (Scan subfolders: Cursos, Asimov Skills, Trilhas Asimov, Projetos, and direct folders)
     asimov_dir = os.path.join(courses_root, "Asimov")
     if os.path.isdir(asimov_dir):
+        for sub in ["Cursos", "Asimov Skills", "Trilhas Asimov", "Projetos"]:
+            sub_full = os.path.join(asimov_dir, sub)
+            if os.path.isdir(sub_full):
+                for entry in sorted(os.listdir(sub_full), key=natural_sort_key):
+                    full = os.path.join(sub_full, entry)
+                    if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+                        course_candidates.append({
+                            "raw_name": entry,
+                            "rel_path": f"Asimov/{sub}/{entry}",
+                            "full_path": full,
+                            "is_asimov": True,
+                            "source": "asimov"
+                        })
+        # Direct folders in Asimov
         for entry in sorted(os.listdir(asimov_dir), key=natural_sort_key):
+            if entry in ["Cursos", "Asimov Skills", "Trilhas Asimov", "Projetos"] or entry.lower() in DEFAULT_IGNORE:
+                continue
             full = os.path.join(asimov_dir, entry)
-            if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+            if os.path.isdir(full):
                 course_candidates.append({
                     "raw_name": entry,
                     "rel_path": f"Asimov/{entry}",
                     "full_path": full,
-                    "is_asimov": True
+                    "is_asimov": True,
+                    "source": "asimov"
                 })
 
-    # 2. SCTEC directory courses
+    # 3. Hashtag
+    hashtag_dir = os.path.join(courses_root, "Hashtag")
+    if os.path.isdir(hashtag_dir):
+        for entry in sorted(os.listdir(hashtag_dir), key=natural_sort_key):
+            full = os.path.join(hashtag_dir, entry)
+            if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+                course_candidates.append({
+                    "raw_name": entry,
+                    "rel_path": f"Hashtag/{entry}",
+                    "full_path": full,
+                    "is_asimov": False,
+                    "source": "hashtag"
+                })
+
+    # 4. SCTEC
     sctec_dir = os.path.join(courses_root, "SCTEC")
     if os.path.isdir(sctec_dir):
         for entry in sorted(os.listdir(sctec_dir), key=natural_sort_key):
@@ -496,25 +571,28 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                     "raw_name": entry,
                     "rel_path": f"SCTEC/{entry}",
                     "full_path": full,
-                    "is_asimov": False
+                    "is_asimov": False,
+                    "source": "sctec"
                 })
 
-    # 3. Asimov Skills directory courses
-    skills_dir = os.path.join(courses_root, "Asimov Skills")
-    if os.path.isdir(skills_dir):
-        for entry in sorted(os.listdir(skills_dir), key=natural_sort_key):
-            full = os.path.join(skills_dir, entry)
+    # 5. outros
+    outros_dir = os.path.join(courses_root, "outros")
+    if os.path.isdir(outros_dir):
+        for entry in sorted(os.listdir(outros_dir), key=natural_sort_key):
+            full = os.path.join(outros_dir, entry)
             if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
                 course_candidates.append({
                     "raw_name": entry,
-                    "rel_path": f"Asimov Skills/{entry}",
+                    "rel_path": f"outros/{entry}",
                     "full_path": full,
-                    "is_asimov": True
+                    "is_asimov": False,
+                    "source": "outros"
                 })
 
-    # 4. Root directory courses
+    # 6. Any other direct folders in root
+    known_roots = {"AI LAB", "Asimov", "Hashtag", "SCTEC", "outros", "Asimov Skills"}
     for entry in sorted(os.listdir(courses_root), key=natural_sort_key):
-        if entry.lower() in DEFAULT_IGNORE or entry in {"Asimov", "SCTEC", "Asimov Skills"}:
+        if entry in known_roots or entry.lower() in DEFAULT_IGNORE:
             continue
         full = os.path.join(courses_root, entry)
         if os.path.isdir(full):
@@ -522,7 +600,8 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                 "raw_name": entry,
                 "rel_path": entry,
                 "full_path": full,
-                "is_asimov": False
+                "is_asimov": False,
+                "source": "outros"
             })
 
     print(f"Total Course Candidates Found: {len(course_candidates)}")
@@ -836,9 +915,7 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
             "is_featured": is_featured,
             "is_hidden": is_hidden,
             "classification_source": "manual" if course_id in overrides else "rule",
-            "classification_confidence": 0.95 if course_id in overrides else 0.85,
-            "discovered_at": old_courses_map.get(course_id, {}).get("discovered_at", datetime.now().astimezone().isoformat()),
-            "last_scanned_at": datetime.now().astimezone().isoformat(),
+            "source": item.get("source") or infer_source(rel_path, raw_name),
             "modules": modules
         }
         scanned_courses.append(course_record)

@@ -6,21 +6,18 @@ import path from 'node:path';
 function getCoursesRoot(): string {
   if (process.env.COURSES_ROOT) {
     const candidate = path.resolve(process.env.COURSES_ROOT);
-    if (fs.existsSync(candidate) && (fs.existsSync(path.join(candidate, 'Asimov')) || fs.existsSync(path.join(candidate, 'AI LAB')))) {
+    if (fs.existsSync(candidate)) {
       return candidate;
     }
   }
 
-  const candidates = [
-    path.resolve(process.cwd(), '..'),
-    process.cwd(),
-    path.resolve('D:/Projetos Antigravity/download synapse')
-  ];
-
-  for (const c of candidates) {
-    if (fs.existsSync(c) && (fs.existsSync(path.join(c, 'Asimov')) || fs.existsSync(path.join(c, 'AI LAB')))) {
-      return c;
-    }
+  // Dynamically check Windows drive mounts at runtime
+  const drives = ['G:', 'I:', 'D:', 'C:'];
+  for (const d of drives) {
+    const p1 = path.join(d + path.sep, 'Meu Drive', 'Cursos', 'Cursos Mindflix');
+    if (fs.existsSync(p1)) return p1;
+    const p2 = path.join(d + path.sep, 'Meu Drive', 'Cursos');
+    if (fs.existsSync(p2)) return p2;
   }
 
   return path.resolve(process.cwd(), '..');
