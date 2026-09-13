@@ -1,19 +1,42 @@
 ---
-// profile.astro - Perfil do Usuário, Estatísticas e Atividade Real dos Últimos 7 Dias
+// profile.astro - Perfil do Usuário, Estatísticas de Aprendizado e Painel Interativo de Atividade
 import Layout from '../layouts/Layout.astro';
+import { getAllCourses } from '../lib/catalog';
+
+const allCourses = getAllCourses();
+// Lightweight lookup map for client-side lesson/course info
+const courseMap: Record<string, { title: string; cover: string; provider: string; lessons: Record<string, string> }> = {};
+for (const course of allCourses) {
+  const lessonNames: Record<string, string> = {};
+  for (const mod of course.modules || []) {
+    for (const les of mod.lessons || []) {
+      lessonNames[les.id] = les.display_title || les.title;
+    }
+  }
+  courseMap[course.id] = {
+    title: course.display_title || course.title,
+    cover: course.cover_image || '',
+    provider: course.provider || '',
+    lessons: lessonNames
+  };
+}
 ---
 
 <Layout title="Meu Perfil — Mindflix">
   <div class="container profile-page">
+    
+    <!-- Profile Header Card -->
     <div class="profile-header-card">
       <div class="profile-identity">
         <div class="profile-avatar-large">
           <span id="profile-avatar-initials">ED</span>
         </div>
         <div class="profile-info">
-          <h1 class="profile-name" id="profile-name">Eduardo</h1>
+          <div class="profile-name-row">
+            <h1 class="profile-name" id="profile-name">Eduardo</h1>
+            <span class="badge badge-cyan">Membro Mindflix</span>
+          </div>
           <p class="profile-email" id="profile-email">usuario@mindflix.local</p>
-          <span class="badge badge-cyan">Membro Mindflix</span>
         </div>
       </div>
 
@@ -36,13 +59,13 @@ import Layout from '../layouts/Layout.astro';
       </div>
     </div>
 
-    <!-- Statistics Grid -->
+    <!-- Overall Statistics Grid -->
     <div class="stats-section">
-      <h2 class="section-title">Estatísticas de Aprendizado</h2>
+      <h2 class="section-title">Estatísticas Gerais</h2>
       <div class="stats-grid">
         <div class="stat-box">
-          <span class="stat-icon-wrapper">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <span class="stat-icon-wrapper accent-cyan-glow">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
           </span>
@@ -54,7 +77,7 @@ import Layout from '../layouts/Layout.astro';
 
         <div class="stat-box">
           <span class="stat-icon-wrapper accent-emerald">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
@@ -67,7 +90,7 @@ import Layout from '../layouts/Layout.astro';
 
         <div class="stat-box">
           <span class="stat-icon-wrapper accent-purple">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
@@ -80,7 +103,7 @@ import Layout from '../layouts/Layout.astro';
 
         <div class="stat-box">
           <span class="stat-icon-wrapper accent-rose">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
           </span>
@@ -90,30 +113,134 @@ import Layout from '../layouts/Layout.astro';
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Real 7-Day Activity Chart -->
-      <div class="activity-chart-card">
-        <div class="chart-header">
-          <div class="chart-title-group">
-            <h3 class="chart-title">Atividade nos Últimos 7 Dias</h3>
-            <span class="chart-subtitle" id="chart-subtitle-summary">Carregando histórico real de estudos...</span>
+    <!-- Real Activity Hub & Interactive Chart -->
+    <div class="activity-chart-card">
+      
+      <!-- Card Top Bar: Header, Badges & Controls -->
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="title-with-pill">
+            <h3 class="chart-title">Ritmo & Atividade de Estudos</h3>
+            <span class="live-pulse-badge">
+              <span class="pulse-dot"></span>
+              Tempo Real
+            </span>
+          </div>
+          <span class="chart-subtitle" id="chart-subtitle-summary">Acompanhe sua consistência e evolução diária.</span>
+        </div>
+
+        <!-- Period selector & Goal settings -->
+        <div class="chart-controls-group">
+          <div class="period-toggle-group">
+            <button type="button" class="period-btn active" data-period="7">7 Dias</button>
+            <button type="button" class="period-btn" data-period="30">30 Dias</button>
           </div>
           <div class="chart-total-badge">
-            <span id="chart-7days-total-time">0h 00m</span>
-            <span class="badge-sub">no período</span>
+            <span class="badge-time-value" id="chart-period-total-time">0h 00m</span>
+            <span class="badge-sub" id="chart-period-label">nos últimos 7 dias</span>
           </div>
         </div>
-        <div class="weekly-bars-container" id="weekly-bars-container">
-          <!-- Populated dynamically with real activity per calendar day -->
+      </div>
+
+      <!-- Quick Metrics Strip: Streak, Daily Average, Goal Target -->
+      <div class="metrics-strip">
+        <div class="metric-chip">
+          <span class="metric-icon">🔥</span>
+          <div class="metric-data">
+            <span class="metric-label">Sequência Atual</span>
+            <strong class="metric-val" id="streak-count">0 dias</strong>
+          </div>
+        </div>
+
+        <div class="metric-chip">
+          <span class="metric-icon">⚡</span>
+          <div class="metric-data">
+            <span class="metric-label">Média Diária</span>
+            <strong class="metric-val" id="daily-avg-time">0 min</strong>
+          </div>
+        </div>
+
+        <div class="metric-chip goal-chip">
+          <span class="metric-icon">🎯</span>
+          <div class="metric-data">
+            <span class="metric-label">Meta Diária</span>
+            <div class="goal-selector-inline">
+              <select id="goal-target-select" title="Selecione sua meta de estudo diária">
+                <option value="15">15 min</option>
+                <option value="30" selected>30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">1h 00m</option>
+                <option value="90">1h 30m</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-chip">
+          <span class="metric-icon">🌟</span>
+          <div class="metric-data">
+            <span class="metric-label">Metas Atingidas</span>
+            <strong class="metric-val" id="goals-reached-count">0 / 7</strong>
+          </div>
         </div>
       </div>
+
+      <!-- Chart Visual Container with Guidelines and Capsules -->
+      <div class="chart-visual-wrapper">
+        <div class="chart-grid-lines">
+          <div class="grid-line"><span class="grid-label" id="grid-label-top">1h</span></div>
+          <div class="grid-line"><span class="grid-label" id="grid-label-mid">30m</span></div>
+          <div class="grid-line grid-base"><span class="grid-label">0m</span></div>
+        </div>
+
+        <div class="weekly-bars-container" id="weekly-bars-container">
+          <!-- Populated dynamically with glassmorphic pillars -->
+        </div>
+      </div>
+
+      <!-- Selected Day Drilldown & Recent Activity Panel -->
+      <div class="day-detail-section" id="day-detail-section">
+        <div class="detail-header">
+          <div class="detail-title-group">
+            <h4 class="detail-title" id="selected-day-title">Atividades de Hoje</h4>
+            <span class="detail-subtitle" id="selected-day-subtitle">Selecione um dia no gráfico para ver as aulas assistidas</span>
+          </div>
+          <div class="detail-summary-badge" id="selected-day-time-badge">
+            0 min de estudo
+          </div>
+        </div>
+
+        <div class="detail-content-box" id="selected-day-content">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
     </div>
+
   </div>
+
+  <!-- Embedded Catalog lookup for client JS -->
+  <script id="mindflix-courses-data" type="application/json" set:html={JSON.stringify(courseMap)}></script>
 </Layout>
 
 <script>
   import { getAllLocalProgress, getFavoriteCourseIds, getRecentCourseIds, syncProgressFromSupabase } from '../lib/progress';
-  import { getLocalUser, setLocalUser } from '../lib/supabase';
+  import { getLocalUser } from '../lib/supabase';
+  import { logoutUser } from '../lib/auth';
+
+  // Read embedded course map
+  let courseLookup: Record<string, { title: string; cover: string; provider: string; lessons: Record<string, string> }> = {};
+  try {
+    const raw = document.getElementById('mindflix-courses-data')?.textContent;
+    if (raw) courseLookup = JSON.parse(raw);
+  } catch (e) {}
+
+  // State
+  let selectedPeriodDays = 7;
+  let dailyGoalMinutes = 30;
+  let selectedDayIndex = 6; // default to today (last item in period)
 
   // Load user
   const user = getLocalUser();
@@ -128,6 +255,93 @@ import Layout from '../layouts/Layout.astro';
     if (nameEl) nameEl.textContent = displayName;
     if (emailEl) emailEl.textContent = user.email;
     if (avatarInitials) avatarInitials.textContent = displayName.substring(0, 2).toUpperCase();
+  }
+
+  // Load saved goal from localStorage
+  const savedGoal = localStorage.getItem('mindflix_daily_goal_minutes');
+  if (savedGoal) {
+    dailyGoalMinutes = parseInt(savedGoal, 10) || 30;
+    const select = document.getElementById('goal-target-select') as HTMLSelectElement;
+    if (select) select.value = String(dailyGoalMinutes);
+  }
+
+  // Goal select change
+  document.getElementById('goal-target-select')?.addEventListener('change', (e) => {
+    const target = e.target as HTMLSelectElement;
+    dailyGoalMinutes = parseInt(target.value, 10) || 30;
+    localStorage.setItem('mindflix_daily_goal_minutes', String(dailyGoalMinutes));
+    renderActivityChart();
+  });
+
+  // Period toggle buttons
+  document.querySelectorAll<HTMLButtonElement>('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPeriodDays = parseInt(btn.getAttribute('data-period') || '7', 10);
+      selectedDayIndex = selectedPeriodDays - 1; // reset selection to today
+      renderActivityChart();
+    });
+  });
+
+  // Calculate Streak
+  function calculateCurrentStreak(allProgress: Record<string, any>): number {
+    const daysWithStudy = new Set<string>();
+    Object.values(allProgress).forEach((item: any) => {
+      if (item.last_watched_at && (item.position_seconds > 0 || item.completed)) {
+        try {
+          const d = new Date(item.last_watched_at);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          daysWithStudy.add(`${y}-${m}-${day}`);
+        } catch (e) {}
+      }
+    });
+
+    let streak = 0;
+    const now = new Date();
+    
+    // Check from today or yesterday
+    const todayStr = getIsoDate(now);
+    const yest = new Date(now);
+    yest.setDate(yest.getDate() - 1);
+    const yestStr = getIsoDate(yest);
+
+    let checkDate = new Date(now);
+    if (!daysWithStudy.has(todayStr)) {
+      if (daysWithStudy.has(yestStr)) {
+        checkDate = yest;
+      } else {
+        return 0; // No streak
+      }
+    }
+
+    while (true) {
+      const dateStr = getIsoDate(checkDate);
+      if (daysWithStudy.has(dateStr)) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }
+
+  function getIsoDate(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function formatDuration(seconds: number): string {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hrs > 0) return `${hrs}h ${String(mins).padStart(2, '0')}m`;
+    return `${mins} min`;
   }
 
   function renderProfileStatsAndActivity() {
@@ -152,113 +366,283 @@ import Layout from '../layouts/Layout.astro';
     if (elTime) elTime.textContent = `${hours}h ${String(minutes).padStart(2, '0')}m`;
     if (elFavs) elFavs.textContent = favIds.length.toString();
 
-    // Render Real 7-Day Activity Chart
+    // Calculate streak
+    const streak = calculateCurrentStreak(allProgress);
+    const streakEl = document.getElementById('streak-count');
+    if (streakEl) {
+      streakEl.textContent = streak > 0 ? `${streak} dia${streak > 1 ? 's' : ''} 🔥` : '0 dias';
+    }
+
+    renderActivityChart();
+  }
+
+  function renderActivityChart() {
+    const allProgress = getAllLocalProgress();
+    const lessons = Object.values(allProgress);
     const container = document.getElementById('weekly-bars-container');
     const summarySub = document.getElementById('chart-subtitle-summary');
-    const totalTimeEl = document.getElementById('chart-7days-total-time');
+    const totalTimeEl = document.getElementById('chart-period-total-time');
+    const periodLabelEl = document.getElementById('chart-period-label');
+    const dailyAvgEl = document.getElementById('daily-avg-time');
+    const goalsReachedEl = document.getElementById('goals-reached-count');
+    const gridLabelTop = document.getElementById('grid-label-top');
+    const gridLabelMid = document.getElementById('grid-label-mid');
 
     if (!container) return;
 
     const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const fullDayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
     const now = new Date();
     const days: {
+      index: number;
       dateStr: string;
       label: string;
+      fullDayName: string;
       formattedDate: string;
       totalSeconds: number;
       lessonsCount: number;
+      lessonsList: any[];
       isToday: boolean;
+      goalReached: boolean;
     }[] = [];
 
-    // Build array for past 6 calendar days + today
-    for (let i = 6; i >= 0; i--) {
+    // Build days array for period
+    for (let i = selectedPeriodDays - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
 
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const dateStr = getIsoDate(d);
       const day = String(d.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
+      const month = String(d.getMonth() + 1).padStart(2, '0');
       const formattedDate = `${day}/${month}`;
       const label = dayNames[d.getDay()];
+      const fullDayName = fullDayNames[d.getDay()];
 
       days.push({
+        index: days.length,
         dateStr,
         label,
+        fullDayName,
         formattedDate,
         totalSeconds: 0,
         lessonsCount: 0,
-        isToday: i === 0
+        lessonsList: [],
+        isToday: i === 0,
+        goalReached: false
       });
     }
 
-    // Accumulate actual watched seconds & lessons per calendar day
+    // Accumulate lessons per calendar day
     lessons.forEach((item) => {
       if (!item.last_watched_at) return;
       try {
         const watchedDate = new Date(item.last_watched_at);
-        const wYear = watchedDate.getFullYear();
-        const wMonth = String(watchedDate.getMonth() + 1).padStart(2, '0');
-        const wDay = String(watchedDate.getDate()).padStart(2, '0');
-        const watchedDateStr = `${wYear}-${wMonth}-${wDay}`;
+        const watchedDateStr = getIsoDate(watchedDate);
 
         const dayObj = days.find(d => d.dateStr === watchedDateStr);
         if (dayObj) {
-          dayObj.totalSeconds += Math.min(item.position_seconds || 0, item.duration_seconds || 3600);
+          const duration = item.duration_seconds || 3600;
+          const watchedSecs = Math.min(item.position_seconds || 0, duration);
+          dayObj.totalSeconds += watchedSecs;
           dayObj.lessonsCount += 1;
+          dayObj.lessonsList.push(item);
         }
       } catch (e) {}
     });
 
-    const grandTotalSeconds = days.reduce((sum, d) => sum + d.totalSeconds, 0);
-    const grandHours = Math.floor(grandTotalSeconds / 3600);
-    const grandMins = Math.floor((grandTotalSeconds % 3600) / 60);
+    const goalSeconds = dailyGoalMinutes * 60;
+    let goalsMetCount = 0;
+    days.forEach(d => {
+      if (d.totalSeconds >= goalSeconds && d.totalSeconds > 0) {
+        d.goalReached = true;
+        goalsMetCount++;
+      }
+    });
 
-    if (totalTimeEl) {
-      totalTimeEl.textContent = grandTotalSeconds > 0 ? `${grandHours}h ${String(grandMins).padStart(2, '0')}m` : '0h 00m';
-    }
+    const grandTotalSeconds = days.reduce((sum, d) => sum + d.totalSeconds, 0);
+    const activeDaysCount = days.filter(d => d.totalSeconds > 0).length;
+    const avgSeconds = activeDaysCount > 0 ? Math.round(grandTotalSeconds / activeDaysCount) : 0;
+
+    if (totalTimeEl) totalTimeEl.textContent = formatDuration(grandTotalSeconds);
+    if (periodLabelEl) periodLabelEl.textContent = `nos últimos ${selectedPeriodDays} dias`;
+    if (dailyAvgEl) dailyAvgEl.textContent = avgSeconds > 0 ? formatDuration(avgSeconds) : '0 min';
+    if (goalsReachedEl) goalsReachedEl.textContent = `${goalsMetCount} / ${selectedPeriodDays}`;
 
     if (summarySub) {
       if (grandTotalSeconds > 0) {
-        summarySub.textContent = `Histórico real: ${grandHours > 0 ? `${grandHours}h ` : ''}${grandMins}m de estudos registrados nos últimos 7 dias.`;
+        summarySub.textContent = `Histórico real: ${formatDuration(grandTotalSeconds)} de estudos e ${goalsMetCount} meta(s) batida(s) no período.`;
       } else {
-        summarySub.textContent = 'Sem atividade registrada nos últimos 7 dias. Assista a uma aula para contabilizar seu tempo!';
+        summarySub.textContent = 'Sem atividade recente. Escolha uma aula para iniciar sua sequência!';
       }
     }
 
-    const maxDaySeconds = Math.max(...days.map(d => d.totalSeconds), 1);
+    // Dynamic grid axis labels
+    const maxDaySeconds = Math.max(...days.map(d => d.totalSeconds), goalSeconds, 3600);
+    if (gridLabelTop) gridLabelTop.textContent = formatDuration(maxDaySeconds);
+    if (gridLabelMid) gridLabelMid.textContent = formatDuration(Math.round(maxDaySeconds / 2));
 
+    // Ensure selectedDayIndex is within range
+    if (selectedDayIndex >= days.length) {
+      selectedDayIndex = days.length - 1;
+    }
+
+    // Render pillars
     container.innerHTML = days.map((day) => {
-      let heightPercent = 4; // subtle base dot height for 0 seconds
+      let heightPercent = 0;
       if (day.totalSeconds > 0) {
-        heightPercent = Math.max(12, Math.min(100, Math.round((day.totalSeconds / maxDaySeconds) * 100)));
+        heightPercent = Math.max(8, Math.min(100, Math.round((day.totalSeconds / maxDaySeconds) * 100)));
       }
 
-      const dMins = Math.floor(day.totalSeconds / 60);
-      const dHrs = Math.floor(dMins / 60);
-      const remMins = dMins % 60;
-      const timeFormatted = day.totalSeconds > 0 
-        ? (dHrs > 0 ? `${dHrs}h ${remMins}m` : `${dMins} min`)
-        : 'Sem atividade';
-
-      const tooltipText = `${day.label} (${day.formattedDate}): ${timeFormatted}${day.lessonsCount > 0 ? ` • ${day.lessonsCount} aula(s)` : ''}`;
+      const isSelected = day.index === selectedDayIndex;
+      const timeFormatted = day.totalSeconds > 0 ? formatDuration(day.totalSeconds) : 'Sem atividade';
+      const tooltipText = `${day.label} (${day.formattedDate}) • ${timeFormatted}${day.lessonsCount > 0 ? ` • ${day.lessonsCount} aula(s)` : ''}`;
 
       return `
-        <div class="day-col ${day.isToday ? 'active-today' : ''}" title="${tooltipText}">
-          <div class="bar-wrapper">
-            <span class="bar-value-tooltip">${timeFormatted}</span>
-            <div class="bar-fill" style="height: ${heightPercent}%;"></div>
+        <div class="day-pillar-col ${day.isToday ? 'is-today' : ''} ${isSelected ? 'is-selected' : ''} ${day.goalReached ? 'goal-met' : ''}" 
+             data-day-index="${day.index}" 
+             title="${tooltipText}">
+          
+          <div class="pillar-slot-track">
+            ${day.goalReached ? '<span class="pillar-goal-star" title="Meta atingida! ✨">✨</span>' : ''}
+            
+            <div class="pillar-fill-bar" style="height: ${heightPercent}%;">
+              <span class="pillar-hover-tooltip">
+                <strong class="tooltip-time">${timeFormatted}</strong>
+                <span class="tooltip-meta">${day.lessonsCount > 0 ? `${day.lessonsCount} aula(s)` : 'Sem aulas'}</span>
+                ${day.goalReached ? '<span class="tooltip-badge">🎯 Meta Atingida</span>' : ''}
+              </span>
+            </div>
           </div>
-          <span class="day-label">${day.isToday ? 'Hoje' : day.label}</span>
-          <span class="day-date">${day.formattedDate}</span>
+
+          <div class="pillar-labels">
+            <span class="pillar-day-name">${day.isToday ? 'Hoje' : day.label}</span>
+            <span class="pillar-day-date">${day.formattedDate}</span>
+          </div>
         </div>
       `;
     }).join('');
+
+    // Attach click listener to pillars
+    container.querySelectorAll<HTMLElement>('.day-pillar-col').forEach(col => {
+      col.addEventListener('click', () => {
+        const idx = parseInt(col.getAttribute('data-day-index') || '0', 10);
+        selectedDayIndex = idx;
+        
+        container.querySelectorAll('.day-pillar-col').forEach(c => c.classList.remove('is-selected'));
+        col.classList.add('is-selected');
+
+        renderSelectedDayDetail(days[idx]);
+      });
+    });
+
+    // Render selected day detail
+    renderSelectedDayDetail(days[selectedDayIndex] || days[days.length - 1]);
   }
 
-  renderProfileStatsAndActivity();
+  function renderSelectedDayDetail(dayObj: any) {
+    if (!dayObj) return;
 
-  import { logoutUser } from '../lib/auth';
+    const titleEl = document.getElementById('selected-day-title');
+    const subtitleEl = document.getElementById('selected-day-subtitle');
+    const timeBadgeEl = document.getElementById('selected-day-time-badge');
+    const contentBox = document.getElementById('selected-day-content');
+
+    if (!contentBox) return;
+
+    const dayTitle = dayObj.isToday ? 'Hoje' : `${dayObj.fullDayName}, ${dayObj.formattedDate}`;
+    if (titleEl) titleEl.textContent = `Sessões de Estudo: ${dayTitle}`;
+
+    if (timeBadgeEl) {
+      if (dayObj.totalSeconds > 0) {
+        timeBadgeEl.className = 'detail-summary-badge active';
+        timeBadgeEl.innerHTML = `<span>⚡ ${formatDuration(dayObj.totalSeconds)}</span> • <span>${dayObj.lessonsCount} aula(s)</span>`;
+      } else {
+        timeBadgeEl.className = 'detail-summary-badge';
+        timeBadgeEl.textContent = '0 min de estudo';
+      }
+    }
+
+    if (subtitleEl) {
+      if (dayObj.totalSeconds > 0) {
+        subtitleEl.textContent = dayObj.goalReached 
+          ? 'Parabéns! Você bateu sua meta diária de estudos nesta data! 🚀' 
+          : 'Aulas assistidas e tempo contabilizado nesta data:';
+      } else {
+        subtitleEl.textContent = 'Nenhuma aula assistida nesta data.';
+      }
+    }
+
+    if (dayObj.lessonsList && dayObj.lessonsList.length > 0) {
+      contentBox.innerHTML = `
+        <div class="day-lessons-list">
+          ${dayObj.lessonsList.map((item: any) => {
+            const courseInfo = courseLookup[item.course_id] || { title: 'Curso Mindflix', cover: '', provider: 'Mindflix', lessons: {} };
+            const lessonTitle = courseInfo.lessons[item.lesson_id] || `Aula #${item.lesson_id}`;
+            const watchSeconds = item.position_seconds || 0;
+            const durSeconds = item.duration_seconds || 3600;
+            const pct = Math.min(100, Math.round((watchSeconds / durSeconds) * 100));
+
+            return `
+              <div class="day-lesson-card">
+                <div class="lesson-card-left">
+                  <div class="lesson-course-badge">${courseInfo.provider || 'Curso'}</div>
+                  <div class="lesson-titles">
+                    <h5 class="lesson-name">${lessonTitle}</h5>
+                    <span class="lesson-course-name">${courseInfo.title}</span>
+                  </div>
+                </div>
+
+                <div class="lesson-card-right">
+                  <div class="lesson-progress-meta">
+                    <div class="lesson-progress-bar">
+                      <div class="lesson-progress-fill" style="width: ${pct}%;"></div>
+                    </div>
+                    <span class="lesson-time-spent">${formatDuration(watchSeconds)} (${pct}%)</span>
+                  </div>
+                  <a href="/watch/${item.course_id}/${item.lesson_id}" class="btn-continue-lesson">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span>${pct >= 90 ? 'Reassistir' : 'Continuar'}</span>
+                  </a>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    } else {
+      // Empty state for selected day with Quick Resume or Explore action
+      const recentIds = getRecentCourseIds();
+      const recentCourseId = recentIds[0];
+      const recentCourse = recentCourseId ? courseLookup[recentCourseId] : null;
+
+      contentBox.innerHTML = `
+        <div class="empty-day-state">
+          <div class="empty-state-visual">
+            <span class="empty-icon">☕</span>
+          </div>
+          <div class="empty-state-info">
+            <h5 class="empty-state-title">Nenhum estudo registrado neste dia</h5>
+            <p class="empty-state-desc">
+              ${recentCourse 
+                ? `Que tal continuar seu aprendizado em <strong>${recentCourse.title}</strong>?`
+                : 'Mantenha sua mente afiada assistindo a uma nova aula do catálogo!'}
+            </p>
+          </div>
+          <div class="empty-state-actions">
+            ${recentCourse 
+              ? `<a href="/courses" class="btn btn-primary btn-sm">Continuar de onde parou</a>`
+              : `<a href="/courses" class="btn btn-primary btn-sm">Explorar Cursos</a>`
+            }
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Initial render
+  renderProfileStatsAndActivity();
 
   // Sync latest progress from Supabase if configured
   syncProgressFromSupabase().then(() => {
@@ -275,9 +659,10 @@ import Layout from '../layouts/Layout.astro';
   .profile-page {
     padding-top: 110px;
     padding-bottom: 5rem;
-    max-width: 1000px;
+    max-width: 1040px;
   }
 
+  /* Profile Header Card */
   .profile-header-card {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
@@ -288,7 +673,20 @@ import Layout from '../layouts/Layout.astro';
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 1.5rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2.25rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-header-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--grad-primary);
   }
 
   .profile-identity {
@@ -298,17 +696,18 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .profile-avatar-large {
-    width: 80px;
-    height: 80px;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    background: linear-gradient(135deg, #00f2fe, #4facfe, #6366f1);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.85rem;
     font-weight: 800;
     color: #ffffff;
-    box-shadow: 0 0 24px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 0 24px rgba(0, 242, 254, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.2);
   }
 
   .profile-info {
@@ -317,9 +716,17 @@ import Layout from '../layouts/Layout.astro';
     gap: 0.35rem;
   }
 
+  .profile-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
   .profile-name {
     font-size: 1.75rem;
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: -0.02em;
   }
 
   .profile-email {
@@ -330,7 +737,12 @@ import Layout from '../layouts/Layout.astro';
   .profile-quick-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.85rem;
+  }
+
+  /* Overall Statistics Grid */
+  .stats-section {
+    margin-bottom: 2.25rem;
   }
 
   .section-title {
@@ -349,21 +761,28 @@ import Layout from '../layouts/Layout.astro';
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    padding: 1.5rem;
+    padding: 1.35rem;
     display: flex;
     align-items: center;
-    gap: 1.25rem;
+    gap: 1.15rem;
+    transition: transform var(--motion-fast) ease, border-color var(--motion-fast) ease;
+  }
+
+  .stat-box:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.15);
   }
 
   .stat-icon-wrapper {
-    width: 48px;
-    height: 48px;
+    width: 46px;
+    height: 46px;
     border-radius: 12px;
     background: rgba(0, 242, 254, 0.1);
     color: var(--accent-cyan);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
 
   .stat-icon-wrapper.accent-emerald {
@@ -384,7 +803,7 @@ import Layout from '../layouts/Layout.astro';
   .stat-meta {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.2rem;
   }
 
   .stat-desc {
@@ -393,155 +812,678 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .stat-number {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 800;
     color: var(--text-primary);
   }
 
+  /* Activity Chart Card */
   .activity-chart-card {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    padding: 1.75rem;
-    margin-top: 1.75rem;
+    padding: 2rem;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
   }
 
+  /* Header & Period Switcher */
   .chart-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.75rem;
+    gap: 1.25rem;
   }
 
   .chart-title-group {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.35rem;
+  }
+
+  .title-with-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
   }
 
   .chart-title {
-    font-size: 1.25rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .live-pulse-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.6875rem;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.6rem;
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    border-radius: var(--radius-pill);
+  }
+
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+    animation: pulseGlow 1.8s infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
   }
 
   .chart-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: var(--text-muted);
+  }
+
+  .chart-controls-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .period-toggle-group {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+  }
+
+  .period-btn {
+    padding: 0.35rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .period-btn.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   }
 
   .chart-total-badge {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    background: rgba(var(--accent-primary-rgb), 0.08);
-    border: 1px solid rgba(var(--accent-primary-rgb), 0.25);
-    padding: 0.5rem 1rem;
+    background: rgba(0, 242, 254, 0.06);
+    border: 1px solid rgba(0, 242, 254, 0.2);
+    padding: 0.45rem 1rem;
     border-radius: var(--radius-md);
   }
 
-  .chart-total-badge span:first-child {
-    font-size: 1.15rem;
+  .badge-time-value {
+    font-size: 1.2rem;
     font-weight: 800;
     color: var(--accent-cyan);
+    line-height: 1.1;
   }
 
   .badge-sub {
-    font-size: 0.7rem;
+    font-size: 0.6875rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
+  /* Metrics Strip */
+  .metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .metric-chip {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .metric-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .metric-data {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .metric-label {
+    font-size: 0.725rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .metric-val {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .goal-selector-inline select {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--accent-cyan);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    border-radius: var(--radius-xs);
+    padding: 0.15rem 0.45rem;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .goal-selector-inline select:focus {
+    border-color: var(--accent-cyan);
+  }
+
+  /* Visual Chart Canvas */
+  .chart-visual-wrapper {
+    position: relative;
+    height: 220px;
+    padding-top: 1.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .chart-grid-lines {
+    position: absolute;
+    top: 1.5rem;
+    left: 0;
+    right: 0;
+    bottom: 35px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .grid-line {
+    position: relative;
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .grid-line.grid-base {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .grid-label {
+    position: absolute;
+    right: 0;
+    top: -12px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
   .weekly-bars-container {
+    position: relative;
+    z-index: 2;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    height: 160px;
-    gap: 0.85rem;
-    padding-top: 1.5rem;
+    height: 100%;
+    gap: 0.75rem;
   }
 
-  .day-col {
+  /* Pillar Column */
+  .day-pillar-col {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     height: 100%;
     justify-content: flex-end;
-    gap: 0.35rem;
-    position: relative;
+    gap: 0.5rem;
     cursor: pointer;
+    position: relative;
+    min-width: 0;
   }
 
-  .bar-wrapper {
+  .pillar-slot-track {
+    position: relative;
     width: 100%;
-    height: 100%;
+    max-width: 44px;
+    height: calc(100% - 35px);
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    position: relative;
+    padding: 3px;
+    transition: all var(--motion-fast) ease;
+    overflow: visible;
   }
 
-  .bar-fill {
-    width: 100%;
-    max-width: 38px;
-    background: rgba(255, 255, 255, 0.07);
-    border-radius: var(--radius-xs);
-    transition: height var(--motion-slow) var(--ease-out), background var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+  .day-pillar-col:hover .pillar-slot-track {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(0, 242, 254, 0.4);
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.15);
   }
 
-  .day-col:hover .bar-fill {
-    background: var(--grad-primary);
-    box-shadow: 0 0 16px rgba(var(--accent-primary-rgb), 0.45);
+  .day-pillar-col.is-selected .pillar-slot-track {
     border-color: var(--accent-cyan);
+    background: rgba(0, 242, 254, 0.08);
+    box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
   }
 
-  .day-col.active-today .bar-fill {
-    background: var(--grad-primary);
-    box-shadow: 0 0 14px rgba(var(--accent-primary-rgb), 0.35);
-  }
-
-  .bar-value-tooltip {
+  .pillar-goal-star {
     position: absolute;
-    top: -2.2rem;
-    font-size: 0.725rem;
-    font-weight: 700;
-    color: #ffffff;
-    background: rgba(18, 22, 32, 0.95);
-    border: 1px solid rgba(var(--accent-primary-rgb), 0.3);
-    padding: 0.2rem 0.5rem;
+    top: -10px;
+    font-size: 0.85rem;
+    z-index: 5;
+    animation: starFloat 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes starFloat {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-3px); }
+  }
+
+  .pillar-fill-bar {
+    width: 100%;
+    background: linear-gradient(180deg, #00f2fe 0%, #4facfe 60%, #6366f1 100%);
     border-radius: var(--radius-xs);
+    position: relative;
+    transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow var(--motion-fast) ease;
+    min-height: 0;
+  }
+
+  .day-pillar-col.goal-met .pillar-fill-bar {
+    background: linear-gradient(180deg, #10b981 0%, #059669 50%, #00f2fe 100%);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+  }
+
+  .day-pillar-col:hover .pillar-fill-bar {
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.6);
+  }
+
+  /* Pillar Tooltip */
+  .pillar-hover-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background: rgba(15, 20, 32, 0.96);
+    border: 1px solid rgba(0, 242, 254, 0.35);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
     white-space: nowrap;
     opacity: 0;
-    transform: translateY(4px);
     pointer-events: none;
     transition: all var(--motion-fast) var(--ease-out);
-    z-index: 10;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
-  .day-col:hover .bar-value-tooltip {
+  .pillar-hover-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background: rgba(15, 20, 32, 0.96);
+    border-right: 1px solid rgba(0, 242, 254, 0.35);
+    border-bottom: 1px solid rgba(0, 242, 254, 0.35);
+  }
+
+  .day-pillar-col:hover .pillar-hover-tooltip {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 
-  .day-label {
-    font-size: 0.775rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-    margin-top: 0.35rem;
+  .tooltip-time {
+    font-size: 0.8125rem;
+    font-weight: 800;
+    color: #ffffff;
   }
 
-  .day-date {
-    font-size: 0.675rem;
+  .tooltip-meta {
+    font-size: 0.6875rem;
     color: var(--text-muted);
   }
 
-  .active-today .day-label {
+  .tooltip-badge {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--accent-emerald);
+    margin-top: 0.1rem;
+  }
+
+  /* Pillar Labels */
+  .pillar-labels {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    height: 32px;
+    justify-content: center;
+  }
+
+  .pillar-day-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: color var(--motion-fast) ease;
+  }
+
+  .pillar-day-date {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  .day-pillar-col.is-today .pillar-day-name {
+    color: var(--accent-cyan);
+    font-weight: 800;
+  }
+
+  .day-pillar-col.is-selected .pillar-day-name {
+    color: #ffffff;
+    font-weight: 800;
+  }
+
+  /* Selected Day Drilldown Section */
+  .day-detail-section {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 1rem;
+  }
+
+  .detail-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .detail-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .detail-subtitle {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .detail-summary-badge {
+    padding: 0.35rem 0.85rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .detail-summary-badge.active {
+    background: rgba(0, 242, 254, 0.1);
+    border-color: rgba(0, 242, 254, 0.3);
     color: var(--accent-cyan);
     font-weight: 700;
+  }
+
+  /* Day Lessons List */
+  .day-lessons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .day-lesson-card {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .day-lesson-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .lesson-card-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .lesson-course-badge {
+    padding: 0.25rem 0.55rem;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: var(--radius-xs);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #a5b4fc;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+
+  .lesson-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .lesson-name {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .lesson-course-name {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .lesson-card-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .lesson-progress-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    min-width: 100px;
+  }
+
+  .lesson-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .lesson-progress-fill {
+    height: 100%;
+    background: var(--grad-primary);
+    border-radius: 2px;
+  }
+
+  .lesson-time-spent {
+    font-size: 0.6875rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  .btn-continue-lesson {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(0, 242, 254, 0.12);
+    border: 1px solid rgba(0, 242, 254, 0.35);
+    color: var(--accent-cyan);
+    border-radius: var(--radius-xs);
+    text-decoration: none;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .btn-continue-lesson:hover {
+    background: var(--accent-cyan);
+    color: #000000;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.4);
+  }
+
+  /* Empty Day State */
+  .empty-day-state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    flex-wrap: wrap;
+  }
+
+  .empty-state-visual {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+  }
+
+  .empty-state-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 200px;
+  }
+
+  .empty-state-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .empty-state-desc {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .empty-state-actions {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    .profile-header-card {
+      padding: 1.5rem;
+    }
+    .profile-identity {
+      flex-direction: column;
+      text-align: center;
+    }
+    .profile-name-row {
+      justify-content: center;
+    }
+    .profile-quick-actions {
+      width: 100%;
+      justify-content: center;
+    }
+    .chart-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .chart-controls-group {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .day-lesson-card {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .lesson-card-right {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .empty-day-state {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 </style>

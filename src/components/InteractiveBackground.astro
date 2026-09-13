@@ -229,42 +229,9 @@ const { disableInteraction = false } = Astro.props;
         });
       }
 
-      // --- 2. AURORA ASSETS ---
-      const auroras: AuroraCurtain[] = [];
-      const auroraParticles: NodeParticle[] = [];
-
-      function initAurora() {
-        auroras.length = 0;
-        const curtainCount = 4;
-        for (let i = 0; i < curtainCount; i++) {
-          auroras.push({
-            baseY: height * (0.2 + i * 0.18),
-            amplitude: 40 + i * 18,
-            wavelength: 0.0012 + i * 0.0005,
-            speed: 0.0004 + i * 0.0002,
-            phase: i * 1.4,
-            colorStops: [
-              { stop: 0, color: `rgba(${currentTheme.primaryRgb}, 0)` },
-              { stop: 0.35, color: `rgba(${currentTheme.primaryRgb}, 0.12)` },
-              { stop: 0.65, color: `rgba(${currentTheme.secondaryRgb}, 0.18)` },
-              { stop: 1, color: `rgba(${currentTheme.secondaryRgb}, 0)` }
-            ]
-          });
-        }
-
-        auroraParticles.length = 0;
-        const count = isMobile ? 24 : 45;
-        for (let i = 0; i < count; i++) {
-          auroraParticles.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.25,
-            vy: -0.15 - Math.random() * 0.3,
-            radius: 1.2 + Math.random() * 2.0,
-            alpha: 0.2 + Math.random() * 0.45,
-            color: i % 2 === 0 ? currentTheme.accentPrimary : currentTheme.accentSecondary
-          });
-        }
+      // --- 2. ESCURO MINIMALISTA (100% ESTÁTICO, SEM EFEITOS OU INTERAÇÕES) ---
+      function initDarkMinimal() {
+        // Sem elementos móveis ou partículas
       }
 
       // --- 3. FLUXO RETILÍNEO (STRAIGHT LINES & DATA PULSES) ASSETS ---
@@ -532,7 +499,7 @@ const { disableInteraction = false } = Astro.props;
 
       function initAll() {
         initWaves();
-        initAurora();
+        initDarkMinimal();
         initCyberGrid();
         initNebula();
       }
@@ -541,7 +508,7 @@ const { disableInteraction = false } = Astro.props;
 
       // Pointer Tracking
       function updatePointer(clientX: number, clientY: number) {
-        if (isWatchPage()) return;
+        if (isWatchPage() || currentStyle === 'aurora') return;
         mouse.targetX = clientX;
         mouse.targetY = clientY;
         if (!mouse.active) {
@@ -569,7 +536,7 @@ const { disableInteraction = false } = Astro.props;
       }, { passive: true });
 
       window.addEventListener('click', (e) => {
-        if (!isWatchPage()) {
+        if (!isWatchPage() && currentStyle !== 'aurora') {
           addRipple(e.clientX, e.clientY, 40);
           if (currentStyle === 'cyber-grid') {
             triggerSurgeAt(e.clientX, e.clientY);
@@ -772,79 +739,9 @@ const { disableInteraction = false } = Astro.props;
         }
       }
 
-      // 2. Render Aurora Nórdica
-      function renderAurora(dt: number, onWatch: boolean) {
-        if (!ctx) return;
-
-        // Render wavy ambient curtain layers
-        auroras.forEach((aurora, idx) => {
-          aurora.phase += aurora.speed * dt;
-
-          ctx.beginPath();
-          const startY = aurora.baseY + Math.sin(aurora.phase) * aurora.amplitude;
-          ctx.moveTo(0, startY);
-
-          const step = isMobile ? 35 : 20;
-          for (let x = 0; x <= width + step; x += step) {
-            const wave1 = Math.sin(x * aurora.wavelength + aurora.phase) * aurora.amplitude;
-            const wave2 = Math.cos(x * aurora.wavelength * 0.5 + aurora.phase * 1.5) * (aurora.amplitude * 0.5);
-            let y = aurora.baseY + wave1 + wave2;
-
-            if (!onWatch && mouse.active) {
-              const dx = x - mouse.x;
-              const dy = y - mouse.y;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist < 220) {
-                y += (dy / (dist || 1)) * (1 - dist / 220) * 35;
-              }
-            }
-
-            ctx.lineTo(x, y);
-          }
-
-          ctx.lineTo(width, height);
-          ctx.lineTo(0, height);
-          ctx.closePath();
-
-          const curtainGrad = ctx.createLinearGradient(0, aurora.baseY - 120, 0, aurora.baseY + 300);
-          curtainGrad.addColorStop(0, `rgba(${idx % 2 === 0 ? currentTheme.primaryRgb : currentTheme.secondaryRgb}, 0)`);
-          curtainGrad.addColorStop(0.3, `rgba(${currentTheme.primaryRgb}, 0.08)`);
-          curtainGrad.addColorStop(0.7, `rgba(${currentTheme.secondaryRgb}, 0.12)`);
-          curtainGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-          ctx.fillStyle = curtainGrad;
-          ctx.fill();
-        });
-
-        // Floating ambient focus motes
-        auroraParticles.forEach((p) => {
-          p.x += p.vx;
-          p.y += p.vy;
-
-          if (p.y < -20) {
-            p.y = height + 20;
-            p.x = Math.random() * width;
-          }
-          if (p.x < -20) p.x = width + 20;
-          else if (p.x > width + 20) p.x = -20;
-
-          if (!onWatch && mouse.active) {
-            const dx = p.x - mouse.x;
-            const dy = p.y - mouse.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 150) {
-              p.x += (dx / (dist || 1)) * 1.2;
-              p.y += (dy / (dist || 1)) * 1.2;
-            }
-          }
-
-          ctx.fillStyle = p.color;
-          ctx.globalAlpha = p.alpha;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.globalAlpha = 1;
-        });
+      // 2. Render Escuro Minimalista (100% estático, sem desenhos na canvas)
+      function renderDarkMinimal(dt: number, onWatch: boolean) {
+        // Nada a renderizar no canvas: fundo puro e sóbrio via CSS
       }
 
       // 3. Render Fluxo Retilíneo (Straight Lines, Glowing Pulses & Click Surges)
@@ -1162,8 +1059,8 @@ const { disableInteraction = false } = Astro.props;
 
           const mouseRadius = mouse.radius;
 
-          // Mouse Ambient Spotlight
-          if (!onWatch && mouse.active && mouse.x > 0 && mouse.y > 0) {
+          // Mouse Ambient Spotlight (desativado no modo Escuro Minimalista)
+          if (!onWatch && currentStyle !== 'aurora' && mouse.active && mouse.x > 0 && mouse.y > 0) {
             const glowGrad = ctx.createRadialGradient(
               mouse.x, mouse.y, 0,
               mouse.x, mouse.y, mouseRadius * 1.2
@@ -1180,7 +1077,7 @@ const { disableInteraction = false } = Astro.props;
 
           // Render active background style
           if (currentStyle === 'aurora') {
-            renderAurora(dt, onWatch);
+            renderDarkMinimal(dt, onWatch);
           } else if (currentStyle === 'cyber-grid') {
             renderCyberGrid(dt, onWatch);
           } else if (currentStyle === 'nebula') {
@@ -1206,6 +1103,20 @@ const { disableInteraction = false } = Astro.props;
     z-index: 0;
     overflow: hidden;
     background-color: var(--bg-main);
+  }
+
+  /* Escuro Minimalista (não totalmente preto, sem orbs, sem efeitos) */
+  :global(html[data-bg-style="aurora"]) .bg-viewport {
+    background: radial-gradient(circle at 50% 30%, #121620 0%, #0c0f16 55%, #080a0f 100%) !important;
+  }
+
+  :global(html[data-bg-style="aurora"]) .glow-orb {
+    display: none !important;
+    opacity: 0 !important;
+  }
+
+  :global(html[data-bg-style="aurora"]) .bg-vignette {
+    background: radial-gradient(circle at 50% 40%, transparent 60%, rgba(5, 7, 10, 0.4) 100%) !important;
   }
 
   /* Distant ambient glow orbs */
@@ -1246,13 +1157,6 @@ const { disableInteraction = false } = Astro.props;
   }
 
   /* Style specific orb modifications */
-  :global(html[data-bg-style="aurora"]) .orb-primary {
-    background: radial-gradient(circle, #10b981 0%, #06b6d4 70%, transparent 100%);
-  }
-  :global(html[data-bg-style="aurora"]) .orb-secondary {
-    background: radial-gradient(circle, #06b6d4 0%, #8b5cf6 70%, transparent 100%);
-  }
-
   :global(html[data-bg-style="cyber-grid"]) .orb-primary {
     background: radial-gradient(circle, #38bdf8 0%, #6366f1 70%, transparent 100%);
   }

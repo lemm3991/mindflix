@@ -25,13 +25,13 @@ export const BACKGROUND_PRESETS: BackgroundPreset[] = [
   },
   {
     id: 'aurora',
-    name: 'Aurora Nórdica',
-    tagline: 'Deep Focus & Serenidade',
-    description: 'Cortinas etéreas de luz boreal ondulante com poeira estelar flutuante suave. Proporciona descanso visual e máxima concentração.',
-    category: 'Foco Profundo',
-    previewGradient: 'radial-gradient(ellipse at 70% 30%, rgba(16, 185, 129, 0.45) 0%, rgba(6, 182, 212, 0.25) 50%, rgba(7, 9, 14, 0.95) 100%)',
-    accentColor: '#10b981',
-    secondaryColor: '#06b6d4'
+    name: 'Escuro Minimalista',
+    tagline: 'Foco Absoluto & Estático',
+    description: 'Fundo escuro sóbrio e elegante (não totalmente preto), 100% estático, sem animações, partículas, interações ou efeitos.',
+    category: 'Estático',
+    previewGradient: 'radial-gradient(ellipse at 50% 50%, #151a24 0%, #0d1118 65%, #080b10 100%)',
+    accentColor: '#475569',
+    secondaryColor: '#1e293b'
   },
   {
     id: 'cyber-grid',
