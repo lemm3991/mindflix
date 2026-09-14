@@ -50,6 +50,9 @@ def resolve_drive_folder_id(custom_id=None):
         return env_id.strip()
     return DEFAULT_DRIVE_FOLDER_ID
 
+import httplib2
+import google_auth_httplib2
+
 def get_drive_service(creds_path=None):
     path = resolve_credentials_path(creds_path)
     if not path:
@@ -59,7 +62,9 @@ def get_drive_service(creds_path=None):
             path,
             scopes=DRIVE_READONLY_SCOPE
         )
-        service = build('drive', 'v3', credentials=creds, cache_discovery=False)
+        http = httplib2.Http(disable_ssl_certificate_validation=True)
+        authed = google_auth_httplib2.AuthorizedHttp(creds, http=http)
+        service = build('drive', 'v3', http=authed, cache_discovery=False)
         return service
     except Exception as e:
         print(f"[Drive] Erro ao inicializar servico do Google Drive: {e}")
