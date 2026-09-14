@@ -5,9 +5,11 @@ import VideoPlayer from '../../../components/VideoPlayer.astro';
 import CourseSidebar from '../../../components/CourseSidebar.astro';
 import ChallengeModal from '../../../components/ChallengeModal.astro';
 import { getCourseById, getFirstPlayableLesson } from '../../../lib/catalog';
+import { getCourseSourceId } from '../../../lib/sources';
 
 const { courseId, lessonId } = Astro.params;
 const course = courseId ? getCourseById(courseId) : undefined;
+const currentCourseSource = course ? getCourseSourceId(course) : 'all';
 
 if (!course) {
   return Astro.redirect('/404');
@@ -58,6 +60,9 @@ const isLastLessonInModule = Boolean(
 ---
 
 <Layout title={`${currentLesson.display_title} — ${course.display_title}`} hideNavbar={false}>
+  <script is:inline define:vars={{ currentCourseSource }}>
+    window.__CURRENT_VIDEO_SOURCE__ = currentCourseSource;
+  </script>
   <!-- Background Overlay for Focus Mode (60% dark) -->
   <div class="focus-backdrop" id="focus-backdrop" aria-hidden="true"></div>
 

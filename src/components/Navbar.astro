@@ -42,145 +42,131 @@ const navItems = [
       </nav>
     </div>
 
-    <!-- Center: 5 Study Sources Switcher with Asimov & Asimov Skills Sub-selector -->
+    <!-- Center: Collapsed Study Source Selector -->
     <div class="source-switcher-wrapper">
-      <div class="source-switcher" id="header-source-switcher" role="tablist" aria-label="Fontes de Estudo">
+      <div class="source-dropdown-group" id="header-source-dropdown-group">
         <button
           type="button"
-          class="source-pill-btn active"
-          data-source-id="all"
-          role="tab"
-          aria-selected="true"
-          title="Ver cursos de todas as fontes de estudo"
+          class="single-source-btn"
+          id="single-source-btn"
+          role="button"
+          aria-haspopup="true"
+          aria-expanded="false"
+          title="Clique para selecionar a Fonte de Estudo"
         >
-          <span class="source-pill-dot dot-all"></span>
-          <span class="source-pill-label">Todas</span>
+          <span class="source-pill-dot dot-all" id="single-source-dot"></span>
+          <span class="source-pill-label" id="single-source-label">Todas</span>
+          <svg class="source-dropdown-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
         </button>
 
-        {STUDY_SOURCES.filter(s => s.id !== 'asimov-skills' && s.id !== 'hashtag-soft-skills').map(source => {
-          if (source.id === 'asimov') {
-            return (
-              <div class="source-dropdown-group" id="asimov-dropdown-group">
-                <button
-                  type="button"
-                  class="source-pill-btn has-dropdown"
-                  data-source-id="asimov"
-                  data-color={source.color}
-                  id="asimov-pill-btn"
-                  role="tab"
-                  aria-selected="false"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Clique para escolher entre Cursos/Projetos ou Asimov Skills"
-                >
-                  <span class="source-pill-dot" style={`background-color: ${source.color}; box-shadow: 0 0 8px ${source.color}80;`}></span>
-                  <span class="source-pill-label" id="asimov-pill-label">Asimov</span>
-                  <svg class="source-dropdown-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-
-                <!-- Dropdown Menu -->
-                <div class="source-dropdown-menu" id="asimov-dropdown-menu" role="menu">
-                  <button type="button" class="dropdown-item active" data-subsource="asimov" role="menuitem">
-                    <div class="dropdown-item-left">
-                      <span class="dropdown-dot dot-asimov"></span>
-                      <div class="dropdown-texts">
-                        <span class="dropdown-item-title">Asimov</span>
-                        <span class="dropdown-item-desc">Cursos, Projetos & Trilhas</span>
-                      </div>
-                    </div>
-                    <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </button>
-
-                  <button type="button" class="dropdown-item" data-subsource="asimov-skills" role="menuitem">
-                    <div class="dropdown-item-left">
-                      <span class="dropdown-dot dot-skills"></span>
-                      <div class="dropdown-texts">
-                        <span class="dropdown-item-title">Asimov Skills</span>
-                        <span class="dropdown-item-desc">Produtividade, Oratória & Soft Skills</span>
-                      </div>
-                    </div>
-                    <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </button>
-                </div>
+        <!-- Collapsed Dropdown Menu -->
+        <div class="source-dropdown-menu single-source-menu" id="header-source-dropdown-menu" role="menu">
+          <button type="button" class="dropdown-item active" data-subsource="all" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot dot-all"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Todas</span>
+                <span class="dropdown-item-desc">Todas as fontes de estudo</span>
               </div>
-            );
-          }
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
 
-          if (source.id === 'hashtag') {
-            return (
-              <div class="source-dropdown-group" id="hashtag-dropdown-group">
-                <button
-                  type="button"
-                  class="source-pill-btn has-dropdown"
-                  data-source-id="hashtag"
-                  data-color={source.color}
-                  id="hashtag-pill-btn"
-                  role="tab"
-                  aria-selected="false"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Clique para escolher entre Treinamentos Impressionadores ou Soft Skills"
-                >
-                  <span class="source-pill-dot" style={`background-color: ${source.color}; box-shadow: 0 0 8px ${source.color}80;`}></span>
-                  <span class="source-pill-label" id="hashtag-pill-label">Hashtag</span>
-                  <svg class="source-dropdown-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-
-                <!-- Dropdown Menu -->
-                <div class="source-dropdown-menu" id="hashtag-dropdown-menu" role="menu">
-                  <button type="button" class="dropdown-item active" data-subsource="hashtag" role="menuitem">
-                    <div class="dropdown-item-left">
-                      <span class="dropdown-dot dot-hashtag"></span>
-                      <div class="dropdown-texts">
-                        <span class="dropdown-item-title">Hashtag</span>
-                        <span class="dropdown-item-desc">Impressionador: IA, Claude, Lovable, Supabase & NoCode</span>
-                      </div>
-                    </div>
-                    <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </button>
-
-                  <button type="button" class="dropdown-item" data-subsource="hashtag-soft-skills" role="menuitem">
-                    <div class="dropdown-item-left">
-                      <span class="dropdown-dot dot-hashtag-skills"></span>
-                      <div class="dropdown-texts">
-                        <span class="dropdown-item-title">Hashtag Soft Skills</span>
-                        <span class="dropdown-item-desc">Alta Performance, Autoconhecimento, Comunicação & Liderança</span>
-                      </div>
-                    </div>
-                    <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </button>
-                </div>
+          <button type="button" class="dropdown-item" data-subsource="ailab" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #00f2fe; box-shadow: 0 0 8px #00f2fe80;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">AI LAB</span>
+                <span class="dropdown-item-desc">Inteligência Artificial & Agentes</span>
               </div>
-            );
-          }
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
 
-          return (
-            <button
-              type="button"
-              class="source-pill-btn"
-              data-source-id={source.id}
-              data-color={source.color}
-              role="tab"
-              aria-selected="false"
-              title={source.description}
-            >
-              <span class="source-pill-dot" style={`background-color: ${source.color}; box-shadow: 0 0 8px ${source.color}80;`}></span>
-              <span class="source-pill-label">{source.shortName}</span>
-            </button>
-          );
-        })}
+          <button type="button" class="dropdown-item" data-subsource="asimov" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #6366f1; box-shadow: 0 0 8px #6366f180;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Asimov</span>
+                <span class="dropdown-item-desc">Cursos, Projetos & Trilhas</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item sub-dropdown-item" data-subsource="asimov-skills" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #818cf8; box-shadow: 0 0 8px #818cf880;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Asimov Skills</span>
+                <span class="dropdown-item-desc">Soft Skills & Produtividade</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item" data-subsource="hashtag" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #ec4899; box-shadow: 0 0 8px #ec489980;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Hashtag</span>
+                <span class="dropdown-item-desc">Impressionador: IA, Claude, Lovable</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item sub-dropdown-item" data-subsource="hashtag-soft-skills" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #f43f5e; box-shadow: 0 0 8px #f43f5e80;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Hashtag Soft Skills</span>
+                <span class="dropdown-item-desc">Liderança & Alta Performance</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item" data-subsource="sctec" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #10b981; box-shadow: 0 0 8px #10b98180;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">SCTEC</span>
+                <span class="dropdown-item-desc">Carreira Tech & Formações</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item" data-subsource="outros" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b80;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Diversos</span>
+                <span class="dropdown-item-desc">Cursos complementares</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -213,56 +199,49 @@ const navItems = [
 <script>
   import { getActiveSource, setActiveSource } from '../lib/sources';
 
-  function updateActiveSourceUI(currentSource: string) {
-    const buttons = document.querySelectorAll<HTMLButtonElement>('.source-pill-btn');
-    const asimovBtn = document.getElementById('asimov-pill-btn');
-    const asimovLabel = document.getElementById('asimov-pill-label');
-    const hashtagBtn = document.getElementById('hashtag-pill-btn');
-    const hashtagLabel = document.getElementById('hashtag-pill-label');
+  const SOURCES_META: Record<string, { label: string; color: string; isAll?: boolean }> = {
+    'all': { label: 'Todas', color: 'var(--grad-primary)', isAll: true },
+    'ailab': { label: 'AI LAB', color: '#00f2fe' },
+    'asimov': { label: 'Asimov', color: '#6366f1' },
+    'asimov-skills': { label: 'Asimov Skills', color: '#818cf8' },
+    'hashtag': { label: 'Hashtag', color: '#ec4899' },
+    'hashtag-soft-skills': { label: 'Hashtag Soft Skills', color: '#f43f5e' },
+    'sctec': { label: 'SCTEC', color: '#10b981' },
+    'outros': { label: 'Diversos', color: '#f59e0b' }
+  };
+
+  function updateActiveSourceUI(forcedSource?: string) {
+    const isWatch = window.location.pathname.startsWith('/watch');
+    const videoSrc = (window as any).__CURRENT_VIDEO_SOURCE__;
+    const currentSource = forcedSource || (isWatch && videoSrc ? videoSrc : getActiveSource());
+
+    const meta = SOURCES_META[currentSource] || SOURCES_META['all'];
+    const labelEl = document.getElementById('single-source-label');
+    const dotEl = document.getElementById('single-source-dot');
+    const btnEl = document.getElementById('single-source-btn');
+
+    if (labelEl) {
+      labelEl.textContent = meta.label;
+    }
+
+    if (dotEl) {
+      if (meta.isAll) {
+        dotEl.classList.add('dot-all');
+        dotEl.style.backgroundColor = '';
+        dotEl.style.boxShadow = '';
+      } else {
+        dotEl.classList.remove('dot-all');
+        dotEl.style.backgroundColor = meta.color;
+        dotEl.style.boxShadow = `0 0 8px ${meta.color}80`;
+      }
+    }
+
+    if (btnEl) {
+      btnEl.setAttribute('data-active-source', currentSource);
+    }
+
+    // Update active checkmarks in dropdown items
     const dropdownItems = document.querySelectorAll<HTMLButtonElement>('.dropdown-item');
-
-    buttons.forEach(btn => {
-      const sId = btn.getAttribute('data-source-id');
-      const isAsimovFamily = (currentSource === 'asimov' || currentSource === 'asimov-skills') && sId === 'asimov';
-      const isHashtagFamily = (currentSource === 'hashtag' || currentSource === 'hashtag-soft-skills') && sId === 'hashtag';
-      const isMatch = sId === currentSource || isAsimovFamily || isHashtagFamily;
-
-      if (isMatch) {
-        btn.classList.add('active');
-        btn.setAttribute('aria-selected', 'true');
-      } else {
-        btn.classList.remove('active');
-        btn.setAttribute('aria-selected', 'false');
-      }
-    });
-
-    // Update Asimov Dropdown specific state
-    if (asimovLabel && asimovBtn) {
-      if (currentSource === 'asimov-skills') {
-        asimovLabel.textContent = 'Asimov Skills';
-        asimovBtn.classList.add('active');
-      } else if (currentSource === 'asimov') {
-        asimovLabel.textContent = 'Asimov';
-        asimovBtn.classList.add('active');
-      } else {
-        asimovLabel.textContent = 'Asimov';
-      }
-    }
-
-    // Update Hashtag Dropdown specific state
-    if (hashtagLabel && hashtagBtn) {
-      if (currentSource === 'hashtag-soft-skills') {
-        hashtagLabel.textContent = 'Hashtag Soft Skills';
-        hashtagBtn.classList.add('active');
-      } else if (currentSource === 'hashtag') {
-        hashtagLabel.textContent = 'Hashtag';
-        hashtagBtn.classList.add('active');
-      } else {
-        hashtagLabel.textContent = 'Hashtag';
-      }
-    }
-
-    // Update checkmark in dropdown items
     dropdownItems.forEach(item => {
       const sub = item.getAttribute('data-subsource');
       if (sub === currentSource) {
@@ -276,7 +255,6 @@ const navItems = [
   function initNavbar() {
     const currentPath = window.location.pathname;
 
-    // Update active link state on navigation
     const links = document.querySelectorAll<HTMLAnchorElement>('.nav-link');
     links.forEach(link => {
       const href = link.getAttribute('href');
@@ -287,11 +265,8 @@ const navItems = [
       }
     });
 
-    // Update active source pill
-    const activeSource = getActiveSource();
-    updateActiveSourceUI(activeSource);
+    updateActiveSourceUI();
 
-    // Check logged user and control admin-only menu visibility
     try {
       const user = localStorage.getItem('mindflix_user');
       if (user) {
@@ -310,7 +285,6 @@ const navItems = [
     } catch (err) {}
   }
 
-  // Progressive glass & height adjustment on scroll (72px -> 64px)
   window.addEventListener('scroll', () => {
     const navbar = document.getElementById('main-navbar');
     if (window.scrollY > 25) {
@@ -320,95 +294,53 @@ const navItems = [
     }
   }, { passive: true });
 
-  // Handle Source Switcher Click (Event Delegation)
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
-    const asimovGroup = document.getElementById('asimov-dropdown-group');
-    const hashtagGroup = document.getElementById('hashtag-dropdown-group');
+    const group = document.getElementById('header-source-dropdown-group');
+    const singleBtn = target.closest<HTMLButtonElement>('#single-source-btn');
 
-    // 1. Click on dropdown item (Asimov, Asimov Skills, Hashtag, Hashtag Soft Skills)
+    // 1. Click on single collapsed button toggle
+    if (singleBtn && group) {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = group.classList.contains('open');
+      if (isOpen) {
+        group.classList.remove('open');
+        singleBtn.setAttribute('aria-expanded', 'false');
+      } else {
+        group.classList.add('open');
+        singleBtn.setAttribute('aria-expanded', 'true');
+      }
+      return;
+    }
+
+    // 2. Click on dropdown item
     const dropdownItem = target.closest<HTMLButtonElement>('.dropdown-item');
     if (dropdownItem) {
       e.preventDefault();
       e.stopPropagation();
       const subsource = dropdownItem.getAttribute('data-subsource') || 'all';
-      
-      asimovGroup?.classList.remove('open');
-      hashtagGroup?.classList.remove('open');
-      document.getElementById('asimov-pill-btn')?.setAttribute('aria-expanded', 'false');
-      document.getElementById('hashtag-pill-btn')?.setAttribute('aria-expanded', 'false');
+
+      group?.classList.remove('open');
+      document.getElementById('single-source-btn')?.setAttribute('aria-expanded', 'false');
 
       setActiveSource(subsource);
       updateActiveSourceUI(subsource);
 
-      if (subsource === 'all') {
-        window.location.href = '/';
-      } else {
-        window.location.href = `/source/${subsource}`;
+      if (window.location.pathname.startsWith('/source/') || window.location.pathname === '/' || window.location.pathname === '/courses') {
+        if (subsource === 'all') {
+          window.location.href = '/courses';
+        } else {
+          window.location.href = `/source/${subsource}`;
+        }
       }
       return;
     }
 
-    // 2. Click on Asimov pill with dropdown toggle
-    const asimovPill = target.closest<HTMLButtonElement>('#asimov-pill-btn');
-    if (asimovPill && asimovGroup) {
-      e.preventDefault();
-      e.stopPropagation();
-      hashtagGroup?.classList.remove('open');
-      document.getElementById('hashtag-pill-btn')?.setAttribute('aria-expanded', 'false');
-
-      const isOpen = asimovGroup.classList.contains('open');
-      if (isOpen) {
-        asimovGroup.classList.remove('open');
-        asimovPill.setAttribute('aria-expanded', 'false');
-      } else {
-        asimovGroup.classList.add('open');
-        asimovPill.setAttribute('aria-expanded', 'true');
-      }
-      return;
-    }
-
-    // 3. Click on Hashtag pill with dropdown toggle
-    const hashtagPill = target.closest<HTMLButtonElement>('#hashtag-pill-btn');
-    if (hashtagPill && hashtagGroup) {
-      e.preventDefault();
-      e.stopPropagation();
-      asimovGroup?.classList.remove('open');
-      document.getElementById('asimov-pill-btn')?.setAttribute('aria-expanded', 'false');
-
-      const isOpen = hashtagGroup.classList.contains('open');
-      if (isOpen) {
-        hashtagGroup.classList.remove('open');
-        hashtagPill.setAttribute('aria-expanded', 'false');
-      } else {
-        hashtagGroup.classList.add('open');
-        hashtagPill.setAttribute('aria-expanded', 'true');
-      }
-      return;
-    }
-
-    // Close any open dropdowns if clicked elsewhere
-    if (asimovGroup?.classList.contains('open') || hashtagGroup?.classList.contains('open')) {
-      asimovGroup?.classList.remove('open');
-      hashtagGroup?.classList.remove('open');
-      document.getElementById('asimov-pill-btn')?.setAttribute('aria-expanded', 'false');
-      document.getElementById('hashtag-pill-btn')?.setAttribute('aria-expanded', 'false');
-    }
-
-    // 4. Regular source pills
-    const pill = target.closest<HTMLButtonElement>('.source-pill-btn');
-    if (pill && !pill.classList.contains('has-dropdown')) {
-      e.preventDefault();
-      const sourceId = pill.getAttribute('data-source-id') || 'all';
-      setActiveSource(sourceId);
-      updateActiveSourceUI(sourceId);
-
-      if (sourceId === 'all') {
-        window.location.href = '/';
-      } else {
-        window.location.href = `/source/${sourceId}`;
-      }
-      return;
+    // Close dropdown when clicking outside
+    if (group?.classList.contains('open')) {
+      group.classList.remove('open');
+      document.getElementById('single-source-btn')?.setAttribute('aria-expanded', 'false');
     }
 
     if (target && target.closest('#open-search-modal-btn')) {
@@ -421,7 +353,6 @@ const navItems = [
     }
   });
 
-  // Listen to external source changes
   window.addEventListener('mindflix:source-changed', (e: any) => {
     if (e?.detail?.sourceId) {
       updateActiveSourceUI(e.detail.sourceId);
@@ -666,6 +597,78 @@ const navItems = [
     transform: rotate(180deg);
   }
 
+  /* Collapsed Single Source Dropdown Selector */
+  .single-source-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.38rem 0.95rem;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(18, 22, 32, 0.85);
+    color: #ffffff;
+    font-size: 0.825rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    transition: all var(--motion-fast) var(--ease-out);
+    user-select: none;
+  }
+
+  .single-source-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+  }
+
+  .single-source-btn[data-active-source="ailab"] {
+    border-color: rgba(0, 242, 254, 0.45);
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.25);
+  }
+
+  .single-source-btn[data-active-source="asimov"] {
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 0 14px rgba(99, 102, 241, 0.25);
+  }
+
+  .single-source-btn[data-active-source="asimov-skills"] {
+    border-color: rgba(129, 140, 248, 0.45);
+    box-shadow: 0 0 14px rgba(129, 140, 248, 0.25);
+  }
+
+  .single-source-btn[data-active-source="hashtag"] {
+    border-color: rgba(236, 72, 153, 0.45);
+    box-shadow: 0 0 14px rgba(236, 72, 153, 0.25);
+  }
+
+  .single-source-btn[data-active-source="hashtag-soft-skills"] {
+    border-color: rgba(244, 63, 94, 0.45);
+    box-shadow: 0 0 14px rgba(244, 63, 94, 0.25);
+  }
+
+  .single-source-btn[data-active-source="sctec"] {
+    border-color: rgba(16, 185, 129, 0.45);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+  }
+
+  .single-source-btn[data-active-source="outros"] {
+    border-color: rgba(245, 158, 11, 0.45);
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
+  }
+
+  .sub-dropdown-item {
+    padding-left: 1.6rem;
+  }
+
+  .single-source-menu {
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 0, 0, 0.4);
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
   .source-dropdown-menu {
     display: none;
     position: absolute;
@@ -673,9 +676,9 @@ const navItems = [
     left: 50%;
     transform: translateX(-50%);
     background: rgba(15, 20, 32, 0.96);
-    border: 1px solid rgba(99, 102, 241, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: var(--radius-md);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(99, 102, 241, 0.18);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     min-width: 270px;
