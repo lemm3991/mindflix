@@ -44,17 +44,24 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
               decoding={idx === 0 ? 'sync' : 'async'}
             />
           )}
-          {videoPath && !videoPath.startsWith('drive:') && (
-            <video
-              class="hero-bg-video"
-              muted
-              loop
-              playsinline
-              preload={idx === 0 ? 'auto' : 'none'}
-              src={idx === 0 ? `/api/video?path=${encodeURIComponent(videoPath)}` : undefined}
-              data-src={`/api/video?path=${encodeURIComponent(videoPath)}`}
-            ></video>
-          )}
+          {(() => {
+            const driveId = firstLesson?.drive_file_id || (videoPath.startsWith('drive:') ? videoPath.replace(/^drive:/, '') : null);
+            const videoSrc = driveId 
+              ? `https://drive.google.com/uc?export=download&id=${driveId}`
+              : videoPath ? `/api/video?path=${encodeURIComponent(videoPath)}` : '';
+
+            return videoSrc ? (
+              <video
+                class="hero-bg-video"
+                muted
+                loop
+                playsinline
+                preload={idx === 0 ? 'auto' : 'none'}
+                src={idx === 0 ? videoSrc : undefined}
+                data-src={videoSrc}
+              ></video>
+            ) : null;
+          })()}
         </div>
       );
     })}

@@ -5,15 +5,19 @@ import { getAllCourses } from '../lib/catalog';
 const allCourses = getAllCourses();
 
 // Build flat search index of courses, modules, lessons, providers, and tags
+const normStr = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const searchIndex: any[] = [];
 
 allCourses.forEach(c => {
   const firstLessonId = c.modules[0]?.lessons[0]?.id;
+  const courseSub = `${c.provider} • ${c.lessons_count} aulas`;
   // Course entry
   searchIndex.push({
     type: 'course',
     title: c.display_title,
-    subtitle: `${c.provider} • ${c.lessons_count} aulas`,
+    subtitle: courseSub,
+    normTitle: normStr(c.display_title),
+    normSubtitle: normStr(courseSub),
     url: '#',
     courseId: c.id,
     category: 'Cursos',
@@ -23,10 +27,13 @@ allCourses.forEach(c => {
   // Modules entry
   c.modules.forEach(m => {
     const modFirstLessonId = m.lessons[0]?.id || firstLessonId;
+    const modSub = `Módulo em: ${c.display_title}`;
     searchIndex.push({
       type: 'module',
       title: m.display_title,
-      subtitle: `Módulo em: ${c.display_title}`,
+      subtitle: modSub,
+      normTitle: normStr(m.display_title),
+      normSubtitle: normStr(modSub),
       url: modFirstLessonId ? `/watch/${c.id}/${modFirstLessonId}` : `/courses`,
       courseId: c.id,
       category: 'Módulos',
@@ -35,10 +42,13 @@ allCourses.forEach(c => {
 
     // All lessons in module
     m.lessons.forEach(l => {
+      const lesSub = `Aula em: ${c.display_title} • ${m.display_title}`;
       searchIndex.push({
         type: 'lesson',
         title: l.display_title,
-        subtitle: `Aula em: ${c.display_title} • ${m.display_title}`,
+        subtitle: lesSub,
+        normTitle: normStr(l.display_title),
+        normSubtitle: normStr(lesSub),
         url: `/watch/${c.id}/${l.id}`,
         courseId: c.id,
         category: 'Aulas',
@@ -418,7 +428,7 @@ allCourses.forEach(c => {
       currentResults = filtered.slice(0, 12);
     } else {
       currentResults = filtered
-        .filter(item => norm(item.title).includes(q) || norm(item.subtitle).includes(q))
+        .filter(item => (item.normTitle && item.normTitle.includes(q)) || (item.normSubtitle && item.normSubtitle.includes(q)))
         .slice(0, 16);
     }
 
