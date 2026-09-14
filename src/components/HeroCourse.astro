@@ -2,6 +2,7 @@
 // HeroCourse.astro - Rotating editorial showcase with mouse parallax and smooth crossfade
 import type { Course } from '../types/catalog';
 import { getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
+import { getLessonDriveId } from '../lib/drive';
 import { getCourseSourceId } from '../lib/sources';
 import ProgressBar from './ProgressBar.astro';
 
@@ -28,6 +29,10 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
       const isVideo = isPlayableVideoLesson(firstLesson);
       const videoPath = isVideo ? (firstLesson?.relative_path || '') : '';
       const sourceId = getCourseSourceId(course);
+      const driveId = getLessonDriveId(firstLesson);
+      const drivePreviewUrl = driveId ? `https://drive.google.com/file/d/${driveId}/preview` : null;
+      const localVideoSrc = (!driveId && videoPath) ? `/api/video?path=${encodeURIComponent(videoPath)}` : null;
+
       return (
         <div
           class={`hero-video-item ${idx === 0 ? 'active' : ''}`}
@@ -44,24 +49,25 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
               decoding={idx === 0 ? 'sync' : 'async'}
             />
           )}
-          {(() => {
-            const driveId = firstLesson?.drive_file_id || (videoPath.startsWith('drive:') ? videoPath.replace(/^drive:/, '') : null);
-            const videoSrc = driveId 
-              ? `https://drive.google.com/uc?export=download&id=${driveId}`
-              : videoPath ? `/api/video?path=${encodeURIComponent(videoPath)}` : '';
-
-            return videoSrc ? (
-              <video
-                class="hero-bg-video"
-                muted
-                loop
-                playsinline
-                preload={idx === 0 ? 'auto' : 'none'}
-                src={idx === 0 ? videoSrc : undefined}
-                data-src={videoSrc}
-              ></video>
-            ) : null;
-          })()}
+          {drivePreviewUrl ? (
+            <iframe
+              class="hero-bg-iframe"
+              src={idx === 0 ? drivePreviewUrl : undefined}
+              data-src={drivePreviewUrl}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              title={course.display_title}
+            ></iframe>
+          ) : localVideoSrc ? (
+            <video
+              class="hero-bg-video"
+              muted
+              loop
+              playsinline
+              preload={idx === 0 ? 'auto' : 'none'}
+              src={idx === 0 ? localVideoSrc : undefined}
+              data-src={localVideoSrc}
+            ></video>
+          ) : null}
         </div>
       );
     })}
@@ -242,6 +248,8 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
   function updateVideoBackdrop(index: number) {
     videoItems.forEach((item, idx) => {
       const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
+      const iframe = item.querySelector<HTMLIFrameElement>('.hero-bg-iframe');
+
       if (idx === index) {
         item.classList.add('active');
         if (vid) {
@@ -250,6 +258,11 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
             vid.src = vid.dataset.src;
           }
           vid.play().catch(() => {});
+        }
+        if (iframe) {
+          if (!iframe.src && iframe.dataset.src) {
+            iframe.src = iframe.dataset.src;
+          }
         }
       } else {
         item.classList.remove('active');
@@ -510,6 +523,19 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     object-fit: cover;
     object-position: center 35%;
     filter: saturate(1.12) brightness(0.96) contrast(1.04);
+  }
+
+  .hero-bg-iframe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    transform: translate(-50%, -50%);
+    border: none;
+    pointer-events: none;
+    z-index: 1;
+    filter: saturate(1.1) brightness(0.92) contrast(1.04);
   }
 
   /* Softened Dark Overlay & Gradient Veils so the video is clearly visible while text remains legible */
