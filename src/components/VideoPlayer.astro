@@ -242,6 +242,18 @@ const isVideo = !isPdf && !isDoc;
       window.dispatchEvent(new CustomEvent('mindflix:progress-updated', { detail: { courseId, lessonId, completed: isComplete } }));
       showToast(isComplete ? 'Aula marcada como concluída!' : 'Aula reaberta', 'success');
     });
+
+    // Clicking "Próxima" marks the current lesson as completed before navigating to next video
+    const manualNextBtn = document.getElementById('manual-next-link');
+    manualNextBtn?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const currentPos = video && !isNaN(video.currentTime) ? video.currentTime : 600;
+      const totalDur = video && !isNaN(video.duration) ? video.duration : 600;
+      await saveLessonProgress(courseId, lessonId, currentPos, totalDur, true);
+      window.dispatchEvent(new CustomEvent('mindflix:progress-updated', { detail: { courseId, lessonId, completed: true } }));
+      const href = manualNextBtn.getAttribute('href');
+      if (href) window.location.href = href;
+    });
     btnFocus?.addEventListener('click', () => {
       const isActive = document.body.classList.toggle('focus-mode-active');
       if (!isActive) {

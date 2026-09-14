@@ -49,7 +49,43 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
   
   if (flatLessons.length === 0) return defaultRes;
   
-  // 1. Check if there is an in-progress lesson (partially watched, not yet completed)
+  // 1. Find the LAST lesson index marked as completed in course order
+  let lastCompletedIdx = -1;
+  for (let i = flatLessons.length - 1; i >= 0; i--) {
+    const item = flatLessons[i];
+    const prog = allProgress[item.lesson.id];
+    if (prog && prog.completed) {
+      lastCompletedIdx = i;
+      break;
+    }
+  }
+
+  // If at least one lesson is marked completed, return the next video immediately after it
+  if (lastCompletedIdx >= 0) {
+    const nextIdx = lastCompletedIdx + 1;
+    if (nextIdx < flatLessons.length) {
+      const nextItem = flatLessons[nextIdx];
+      return {
+        lesson: nextItem.lesson,
+        module: nextItem.module,
+        isResume: true,
+        watchUrl: `/watch/${course.id}/${nextItem.lesson.id}`,
+        label: `Continuar: ${nextItem.lesson.display_title}`
+      };
+    } else {
+      // All lessons are completed: default to first lesson for rewatching
+      const first = flatLessons[0];
+      return {
+        lesson: first.lesson,
+        module: first.module,
+        isResume: true,
+        watchUrl: `/watch/${course.id}/${first.lesson.id}`,
+        label: 'Reassistir Curso'
+      };
+    }
+  }
+
+  // 2. If NO lesson is marked completed yet, check for an in-progress lesson
   let inProgressItem: { lesson: Lesson; module: Module; lastWatched?: string } | null = null;
   for (const item of flatLessons) {
     const prog = allProgress[item.lesson.id];
@@ -59,7 +95,7 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
       }
     }
   }
-  
+
   if (inProgressItem) {
     return {
       lesson: inProgressItem.lesson,
@@ -69,31 +105,15 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
       label: `Continuar: ${inProgressItem.lesson.display_title}`
     };
   }
-  
-  // 2. Find the FIRST uncompleted lesson in course order
-  for (let i = 0; i < flatLessons.length; i++) {
-    const item = flatLessons[i];
-    const prog = allProgress[item.lesson.id];
-    if (!prog || !prog.completed) {
-      const isFirst = i === 0;
-      return {
-        lesson: item.lesson,
-        module: item.module,
-        isResume: !isFirst,
-        watchUrl: `/watch/${course.id}/${item.lesson.id}`,
-        label: isFirst ? 'Assistir Agora' : `Próxima: ${item.lesson.display_title}`
-      };
-    }
-  }
-  
-  // 3. If all lessons are completed, default to first lesson for rewatching
+
+  // 3. Fallback to first lesson
   const first = flatLessons[0];
   return {
     lesson: first.lesson,
     module: first.module,
-    isResume: true,
+    isResume: false,
     watchUrl: `/watch/${course.id}/${first.lesson.id}`,
-    label: 'Reassistir Curso'
+    label: 'Assistir Agora'
   };
 }
 
