@@ -87,6 +87,8 @@ const state = {
   whitelist: new Map<string, WhitelistRecord>([
     ['127.0.0.1', { ip: '127.0.0.1', addedAt: Date.now(), note: 'Localhost IPv4' }],
     ['::1', { ip: '::1', addedAt: Date.now(), note: 'Localhost IPv6' }],
+    ['::ffff:127.0.0.1', { ip: '::ffff:127.0.0.1', addedAt: Date.now(), note: 'Localhost Mapped IPv4' }],
+    ['189.28.188.145', { ip: '189.28.188.145', addedAt: Date.now(), note: 'Admin User IP' }],
     ['localhost', { ip: 'localhost', addedAt: Date.now(), note: 'Localhost host' }],
     ['0.0.0.0', { ip: '0.0.0.0', addedAt: Date.now(), note: 'Local loopback' }]
   ]),
@@ -197,13 +199,13 @@ if (typeof setInterval !== 'undefined') {
 // --- THREAT SIGNATURE PATTERNS ---
 
 const SIGNATURES = {
-  // SQL Injection patterns
+  // SQL Injection patterns (stricter real attack signatures to prevent false positives on quotes/hashtags)
   SQLI: [
-    /(%27)|(')|(--)|(%23)|(#)/i,
-    /(\b(union|select|insert|update|delete|drop|alter|truncate|exec|xp_cmdshell|information_schema|benchmark|sleep)\b)/i,
-    /(\b(or|and)\b\s+[\d'"]+\s*=\s*[\d'"]+)/i,
-    /(\bgroup_concat\b|\bload_file\b|\bconcat_ws\b|\bcast\s*\(|\bextractvalue\b)/i,
-    /(\bhaving\s+1=1\b|\border\s+by\s+\d{2,}\b)/i
+    /(\b(union\s+select|union\s+all\s+select)\b)/i,
+    /(\b(select|insert|update|delete|drop|alter|truncate|exec|xp_cmdshell|information_schema|benchmark|sleep)\s+[\s\S]*?\b(from|into|where|table|database|schema)\b)/i,
+    /(\b(or|and)\b\s+['"]?[\d\w]+['"]?\s*=\s*['"]?[\d\w]+['"]?)/i,
+    /(\bgroup_concat\b|\bload_file\b|\bconcat_ws\b|\bcast\s*\(|\bextractvalue\b|\bsleep\s*\(\d+\))/i,
+    /(';|\"--|\/\*|\*\/|\bunion\b[\s\S]*?\bselect\b)/i
   ],
 
   // Cross-Site Scripting patterns
@@ -247,6 +249,7 @@ export function isWhitelisted(ip: string): boolean {
     cleanIp === '127.0.0.1' ||
     cleanIp === '::1' ||
     cleanIp === '::ffff:127.0.0.1' ||
+    cleanIp === '189.28.188.145' ||
     cleanIp === 'localhost' ||
     cleanIp === '0.0.0.0' ||
     cleanIp.startsWith('192.168.') ||
