@@ -114,7 +114,8 @@ export const GET: APIRoute = async ({ request }) => {
 
   // If a Google Drive ID is provided directly
   if (driveId) {
-    return Response.redirect(`https://drive.google.com/file/d/${driveId}/preview`, 302);
+    const cleanId = driveId.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
+    return Response.redirect(`https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`, 302);
   }
 
   if (!relPath) {
@@ -127,14 +128,14 @@ export const GET: APIRoute = async ({ request }) => {
   // If relPath is a full Google Drive URL or drive:ID
   if (relPath.includes('drive.google.com') || relPath.startsWith('drive:')) {
     const cleanId = relPath.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
-    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
+    return Response.redirect(`https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`, 302);
   }
 
   // Check catalog for Google Drive file ID
   const driveIdFromCatalog = getDriveIdFromCatalog(relPath);
   if (driveIdFromCatalog) {
     const cleanId = driveIdFromCatalog.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
-    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
+    return Response.redirect(`https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`, 302);
   }
 
   const resolved = resolveSafeFilePath(COURSES_ROOT, relPath);
