@@ -145,8 +145,9 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
                       <span class="material-path">{mat.relative_path}</span>
                     </div>
                     <a
-                      href={`/api/video?path=${encodeURIComponent(mat.relative_path)}`}
+                      href={mat.drive_file_id ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` : mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       class="btn btn-secondary btn-sm"
                       download
                     >
