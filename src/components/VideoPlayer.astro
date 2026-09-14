@@ -130,127 +130,58 @@ const isVideo = !isPdf && !isDoc;
     </div>
   </div>
 
-  <!-- Refined Bottom Control Bar -->
-  <div class="player-controls-bar">
-    {!isDrive && (
-      <div class="player-timeline-container" id="player-timeline-box">
-        <div class="timeline-track-bar" id="timeline-track">
-          <div class="timeline-fill-bar" id="timeline-fill" style="width: 0%;"></div>
-          <div class="timeline-thumb-knob" id="timeline-thumb" style="left: 0%;"></div>
-        </div>
-      </div>
-    )}
-
-    <div class="controls-main-row">
-      <div class="controls-left">
-        {!isDrive && (
-          <button type="button" class="btn-control-play-main" id="btn-main-play" title="Reproduzir / Pausar (Espaço)">
-            <svg class="icon-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            <svg class="icon-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
-              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
-            </svg>
-          </button>
-        )}
-
-        {!isDrive && (
-          <button type="button" class="btn-control-icon" id="btn-rewind-10" title="Retroceder 10s (J / Seta Esquerda)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 19l-9-7 9-7v14z"></path>
-              <path d="M22 19l-9-7 9-7v14z"></path>
-            </svg>
-            <span class="step-label">-10s</span>
-          </button>
-        )}
-
-        {!isDrive && (
-          <button type="button" class="btn-control-icon" id="btn-forward-10" title="Avançar 10s (L / Seta Direita)">
-            <span class="step-label">+10s</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M13 5l9 7-9 7V5z"></path>
-              <path d="M2 5l9 7-9 7V5z"></path>
-            </svg>
-          </button>
-        )}
-
-        {!isDrive && (
-          <div class="video-time-counter" id="video-time-box">
-            <span id="time-current">0:00</span>
-            <span class="time-sep">/</span>
-            <span id="time-duration">0:00</span>
-          </div>
-        )}
-
-        {prevLessonHref ? (
-          <a href={prevLessonHref} class="btn-nav-lesson" title="Aula Anterior (Shift + P)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            <span class="btn-label-desktop">Anterior</span>
-          </a>
-        ) : (
-          <button class="btn-nav-lesson disabled" disabled>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            <span class="btn-label-desktop">Anterior</span>
-          </button>
-        )}
-
-        {nextLessonHref ? (
-          <a href={nextLessonHref} class="btn-nav-lesson" id="manual-next-link" title="Próxima Aula (Shift + N)">
-            <span class="btn-label-desktop">Próxima</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </a>
-        ) : (
-          <button class="btn-nav-lesson disabled" disabled>
-            <span class="btn-label-desktop">Próxima</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        )}
-      </div>
-
-      <div class="controls-center">
-        <!-- Mode Toggle: Focus -->
-        <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"></path>
+  <!-- Classroom Action Bar (Lesson Navigation, Focus Mode & Mark Completed) -->
+  <div class="classroom-nav-bar">
+    <div class="nav-left">
+      {prevLessonHref ? (
+        <a href={prevLessonHref} class="btn-nav-lesson" title="Aula Anterior (Shift + P)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
-          <span class="btn-label-desktop">Foco</span>
+          <span class="btn-label-desktop">Anterior</span>
+        </a>
+      ) : (
+        <button class="btn-nav-lesson disabled" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span class="btn-label-desktop">Anterior</span>
         </button>
+      )}
 
-        {!isDrive && (
-          <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-pip-mode" title="Picture-in-Picture (P)">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-              <rect x="13" y="11" width="7" height="6" rx="1"></rect>
-            </svg>
-          </button>
-        )}
-      </div>
-
-      <div class="controls-right">
-        <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-fullscreen-toggle" title="Tela Cheia (F)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+      {nextLessonHref ? (
+        <a href={nextLessonHref} class="btn-nav-lesson" id="manual-next-link" title="Próxima Aula (Shift + N)">
+          <span class="btn-label-desktop">Próxima</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      ) : (
+        <button class="btn-nav-lesson disabled" disabled>
+          <span class="btn-label-desktop">Próxima</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </button>
+      )}
+    </div>
 
-        <!-- Mark as completed toggle button -->
-        <button type="button" class="btn btn-secondary btn-complete-toggle" id="btn-toggle-complete">
-          <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span id="complete-btn-text">Concluir</span>
-        </button>
-      </div>
+    <div class="nav-right">
+      <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"></path>
+        </svg>
+        <span class="btn-label-desktop">Foco</span>
+      </button>
+
+      <!-- Mark as completed toggle button -->
+      <button type="button" class="btn btn-secondary btn-complete-toggle" id="btn-toggle-complete">
+        <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="complete-btn-text">Concluir</span>
+      </button>
     </div>
   </div>
 </div>
@@ -852,29 +783,20 @@ const isVideo = !isPdf && !isDoc;
     animation: fadeIn 0.2s ease;
   }
 
-  /* Bottom Controls Bar */
-  .player-controls-bar {
+  /* Classroom Action Bar (Navigation, Focus & Complete) */
+  .classroom-nav-bar {
     display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding: 0.35rem 0.65rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.85rem;
     background: var(--bg-card);
     border-top: 1px solid var(--border-subtle);
   }
 
-  .controls-main-row {
+  .nav-left, .nav-right {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-    width: 100%;
-  }
-
-  .controls-left, .controls-center, .controls-right {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
+    gap: 0.5rem;
   }
 
   /* Timeline Scrubber Bar */
