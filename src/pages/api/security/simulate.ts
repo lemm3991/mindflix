@@ -1,24 +1,32 @@
-import type { APIRoute } from 'astro';
 import {
   recordAttack,
   getSecurityStats,
   getBannedIps,
   getAttackLogs,
+  isWhitelisted,
   type AttackType,
   type ThreatSeverity
 } from '../../../lib/server/security-monitor';
+import { getClientIp } from '../../../lib/server/rate-limit';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
+    const callerIp = getClientIp(request);
+    let targetIp = body.ip ? String(body.ip).trim() : '';
+
+    if (!targetIp || targetIp === callerIp || isWhitelisted(targetIp)) {
+      targetIp = `198.51.100.${Math.floor(Math.random() * 250) + 1}`;
+    }
+
     const {
       attackType = 'SQL_INJECTION',
-      ip = `198.51.100.${Math.floor(Math.random() * 250) + 1}`,
       method = 'GET',
       path = '/api/search',
       customPayload,
       userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ThreatSimulator/2.0'
     } = body;
+    const ip = targetIp;
 
     const templates: Record<
       AttackType,

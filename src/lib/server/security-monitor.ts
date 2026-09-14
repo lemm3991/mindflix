@@ -246,9 +246,27 @@ export function isWhitelisted(ip: string): boolean {
     state.whitelist.has(cleanIp) ||
     cleanIp === '127.0.0.1' ||
     cleanIp === '::1' ||
+    cleanIp === '::ffff:127.0.0.1' ||
     cleanIp === 'localhost' ||
+    cleanIp === '0.0.0.0' ||
     cleanIp.startsWith('192.168.') ||
-    cleanIp.startsWith('10.')
+    cleanIp.startsWith('10.') ||
+    cleanIp.startsWith('172.16.') ||
+    cleanIp.startsWith('172.17.') ||
+    cleanIp.startsWith('172.18.') ||
+    cleanIp.startsWith('172.19.') ||
+    cleanIp.startsWith('172.20.') ||
+    cleanIp.startsWith('172.21.') ||
+    cleanIp.startsWith('172.22.') ||
+    cleanIp.startsWith('172.23.') ||
+    cleanIp.startsWith('172.24.') ||
+    cleanIp.startsWith('172.25.') ||
+    cleanIp.startsWith('172.26.') ||
+    cleanIp.startsWith('172.27.') ||
+    cleanIp.startsWith('172.28.') ||
+    cleanIp.startsWith('172.29.') ||
+    cleanIp.startsWith('172.30.') ||
+    cleanIp.startsWith('172.31.')
   );
 }
 
@@ -284,6 +302,17 @@ export function banIp(
   isManual: boolean = false,
   incidentId?: string
 ): BannedIpRecord {
+  if (isWhitelisted(ip)) {
+    return {
+      ip,
+      bannedAt: Date.now(),
+      expiresAt: Date.now(),
+      reason: 'IP na Whitelist (Protegido)',
+      incidentId: 'INC-WHITELISTED',
+      totalThreatScore: 0,
+      attackCount: 0
+    };
+  }
   const now = Date.now();
   const dur = durationMinutes !== undefined ? durationMinutes : state.settings.banDurationMinutes;
   const expiresAt = dur && dur > 0 ? now + dur * 60 * 1000 : null;
