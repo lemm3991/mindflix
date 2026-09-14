@@ -79,9 +79,10 @@ def build_trilhas():
     courses = catalog.get('courses', [])
     asimov_courses = [c for c in courses if c.get('source') == 'asimov']
 
-    asimov_root = r'G:\Meu Drive\Cursos\Cursos Mindflix\Asimov'
+    courses_root = os.environ.get('COURSES_ROOT', '.')
+    asimov_root = os.path.join(courses_root, 'Asimov')
     trilhas_dir = os.path.join(asimov_root, 'Trilhas Asimov')
-    trilha_files = [f for f in os.listdir(trilhas_dir) if f.endswith('.json')]
+    trilha_files = [f for f in os.listdir(trilhas_dir) if f.endswith('.json')] if os.path.isdir(trilhas_dir) else []
 
     course_by_id = {c['id']: c for c in asimov_courses}
     

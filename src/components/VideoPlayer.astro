@@ -14,14 +14,14 @@ interface Props {
 const { courseId, lesson, nextLessonHref, nextLessonTitle = 'Próxima Aula', prevLessonHref } = Astro.props;
 
 const driveId = getLessonDriveId(lesson);
-const isDrive = Boolean(driveId) || isDriveLesson(lesson);
-const drivePreviewUrl = driveId ? getDrivePreviewUrl(driveId) : null;
 const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_path || '')}`;
+const drivePreviewUrl = driveId ? getDrivePreviewUrl(driveId) : videoStreamUrl;
+const isDrive = true; // All videos hosted on Google Drive
 
 const ext = (lesson.relative_path || '').split('.').pop()?.toLowerCase() || '';
 const isPdf = lesson.type === 'pdf' || ext === 'pdf';
 const isDoc = ['docx', 'pptx', 'xlsx', 'txt', 'md', 'html'].includes(ext);
-const isVideo = !isDrive && !isPdf && !isDoc;
+const isVideo = !isPdf && !isDoc;
 ---
 
 <div
@@ -64,7 +64,7 @@ const isVideo = !isDrive && !isPdf && !isDoc;
 
   <!-- Main Video Viewport (Supports Google Drive & Local Video Stream & PDFs/Docs) -->
   <div class="video-viewport" id="video-viewport">
-    {isDrive && drivePreviewUrl ? (
+    {isVideo ? (
       <div class="drive-video-wrapper">
         <iframe
           id="drive-video-iframe"
@@ -86,7 +86,7 @@ const isVideo = !isDrive && !isPdf && !isDoc;
           title={lesson.display_title}
         ></iframe>
       </div>
-    ) : isDoc ? (
+    ) : (
       <div class="doc-download-card">
         <div class="doc-icon-box">
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -110,17 +110,6 @@ const isVideo = !isDrive && !isPdf && !isDoc;
           <a href={videoStreamUrl} target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Abrir no Navegador</a>
         </div>
       </div>
-    ) : (
-      <video
-        id="main-video-player"
-        class="html5-video"
-        src={videoStreamUrl}
-        controls
-        playsinline
-        preload="metadata"
-      >
-        Seu navegador não suporta este vídeo.
-      </video>
     )}
 
     <!-- Graceful Media Error State -->

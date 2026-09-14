@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Centralized courses root directory resolution with robust fallback checks
+// Centralized courses root directory resolution from env only
 function getCoursesRoot(): string {
   if (process.env.COURSES_ROOT) {
     const candidate = path.resolve(process.env.COURSES_ROOT);
@@ -10,20 +10,39 @@ function getCoursesRoot(): string {
       return candidate;
     }
   }
-
-  // Dynamically check Windows drive mounts at runtime
-  const drives = ['G:', 'I:', 'D:', 'C:'];
-  for (const d of drives) {
-    const p1 = path.join(d + path.sep, 'Meu Drive', 'Cursos', 'Cursos Mindflix');
-    if (fs.existsSync(p1)) return p1;
-    const p2 = path.join(d + path.sep, 'Meu Drive', 'Cursos');
-    if (fs.existsSync(p2)) return p2;
-  }
-
   return path.resolve(process.cwd(), '..');
 }
 
 const COURSES_ROOT = getCoursesRoot();
+
+// Helper to lookup lesson drive ID from catalog.json
+let cachedCatalog: any = null;
+
+function getDriveIdFromCatalog(relPath: string): string | null {
+  try {
+    if (!cachedCatalog) {
+      const catalogPath = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
+      if (fs.existsSync(catalogPath)) {
+        cachedCatalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
+      }
+    }
+    if (!cachedCatalog || !cachedCatalog.courses) return null;
+
+    const normTarget = relPath.replace(/\\/g, '/').toLowerCase();
+    for (const course of cachedCatalog.courses) {
+      for (const mod of (course.modules || [])) {
+        for (const les of (mod.lessons || [])) {
+          if (les.relative_path && les.relative_path.replace(/\\/g, '/').toLowerCase() === normTarget) {
+            return les.drive_file_id || les.drive_url || null;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Catalog lookup error:', err);
+  }
+  return null;
+}
 
 // Helper to safely resolve and verify local media files across Windows MAX_PATH & encodings
 function resolveSafeFilePath(root: string, relPath: string): { filePath: string; rawPath: string } | null {
@@ -105,9 +124,16 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
-  // If relPath is a full Google Drive URL
+  // If relPath is a full Google Drive URL or drive:ID
   if (relPath.includes('drive.google.com') || relPath.startsWith('drive:')) {
     const cleanId = relPath.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
+    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
+  }
+
+  // Check catalog for Google Drive file ID
+  const driveIdFromCatalog = getDriveIdFromCatalog(relPath);
+  if (driveIdFromCatalog) {
+    const cleanId = driveIdFromCatalog.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
     return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
   }
 

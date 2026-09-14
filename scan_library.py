@@ -45,18 +45,7 @@ def resolve_courses_root():
                     if os.path.isdir(candidate):
                         return candidate
 
-    # Google Drive default paths
-    candidates = [
-        r"G:\Meu Drive\Cursos\Cursos Mindflix",
-        r"I:\Meu Drive\Cursos\Cursos Mindflix",
-        r"G:\Meu Drive\Cursos",
-        r"I:\Meu Drive\Cursos",
-        os.path.abspath(os.path.join(MINDFLIX_DIR, ".."))
-    ]
-    for c in candidates:
-        if os.path.isdir(c):
-            return os.path.abspath(c)
-
+    # Default to root directory
     return os.path.abspath(os.path.join(MINDFLIX_DIR, ".."))
 
 COURSES_ROOT = resolve_courses_root()
