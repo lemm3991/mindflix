@@ -32,6 +32,7 @@ pnpm-debug.log*
 scanner_cache.json
 custom_passwords.json
 src/data/custom_passwords.json
+src/data/security_state.json
 *.log
 *credentials*.json
 service_account.json
