@@ -132,14 +132,6 @@ const remainingCount = trilha.courses.length - previewCourses.length;
     scroll-snap-align: center;
   }
 
-  .trilha-card:hover {
-    transform: perspective(1000px) rotateY(0deg) skewY(0deg) scale(1.03) translateZ(35px) !important;
-    opacity: 1 !important;
-    border-color: rgba(0, 242, 254, 0.45);
-    box-shadow: 0 20px 45px rgba(0, 242, 254, 0.18), 0 8px 32px rgba(0, 0, 0, 0.8);
-    z-index: 10;
-  }
-
   .trilha-card-inner {
     display: flex;
     flex-direction: column;
@@ -160,10 +152,6 @@ const remainingCount = trilha.courses.length - previewCourses.length;
     object-fit: cover;
     object-position: center 30%;
     transition: transform var(--motion-slow) ease-out;
-  }
-
-  .trilha-card:hover .trilha-cover-img {
-    transform: scale(1.05);
   }
 
   .trilha-cover-overlay {

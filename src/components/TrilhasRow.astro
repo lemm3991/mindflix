@@ -94,10 +94,8 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
       const translateZ = -Math.abs(clampedDist) * 35;
       const opacity = Math.max(0.75, 1 - Math.abs(clampedDist) * 0.18);
 
-      if (!card.matches(':hover')) {
-        card.style.transform = `perspective(1200px) rotateY(${rotateY.toFixed(2)}deg) skewY(${skewY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
-        card.style.opacity = opacity.toFixed(2);
-      }
+      card.style.transform = `perspective(1200px) rotateY(${rotateY.toFixed(2)}deg) skewY(${skewY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
+      card.style.opacity = opacity.toFixed(2);
     });
     isUpdatingPerspective = false;
   }
