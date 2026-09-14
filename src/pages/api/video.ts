@@ -107,15 +107,62 @@ function resolveSafeFilePath(root: string, relPath: string): { filePath: string;
   return null;
 }
 
+async function proxyGoogleDriveStream(cleanId: string, request: Request): Promise<Response> {
+  try {
+    const range = request.headers.get('range');
+    const upstreamHeaders: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    };
+    if (range) {
+      upstreamHeaders['Range'] = range;
+    }
+
+    const driveUrl = `https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`;
+    const upstreamRes = await fetch(driveUrl, {
+      headers: upstreamHeaders,
+      redirect: 'follow'
+    });
+
+    if (!upstreamRes.ok && upstreamRes.status !== 206) {
+      return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
+    }
+
+    const responseHeaders = new Headers();
+    responseHeaders.set('Content-Type', upstreamRes.headers.get('content-type') || 'video/mp4');
+    responseHeaders.set('Content-Disposition', 'inline');
+    responseHeaders.set('Accept-Ranges', 'bytes');
+    responseHeaders.set('Cache-Control', 'public, max-age=3600');
+
+    if (upstreamRes.headers.get('content-length')) {
+      responseHeaders.set('Content-Length', upstreamRes.headers.get('content-length')!);
+    }
+    if (upstreamRes.headers.get('content-range')) {
+      responseHeaders.set('Content-Range', upstreamRes.headers.get('content-range')!);
+    }
+
+    return new Response(upstreamRes.body, {
+      status: upstreamRes.status,
+      headers: responseHeaders
+    });
+  } catch (err) {
+    console.error('Failed to proxy Google Drive stream:', err);
+    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
+  }
+}
+
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const relPath = url.searchParams.get('path');
   const driveId = url.searchParams.get('drive_id');
+  const streamParam = url.searchParams.get('stream');
 
   // If a Google Drive ID is provided directly
   if (driveId) {
     const cleanId = driveId.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
-    return Response.redirect(`https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`, 302);
+    if (streamParam === '1' || streamParam === 'true') {
+      return proxyGoogleDriveStream(cleanId, request);
+    }
+    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
   }
 
   if (!relPath) {
@@ -128,14 +175,20 @@ export const GET: APIRoute = async ({ request }) => {
   // If relPath is a full Google Drive URL or drive:ID
   if (relPath.includes('drive.google.com') || relPath.startsWith('drive:')) {
     const cleanId = relPath.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
-    return Response.redirect(`https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`, 302);
+    if (streamParam === '1' || streamParam === 'true') {
+      return proxyGoogleDriveStream(cleanId, request);
+    }
+    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
   }
 
   // Check catalog for Google Drive file ID
   const driveIdFromCatalog = getDriveIdFromCatalog(relPath);
   if (driveIdFromCatalog) {
     const cleanId = driveIdFromCatalog.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
-    return Response.redirect(`https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`, 302);
+    if (streamParam === '1' || streamParam === 'true') {
+      return proxyGoogleDriveStream(cleanId, request);
+    }
+    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
   }
 
   const resolved = resolveSafeFilePath(COURSES_ROOT, relPath);
