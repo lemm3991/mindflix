@@ -49,10 +49,12 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
         </div>
       </div>
 
-      <div class="trilhas-carousel-track" id="trilhas-carousel">
-        {trilhas.map((trilha) => (
-          <TrilhaCard trilha={trilha} />
-        ))}
+      <div class="trilhas-carousel-wrapper">
+        <div class="trilhas-carousel-track" id="trilhas-carousel">
+          {trilhas.map((trilha) => (
+            <TrilhaCard trilha={trilha} />
+          ))}
+        </div>
       </div>
     </div>
   </section>
@@ -67,13 +69,96 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
   const prevBtn = document.getElementById('trilhas-prev-btn');
   const nextBtn = document.getElementById('trilhas-next-btn');
 
+  // Dynamic 3D Skewed Perspective calculation
+  let isUpdatingPerspective = false;
+  function updateSkewedPerspective() {
+    if (!carousel) return;
+    const rect = carousel.getBoundingClientRect();
+    const carouselCenter = rect.left + rect.width / 2;
+
+    const cards = carousel.querySelectorAll<HTMLElement>('.trilha-card');
+    cards.forEach(card => {
+      if (card.style.display === 'none') return;
+
+      const cardRect = card.getBoundingClientRect();
+      const cardCenter = cardRect.left + cardRect.width / 2;
+
+      // Calculate normalized distance from viewport center (-1.5 to +1.5)
+      const distance = (cardCenter - carouselCenter) / (rect.width * 0.45);
+      const clampedDist = Math.max(-1.5, Math.min(1.5, distance));
+
+      // Calculate 3D transforms: rotateY, skewY, scale, translateZ
+      const rotateY = -clampedDist * 10;  // Rotate up to +/- 10deg
+      const skewY = clampedDist * 2.2;    // Skew up to +/- 2.2deg
+      const scale = Math.max(0.88, 1 - Math.abs(clampedDist) * 0.08);
+      const translateZ = -Math.abs(clampedDist) * 35;
+      const opacity = Math.max(0.75, 1 - Math.abs(clampedDist) * 0.18);
+
+      if (!card.matches(':hover')) {
+        card.style.transform = `perspective(1200px) rotateY(${rotateY.toFixed(2)}deg) skewY(${skewY.toFixed(2)}deg) scale(${scale.toFixed(3)}) translateZ(${translateZ.toFixed(1)}px)`;
+        card.style.opacity = opacity.toFixed(2);
+      }
+    });
+    isUpdatingPerspective = false;
+  }
+
+  function requestPerspectiveUpdate() {
+    if (!isUpdatingPerspective) {
+      isUpdatingPerspective = true;
+      requestAnimationFrame(updateSkewedPerspective);
+    }
+  }
+
+  if (carousel) {
+    carousel.addEventListener('scroll', requestPerspectiveUpdate, { passive: true });
+    window.addEventListener('resize', requestPerspectiveUpdate, { passive: true });
+    // Initial calculation
+    setTimeout(updateSkewedPerspective, 80);
+  }
+
+  // Drag-to-scroll support
+  if (carousel) {
+    let isDown = false;
+    let startX = 0;
+    let scrollLeft = 0;
+
+    carousel.addEventListener('pointerdown', (e) => {
+      if ((e.target as HTMLElement).closest('a, button')) return;
+      isDown = true;
+      carousel.classList.add('is-dragging');
+      startX = e.pageX - carousel.offsetLeft;
+      scrollLeft = carousel.scrollLeft;
+    });
+
+    carousel.addEventListener('pointerleave', () => {
+      isDown = false;
+      carousel.classList.remove('is-dragging');
+    });
+
+    carousel.addEventListener('pointerup', () => {
+      isDown = false;
+      carousel.classList.remove('is-dragging');
+    });
+
+    carousel.addEventListener('pointermove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - carousel.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      carousel.scrollLeft = scrollLeft - walk;
+      requestPerspectiveUpdate();
+    });
+  }
+
   // Horizontal scroll buttons
   if (carousel && prevBtn && nextBtn) {
     prevBtn.addEventListener('click', () => {
-      carousel.scrollBy({ left: -360, behavior: 'smooth' });
+      carousel.scrollBy({ left: -370, behavior: 'smooth' });
+      setTimeout(requestPerspectiveUpdate, 250);
     });
     nextBtn.addEventListener('click', () => {
-      carousel.scrollBy({ left: 360, behavior: 'smooth' });
+      carousel.scrollBy({ left: 370, behavior: 'smooth' });
+      setTimeout(requestPerspectiveUpdate, 250);
     });
   }
 
@@ -90,7 +175,7 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
       const src = card.getAttribute('data-source') || 'asimov';
       const isMatch = active === 'all' || src === active || (active === 'hashtag' && src.startsWith('hashtag')) || (active === 'ailab' && (src === 'ailab' || src === 'ai-lab')) || (active === 'sctec' && src === 'sctec');
       if (isMatch) {
-        card.style.display = 'block';
+        card.style.display = 'flex';
         visibleCount++;
       } else {
         card.style.display = 'none';
@@ -98,6 +183,7 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
     });
 
     section.style.display = visibleCount > 0 ? 'block' : 'none';
+    requestPerspectiveUpdate();
   }
 
   // Calculate progress for each trilha based on completed lessons across its courses
@@ -113,24 +199,18 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
       const totalLessons = parseInt(card.getAttribute('data-total-lessons') || '0', 10);
       if (!trilhaId || totalLessons === 0) return;
 
-      // Count completed lessons that belong to this trilha (we check stored lessons)
       let completedInTrilha = 0;
       completedSet.forEach(lessonId => {
-        // If user completed lesson, increment
         completedInTrilha++;
       });
 
-      // Progress bar UI elements
       const progressWrap = document.getElementById(`progress-wrap-${trilhaId}`);
       const progressPct = document.getElementById(`progress-pct-${trilhaId}`);
       const progressFill = document.getElementById(`progress-fill-${trilhaId}`);
       const watchBtn = document.getElementById(`btn-watch-${trilhaId}`);
       const btnText = watchBtn?.querySelector('.btn-text');
 
-      // We calculate percentage against user's actual progress
-      // (For accuracy, check if any course inside has progress)
       if (completedSet.size > 0 && progressWrap && progressPct && progressFill) {
-        // Find if user has watched lessons
         const pct = Math.min(Math.round((completedInTrilha / totalLessons) * 100), 100);
         if (pct > 0) {
           progressWrap.style.display = 'block';
@@ -159,6 +239,7 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
     padding: 2.5rem 0 1.5rem;
     margin-bottom: 2rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
   }
 
   .trilhas-section.highlight-asimov {
@@ -231,29 +312,41 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
     transform: scale(1.05);
   }
 
+  /* 3D Skewed Carousel Track & Wrapper */
+  .trilhas-carousel-wrapper {
+    position: relative;
+    perspective: 1200px;
+    transform-style: preserve-3d;
+    padding: 1.5rem 0 2rem;
+    margin: 0 -0.5rem;
+    overflow: visible;
+  }
+
   .trilhas-carousel-track {
     display: flex;
-    gap: 1.25rem;
+    gap: 1.5rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    padding-bottom: 1.25rem;
-    padding-top: 0.5rem;
+    padding: 1.5rem 1rem 2.5rem;
+    transform-style: preserve-3d;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 242, 254, 0.3) transparent;
+    scrollbar-width: none;
+    cursor: grab;
   }
 
-  .trilhas-carousel-track > * {
-    scroll-snap-align: start;
+  .trilhas-carousel-track.is-dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+    user-select: none;
   }
 
   .trilhas-carousel-track::-webkit-scrollbar {
-    height: 6px;
+    display: none;
   }
 
-  .trilhas-carousel-track::-webkit-scrollbar-thumb {
-    background: rgba(0, 242, 254, 0.25);
-    border-radius: 999px;
+  .trilhas-carousel-track > * {
+    scroll-snap-align: center;
   }
 </style>

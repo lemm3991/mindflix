@@ -116,20 +116,28 @@ const remainingCount = trilha.courses.length - previewCourses.length;
     background: var(--bg-card);
     border: 1px solid rgba(255, 255, 255, 0.08);
     overflow: hidden;
-    transition: all var(--motion-normal) cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
     height: 100%;
     min-width: 320px;
     max-width: 380px;
-    flex: 0 0 340px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    flex: 0 0 350px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.45s ease,
+                border-color 0.45s ease,
+                opacity 0.45s ease;
+    will-change: transform, opacity;
+    scroll-snap-align: center;
   }
 
   .trilha-card:hover {
-    transform: translateY(-6px);
-    border-color: rgba(0, 242, 254, 0.35);
-    box-shadow: 0 12px 32px rgba(0, 242, 254, 0.12), 0 4px 16px rgba(0, 0, 0, 0.6);
+    transform: perspective(1000px) rotateY(0deg) skewY(0deg) scale(1.03) translateZ(35px) !important;
+    opacity: 1 !important;
+    border-color: rgba(0, 242, 254, 0.45);
+    box-shadow: 0 20px 45px rgba(0, 242, 254, 0.18), 0 8px 32px rgba(0, 0, 0, 0.8);
+    z-index: 10;
   }
 
   .trilha-card-inner {
