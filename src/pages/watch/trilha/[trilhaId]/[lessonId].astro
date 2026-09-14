@@ -251,6 +251,8 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
   .watch-video-section {
     background: #000000;
     width: 100%;
+    max-width: min(960px, calc((100vh - 220px) * 16 / 9));
+    margin: 0 auto;
     position: relative;
     z-index: 10;
   }
