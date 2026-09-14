@@ -324,7 +324,6 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
     display: flex;
     gap: 1.5rem;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     padding: 1.5rem 1rem 2.5rem;
     transform-style: preserve-3d;
@@ -335,16 +334,11 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
 
   .trilhas-carousel-track.is-dragging {
     cursor: grabbing;
-    scroll-snap-type: none;
     scroll-behavior: auto;
     user-select: none;
   }
 
   .trilhas-carousel-track::-webkit-scrollbar {
     display: none;
-  }
-
-  .trilhas-carousel-track > * {
-    scroll-snap-align: center;
   }
 </style>
