@@ -29,6 +29,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
       const isVideo = isPlayableVideoLesson(firstLesson);
       const videoPath = isVideo ? (firstLesson?.relative_path || '') : '';
       const sourceId = getCourseSourceId(course);
+      const driveId = getLessonDriveId(firstLesson);
       const videoSrc = driveId 
         ? `/api/video?drive_id=${driveId}&stream=1`
         : (videoPath ? `/api/video?path=${encodeURIComponent(videoPath)}` : '');
