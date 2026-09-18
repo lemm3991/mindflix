@@ -1,27 +1,30 @@
 ---
-// courses.astro - Catálogo Geral de Cursos com Active Filter Chips e Suporte às 5 Fontes de Estudo
+// courses.astro - Catálogo Geral de Cursos e Trilhas com Active Filter Chips e Suporte às Fontes de Estudo
 import Layout from '../layouts/Layout.astro';
 import CourseCard from '../components/CourseCard.astro';
+import TrilhaCard from '../components/TrilhaCard.astro';
 import SearchBar from '../components/SearchBar.astro';
 import CourseFilters from '../components/CourseFilters.astro';
 import EmptyState from '../components/EmptyState.astro';
 import { getAllCourses, getCategories, getAllProviders, isComecePorAqui } from '../lib/catalog';
+import { getAllTrilhas } from '../lib/trilhas';
 import { getCourseSourceId } from '../lib/sources';
 
 const courses = getAllCourses().filter(c => !isComecePorAqui(c));
+const trilhas = getAllTrilhas();
 const categories = getCategories();
 const providers = getAllProviders();
 ---
 
-<Layout title="Catálogo Completo — Mindflix" description="Explore todos os cursos disponíveis na sua biblioteca pessoal com filtros avançados e busca em tempo real.">
+<Layout title="Catálogo Completo — Mindflix" description="Explore todos os cursos e trilhas de formação disponíveis na sua biblioteca pessoal com filtros avançados e busca em tempo real.">
   <div class="container catalog-page-container">
     <header class="catalog-header">
-      <h1 class="catalog-title">Catálogo de Cursos</h1>
-      <p class="catalog-subtitle" id="catalog-subtitle">Explore sua biblioteca completa com mais de {courses.length} cursos organizados por especialidade.</p>
+      <h1 class="catalog-title">Catálogo de Cursos & Trilhas</h1>
+      <p class="catalog-subtitle" id="catalog-subtitle">Explore sua biblioteca completa com mais de {courses.length} cursos e {trilhas.length} trilhas estruturadas.</p>
     </header>
 
     <div class="catalog-controls">
-      <SearchBar placeholder="Pesquise por curso, tecnologia, módulo ou fornecedor..." />
+      <SearchBar placeholder="Pesquise por curso, trilha, tecnologia, módulo ou fornecedor..." />
       <CourseFilters categories={categories} providers={providers} />
       
       <!-- Active Filter Chips (Section 33) -->
@@ -31,7 +34,7 @@ const providers = getAllProviders();
       </div>
     </div>
 
-    <!-- Course Grid -->
+    <!-- Course & Trilha Grid -->
     <div class="courses-grid" id="catalog-grid">
       {courses.map((course, idx) => {
         const corpus = [
@@ -45,6 +48,7 @@ const providers = getAllProviders();
         return (
           <div
             class="course-grid-item"
+            data-type="course"
             data-title={course.display_title.toLowerCase()}
             data-provider={course.provider}
             data-categories={course.categories.join(',')}
@@ -61,14 +65,38 @@ const providers = getAllProviders();
           </div>
         );
       })}
+
+      {trilhas.map((trilha) => {
+        const corpus = [
+          trilha.title,
+          trilha.provider,
+          trilha.description,
+          ...trilha.courses.map(c => c.course_title || c.nome_trilha)
+        ].join(' ');
+        return (
+          <div
+            class="course-grid-item"
+            data-type="trilha"
+            data-title={trilha.title.toLowerCase()}
+            data-provider={trilha.provider}
+            data-categories="trilha"
+            data-tags="trilha,formacao,trilhas"
+            data-corpus={corpus}
+            data-trilha-id={trilha.id}
+            data-source={trilha.source}
+          >
+            <TrilhaCard trilha={trilha} />
+          </div>
+        );
+      })}
     </div>
 
     <!-- Empty Results Fallback -->
     <div id="no-results-state" style="display: none;">
       <EmptyState
-        title="Nenhum curso encontrado"
-        description="Tente ajustar os termos de pesquisa ou selecionar outra fonte de estudos no menu superior."
-        actionText="Ver Todos os Cursos"
+        title="Nenhum conteúdo encontrado"
+        description="Tente ajustar os termos de pesquisa ou selecionar outra opção de filtro acima."
+        actionText="Ver Todo o Catálogo"
         actionHref="/courses"
       />
     </div>
@@ -80,6 +108,7 @@ const providers = getAllProviders();
   import { getActiveSource, getSourceById, setActiveSource } from '../lib/sources';
 
   const searchInput = document.getElementById('global-search-input') as HTMLInputElement | null;
+  const typeSelect = document.getElementById('filter-type') as HTMLSelectElement | null;
   const categorySelect = document.getElementById('filter-category') as HTMLSelectElement | null;
   const providerSelect = document.getElementById('filter-provider') as HTMLSelectElement | null;
   const statusSelect = document.getElementById('filter-status') as HTMLSelectElement | null;
@@ -90,18 +119,6 @@ const providers = getAllProviders();
   const chipsContainer = document.getElementById('active-filter-chips');
   const chipsList = document.getElementById('chips-list');
   const subtitleEl = document.getElementById('catalog-subtitle');
-
-  // Check URL query param for initial category or search
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialCategory = urlParams.get('category');
-  const initialQuery = urlParams.get('q');
-
-  if (initialCategory && categorySelect) {
-    categorySelect.value = initialCategory;
-  }
-  if (initialQuery && searchInput) {
-    searchInput.value = initialQuery;
-  }
 
   function renderChips() {
     if (!chipsContainer || !chipsList) return;
@@ -123,6 +140,14 @@ const providers = getAllProviders();
           }
         });
       }
+    }
+
+    if (typeSelect?.value) {
+      const typeLabel = typeSelect.value === 'trilha' ? 'Apenas Trilhas' : 'Apenas Cursos';
+      activeFilters.push({
+        label: `Tipo: ${typeLabel}`,
+        clear: () => { typeSelect.value = ''; filterAndSort(); }
+      });
     }
 
     if (searchInput?.value.trim()) {
@@ -178,6 +203,7 @@ const providers = getAllProviders();
 
   function filterAndSort() {
     const query = norm(searchInput?.value || '');
+    const selectedType = typeSelect?.value || '';
     const selectedCategory = categorySelect?.value || '';
     const selectedProvider = providerSelect?.value || '';
     const selectedStatus = statusSelect?.value || '';
@@ -187,12 +213,14 @@ const providers = getAllProviders();
     let visibleCount = 0;
 
     items.forEach(item => {
+      const itemType = item.getAttribute('data-type') || 'course';
       const corpus = norm(item.getAttribute('data-corpus') || item.getAttribute('data-title') || '');
       const provider = item.getAttribute('data-provider') || '';
       const categories = (item.getAttribute('data-categories') || '').split(',');
       const courseId = item.getAttribute('data-course-id') || '';
       const itemSource = item.getAttribute('data-source') || 'outros';
 
+      const matchesType = !selectedType || itemType === selectedType;
       const matchesSource = activeSource === 'all' || itemSource === activeSource;
       const matchesSearch = !query || corpus.includes(query);
       const matchesCategory = !selectedCategory || categories.includes(selectedCategory);
@@ -200,16 +228,21 @@ const providers = getAllProviders();
 
       let matchesStatus = true;
       if (selectedStatus) {
-        const stats = getCourseCompletionStats(courseId, 100);
-        const isFav = isCourseFavorite(courseId);
+        if (itemType === 'course') {
+          const stats = getCourseCompletionStats(courseId, 100);
+          const isFav = isCourseFavorite(courseId);
 
-        if (selectedStatus === 'not_started') matchesStatus = stats.percentage === 0;
-        else if (selectedStatus === 'in_progress') matchesStatus = stats.percentage > 0 && stats.percentage < 90;
-        else if (selectedStatus === 'completed') matchesStatus = stats.percentage >= 90;
-        else if (selectedStatus === 'favorited') matchesStatus = isFav;
+          if (selectedStatus === 'not_started') matchesStatus = stats.percentage === 0;
+          else if (selectedStatus === 'in_progress') matchesStatus = stats.percentage > 0 && stats.percentage < 90;
+          else if (selectedStatus === 'completed') matchesStatus = stats.percentage >= 90;
+          else if (selectedStatus === 'favorited') matchesStatus = isFav;
+        } else {
+          // Trilha status
+          matchesStatus = selectedStatus === 'not_started' || selectedStatus === 'in_progress';
+        }
       }
 
-      if (matchesSource && matchesSearch && matchesCategory && matchesProvider && matchesStatus) {
+      if (matchesType && matchesSource && matchesSearch && matchesCategory && matchesProvider && matchesStatus) {
         item.style.display = 'block';
         visibleCount++;
       } else {
@@ -220,9 +253,9 @@ const providers = getAllProviders();
     if (subtitleEl) {
       if (activeSource !== 'all') {
         const src = getSourceById(activeSource);
-        subtitleEl.textContent = `Exibindo ${visibleCount} curso(s) da fonte selecionada: ${src?.name || activeSource}.`;
+        subtitleEl.textContent = `Exibindo ${visibleCount} conteúdo(s) da fonte selecionada: ${src?.name || activeSource}.`;
       } else {
-        subtitleEl.textContent = `Exibindo ${visibleCount} cursos em todas as fontes de estudo da biblioteca.`;
+        subtitleEl.textContent = `Exibindo ${visibleCount} conteúdo(s) (cursos e trilhas) no catálogo.`;
       }
     }
 
@@ -244,7 +277,7 @@ const providers = getAllProviders();
     }
 
     if (resetBtn) {
-      const hasFilters = Boolean(query || selectedCategory || selectedProvider || selectedStatus || activeSource !== 'all');
+      const hasFilters = Boolean(query || selectedType || selectedCategory || selectedProvider || selectedStatus || activeSource !== 'all');
       resetBtn.style.display = hasFilters ? 'inline-flex' : 'none';
     }
 
@@ -252,6 +285,7 @@ const providers = getAllProviders();
   }
 
   searchInput?.addEventListener('input', filterAndSort);
+  typeSelect?.addEventListener('change', filterAndSort);
   categorySelect?.addEventListener('change', filterAndSort);
   providerSelect?.addEventListener('change', filterAndSort);
   statusSelect?.addEventListener('change', filterAndSort);
@@ -259,6 +293,7 @@ const providers = getAllProviders();
 
   resetBtn?.addEventListener('click', () => {
     if (searchInput) searchInput.value = '';
+    if (typeSelect) typeSelect.value = '';
     if (categorySelect) categorySelect.value = '';
     if (providerSelect) providerSelect.value = '';
     if (statusSelect) statusSelect.value = '';
@@ -272,10 +307,12 @@ const providers = getAllProviders();
 
   function initFromUrl() {
     const params = new URLSearchParams(window.location.search);
+    const type = params.get('type') || params.get('tipo');
     const cat = params.get('category') || params.get('categoria');
     const q = params.get('q') || params.get('search');
     const src = params.get('source') || params.get('fonte');
     
+    if (type && typeSelect) typeSelect.value = type;
     if (cat && categorySelect) categorySelect.value = cat;
     if (q && searchInput) searchInput.value = q;
     if (src) setActiveSource(src);

@@ -14,6 +14,16 @@ const { categories, providers, selectedCategory = '', selectedProvider = '' } = 
 
 <div class="filters-bar" id="course-filters-bar">
   <div class="filters-group">
+    <!-- Content Type Filter -->
+    <div class="filter-item">
+      <label for="filter-type" class="filter-label">Tipo</label>
+      <select id="filter-type" class="filter-select">
+        <option value="">Todos (Cursos & Trilhas)</option>
+        <option value="course">Apenas Cursos</option>
+        <option value="trilha">Apenas Trilhas</option>
+      </select>
+    </div>
+
     <!-- Category Filter -->
     <div class="filter-item">
       <label for="filter-category" class="filter-label">Categoria</label>
