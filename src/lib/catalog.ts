@@ -1,10 +1,11 @@
 import catalogData from '../data/catalog.json';
 import type { Course, Category, CatalogData, Lesson } from '../types/catalog';
+import { createRequire } from 'node:module';
 
 function getNodeModule(name: string): any {
   if (typeof window !== 'undefined') return null;
   try {
-    const req = Function('return require')();
+    const req = createRequire(import.meta.url);
     return req ? req(name) : null;
   } catch {
     return null;
@@ -124,12 +125,75 @@ export function getCatalog(): CatalogData {
   return loadMergedCatalog();
 }
 
+const ROOT_ORGANIZATION_PATHS = new Set([
+  'ai lab',
+  'asimov',
+  'asimov/asimov skills',
+  'asimov/cursos',
+  'asimov/projetos',
+  'asimov/trilhas asimov',
+  'asimov skills',
+  'cursos',
+  'projetos',
+  'trilhas asimov',
+  'hashtag',
+  'hashtag/soft skills',
+  'soft skills',
+  'sctec',
+  'outros',
+  'diversos'
+]);
+
+const ROOT_ORGANIZATION_TITLES = new Set([
+  'ai lab',
+  'asimov',
+  'asimov skills',
+  'cursos',
+  'projetos',
+  'trilhas asimov',
+  'hashtag',
+  'soft skills',
+  'sctec',
+  'outros',
+  'diversos'
+]);
+
+const ROOT_ORGANIZATION_SLUGS = new Set([
+  'course-ai-lab',
+  'course-asimov',
+  'course-asimov-skills',
+  'course-cursos',
+  'course-projetos',
+  'course-trilhas-asimov',
+  'course-hashtag',
+  'course-hashtag-soft-skills',
+  'course-soft-skills',
+  'course-sctec',
+  'course-outros',
+  'course-diversos'
+]);
+
+export function isOrganizationRootFolder(course: Course | undefined | null): boolean {
+  if (!course) return false;
+  const rel = (course.relative_path || '').trim().toLowerCase().replace(/\\/g, '/');
+  const slug = (course.slug || course.id || '').trim().toLowerCase();
+  const rawTitle = (course.raw_title || '').trim().toLowerCase();
+  const displayTitle = (course.display_title || '').trim().toLowerCase();
+
+  return (
+    ROOT_ORGANIZATION_PATHS.has(rel) ||
+    ROOT_ORGANIZATION_SLUGS.has(slug) ||
+    ROOT_ORGANIZATION_TITLES.has(rawTitle) ||
+    ROOT_ORGANIZATION_TITLES.has(displayTitle)
+  );
+}
+
 export function getAllCourses(): Course[] {
-  return getCatalog().courses;
+  return getCatalog().courses.filter(c => !isOrganizationRootFolder(c) && !c.is_hidden);
 }
 
 export function getCourseById(id: string): Course | undefined {
-  return getCatalog().courses.find(c => c.id === id || c.slug === id);
+  return getCatalog().courses.find(c => (c.id === id || c.slug === id) && !isOrganizationRootFolder(c));
 }
 
 export function getCategories(): Category[] {

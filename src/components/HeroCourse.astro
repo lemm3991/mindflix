@@ -219,13 +219,20 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
 
   function setHeroMuted(muted: boolean) {
     isHeroMuted = muted;
-    videoItems.forEach((item) => {
+    videoItems.forEach((item, idx) => {
       const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
       if (vid) {
-        vid.muted = isHeroMuted;
-        if (!isHeroMuted) {
-          vid.volume = 0.8;
-          vid.play().catch(() => {});
+        if (idx === currentSlide) {
+          vid.muted = isHeroMuted;
+          if (!isHeroMuted) {
+            vid.volume = 0.8;
+            vid.play().catch(() => {});
+          }
+        } else {
+          vid.muted = true;
+          if (!vid.paused) {
+            vid.pause();
+          }
         }
       }
     });
@@ -250,12 +257,18 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
           if (!vid.src && vid.dataset.src) {
             vid.src = vid.dataset.src;
           }
+          if (!isHeroMuted) {
+            vid.volume = 0.8;
+          }
           vid.play().catch(() => {});
         }
       } else {
         item.classList.remove('active');
-        if (vid && !vid.paused) {
-          vid.pause();
+        if (vid) {
+          vid.muted = true;
+          if (!vid.paused) {
+            vid.pause();
+          }
         }
       }
     });

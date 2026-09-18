@@ -198,7 +198,7 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
 
 <style>
   .trilha-study-sidebar {
-    width: 440px;
+    width: 420px;
     height: calc(100vh - 72px);
     background: var(--bg-card);
     border-left: 1px solid var(--border-subtle);
@@ -304,21 +304,25 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
     padding: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.65rem;
     max-height: calc(100vh - 200px);
   }
 
   .trilha-course-block {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     overflow: hidden;
-    transition: border-color var(--motion-fast) ease;
+    transition: border-color var(--motion-normal) var(--ease-out), background-color var(--motion-normal) var(--ease-out);
+  }
+
+  .trilha-course-block.open {
+    border-color: var(--border-highlight);
+    background: rgba(18, 22, 32, 0.9);
   }
 
   .trilha-course-block.is-active-course {
-    border-color: rgba(0, 242, 254, 0.35);
-    background: rgba(0, 242, 254, 0.02);
+    border-color: rgba(0, 242, 254, 0.4);
   }
 
   .course-accordion-btn {
@@ -326,13 +330,14 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.6rem 0.85rem;
-    min-height: 44px;
+    padding: 0.65rem 0.9rem;
+    min-height: 48px;
     background: transparent;
     border: none;
     cursor: pointer;
     text-align: left;
     gap: 0.75rem;
+    color: var(--text-primary);
   }
 
   .course-accordion-btn:hover {
@@ -368,18 +373,10 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
     min-width: 0;
   }
 
-  .course-type-tag {
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-  }
-
   .course-name {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -393,13 +390,14 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
   }
 
   .course-lessons-badge {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
   }
 
   .chevron-icon {
     color: var(--text-muted);
-    transition: transform 0.3s ease;
+    transition: transform var(--motion-normal) var(--ease-spring), color var(--motion-fast) var(--ease-out);
   }
 
   .trilha-course-block.open .chevron-icon {
@@ -409,8 +407,8 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
 
   .course-accordion-body {
     display: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(11, 13, 19, 0.45);
+    border-top: 1px solid var(--border-subtle);
   }
 
   .trilha-course-block.open .course-accordion-body {
