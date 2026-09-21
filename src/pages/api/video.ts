@@ -122,6 +122,10 @@ function resolveSafeFilePath(root: string, relPath: string): { filePath: string;
 }
 
 async function proxyGoogleDriveStream(cleanId: string, request: Request): Promise<Response> {
+  // On Vercel serverless environment, proxying large video streams exceeds free bandwidth limits (10GB Fast Origin Transfer)
+  if (process.env.VERCEL) {
+    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
+  }
   try {
     const range = request.headers.get('range');
     const upstreamHeaders: Record<string, string> = {
