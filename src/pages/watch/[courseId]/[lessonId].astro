@@ -4,6 +4,7 @@ import Layout from '../../../layouts/Layout.astro';
 import VideoPlayer from '../../../components/VideoPlayer.astro';
 import CourseSidebar from '../../../components/CourseSidebar.astro';
 import ChallengeModal from '../../../components/ChallengeModal.astro';
+import FocusMode from '../../../components/FocusMode.astro';
 import { getCourseById, getFirstPlayableLesson, isPlayableVideoLesson } from '../../../lib/catalog';
 import { getCourseSourceId } from '../../../lib/sources';
 
@@ -63,36 +64,8 @@ const isLastLessonInModule = Boolean(
   <script is:inline define:vars={{ currentCourseSource }}>
     window.__CURRENT_VIDEO_SOURCE__ = currentCourseSource;
   </script>
-  <!-- Background Overlay for Focus Mode (60% dark) -->
-  <div class="focus-backdrop" id="focus-backdrop" aria-hidden="true"></div>
-
-  <!-- Focus Mode Floating Bar -->
-  <div class="focus-mode-bar" id="focus-mode-bar">
-    <div class="focus-pill">
-      <span class="focus-pulse-dot"></span>
-      <span>Modo Foco Zen</span>
-    </div>
-    <div class="focus-actions">
-      <button type="button" class="focus-action-btn" id="btn-focus-toggle-sidebar" title="Alternar Playlist de Aulas">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="8" y1="6" x2="21" y2="6"></line>
-          <line x1="8" y1="12" x2="21" y2="12"></line>
-          <line x1="8" y1="18" x2="21" y2="18"></line>
-          <line x1="3" y1="6" x2="3.01" y2="6"></line>
-          <line x1="3" y1="12" x2="3.01" y2="12"></line>
-          <line x1="3" y1="18" x2="3.01" y2="18"></line>
-        </svg>
-        <span>Playlist</span>
-      </button>
-      <button type="button" class="focus-action-btn focus-action-exit" id="btn-exit-focus" title="Sair do Modo Foco (ESC)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-        <span>Sair do Foco (ESC)</span>
-      </button>
-    </div>
-  </div>
+  <!-- Standardized Focus Mode Component -->
+  <FocusMode />
 
   <div class="watch-layout">
     <!-- Main Content Area: Video and Details -->
@@ -357,25 +330,6 @@ const isLastLessonInModule = Boolean(
         }
       }));
     });
-  });
-
-  // Focus Mode Controls
-  const backdrop = document.getElementById('focus-backdrop');
-  const btnExitFocus = document.getElementById('btn-exit-focus');
-  const btnToggleSidebar = document.getElementById('btn-focus-toggle-sidebar');
-  const btnPlayerFocus = document.getElementById('btn-focus-mode');
-
-  const exitFocusMode = () => {
-    document.body.classList.remove('focus-mode-active');
-    document.body.classList.remove('focus-sidebar-open');
-    btnPlayerFocus?.classList.remove('active');
-  };
-
-  backdrop?.addEventListener('click', exitFocusMode);
-  btnExitFocus?.addEventListener('click', exitFocusMode);
-
-  btnToggleSidebar?.addEventListener('click', () => {
-    document.body.classList.toggle('focus-sidebar-open');
   });
 </script>
 

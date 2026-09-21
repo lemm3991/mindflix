@@ -254,14 +254,6 @@ const isVideo = !isPdf && !isDoc;
       const href = manualNextBtn.getAttribute('href');
       if (href) window.location.href = href;
     });
-    btnFocus?.addEventListener('click', () => {
-      const isActive = document.body.classList.toggle('focus-mode-active');
-      if (!isActive) {
-        document.body.classList.remove('focus-sidebar-open');
-      }
-      btnFocus.classList.toggle('active', isActive);
-      showToast(isActive ? 'Modo Foco Zen ativado. Pressione C ou ESC para sair.' : 'Modo Foco desativado', 'info', 3000);
-    });
 
     // Next lesson countdown cancel
     btnCancelNext?.addEventListener('click', () => {
