@@ -1,17 +1,41 @@
 ---
 // HeroCourse.astro - Rotating editorial showcase with mouse parallax and smooth crossfade
 import type { Course } from '../types/catalog';
-import { getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
+import { getAllCourses, getFirstPlayableLesson, isPlayableVideoLesson, isComecePorAqui, isProjectCourse } from '../lib/catalog';
 import { getLessonDriveId } from '../lib/drive';
 import { getCourseSourceId } from '../lib/sources';
 import ProgressBar from './ProgressBar.astro';
 
 interface Props {
-  featuredCourses: Course[];
+  featuredCourses?: Course[];
+  limit?: number;
 }
 
-const { featuredCourses } = Astro.props;
-const courses = featuredCourses.length > 0 ? featuredCourses : [];
+const { featuredCourses, limit = 5 } = Astro.props;
+
+let courses: Course[] = [];
+
+if (featuredCourses && featuredCourses.length > 0) {
+  courses = featuredCourses;
+} else {
+  const allCourses = getAllCourses();
+  const eligibleHeroCourses = allCourses.filter(c => {
+    if (c.is_hidden || (c as any).missing || isComecePorAqui(c) || isProjectCourse(c)) return false;
+    const firstVideo = getFirstPlayableLesson(c);
+    return Boolean(firstVideo && isPlayableVideoLesson(firstVideo));
+  });
+
+  const poolToSample = eligibleHeroCourses.length >= limit 
+    ? eligibleHeroCourses 
+    : (eligibleHeroCourses.length > 0 ? eligibleHeroCourses : allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c)));
+
+  const pool = [...poolToSample];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  courses = pool.slice(0, Math.min(limit, pool.length));
+}
 ---
 
 <section class="hero-section" id="home-hero-section">

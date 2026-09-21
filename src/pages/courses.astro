@@ -1,6 +1,7 @@
 ---
 // courses.astro - Catálogo Geral de Cursos e Trilhas com Active Filter Chips e Suporte às Fontes de Estudo
 import Layout from '../layouts/Layout.astro';
+import HeroCourse from '../components/HeroCourse.astro';
 import CourseCard from '../components/CourseCard.astro';
 import TrilhaCard from '../components/TrilhaCard.astro';
 import SearchBar from '../components/SearchBar.astro';
@@ -17,6 +18,8 @@ const providers = getAllProviders();
 ---
 
 <Layout title="Catálogo Completo — Mindflix" description="Explore todos os cursos e trilhas de formação disponíveis na sua biblioteca pessoal com filtros avançados e busca em tempo real.">
+  <HeroCourse />
+
   <div class="container catalog-page-container">
     <header class="catalog-header">
       <h1 class="catalog-title">Catálogo de Cursos & Trilhas</h1>

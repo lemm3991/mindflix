@@ -5,33 +5,10 @@ import HeroCourse from '../components/HeroCourse.astro';
 import CourseRow from '../components/CourseRow.astro';
 import CourseCard from '../components/CourseCard.astro';
 import TrilhasRow from '../components/TrilhasRow.astro';
-import { getAllCourses, getCoursesByCategory, getFirstPlayableLesson, isPlayableVideoLesson, isComecePorAqui, isProjectCourse } from '../lib/catalog';
+import { getAllCourses, getCoursesByCategory, isComecePorAqui, isProjectCourse } from '../lib/catalog';
 import { getCourseSourceId } from '../lib/sources';
 
 const allCourses = getAllCourses();
-
-// Eligible courses for hero showcase (must not be hidden/missing, not comece por aqui, not project, and must have playable video)
-const eligibleHeroCourses = allCourses.filter(c => {
-  if (c.is_hidden || (c as any).missing || isComecePorAqui(c) || isProjectCourse(c)) return false;
-  const firstVideo = getFirstPlayableLesson(c);
-  return Boolean(firstVideo && isPlayableVideoLesson(firstVideo));
-});
-
-// Fisher-Yates shuffle algorithm for uniform randomness
-function getRandomHeroCourses(list: typeof allCourses, count = 5) {
-  const pool = [...list];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool.slice(0, count);
-}
-
-// Randomly select 5 diverse courses on each page load/request
-const poolToSample = eligibleHeroCourses.length >= 5 
-  ? eligibleHeroCourses 
-  : (eligibleHeroCourses.length > 0 ? eligibleHeroCourses : allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c)));
-const featuredCourses = getRandomHeroCourses(poolToSample, Math.min(5, poolToSample.length));
 
 // Course counts for the 4 featured source spotlight cards (excluding comece por aqui and projects)
 const ailabCourses = allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c) && getCourseSourceId(c) === 'ailab');
@@ -59,7 +36,7 @@ const nextInPathCourses = allCourses.filter(c =>
 
 <Layout title="Mindflix — Biblioteca Pessoal de Cursos">
   <!-- Multi-featured Editorial Rotating Hero -->
-  <HeroCourse featuredCourses={featuredCourses} />
+  <HeroCourse />
 
   <!-- 4 Featured Highlight Source Cards (AI LAB, Asimov, Hashtag, Diversos) -->
   <section class="source-spotlight-section">
