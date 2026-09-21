@@ -1,16 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import catalogData from '../data/catalog.json';
 import type { Course, Category, CatalogData, Lesson } from '../types/catalog';
-import { createRequire } from 'node:module';
-
-function getNodeModule(name: string): any {
-  if (typeof window !== 'undefined') return null;
-  try {
-    const req = createRequire(import.meta.url);
-    return req ? req(name) : null;
-  } catch {
-    return null;
-  }
-}
 
 let cachedCatalog: CatalogData | null = null;
 let lastCatalogLoadTime = 0;
@@ -24,7 +15,7 @@ export function invalidateCatalogCache(): void {
 function loadMergedCatalog(): CatalogData {
   const baseCatalog = catalogData as CatalogData;
 
-  // Check if we are running in Node.js server environment (SSR / API)
+  // Check if we are running in browser context
   if (typeof window !== 'undefined') {
     return baseCatalog;
   }
@@ -35,21 +26,13 @@ function loadMergedCatalog(): CatalogData {
   }
 
   try {
-    const fs = getNodeModule('node:fs');
-    const path = getNodeModule('node:path');
-    const os = getNodeModule('node:os');
-
-    if (!fs || !path) {
-      cachedCatalog = baseCatalog;
-      lastCatalogLoadTime = now;
-      return baseCatalog;
-    }
 
     const primaryCatalog = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
-    const tmpCatalog = path.join(os.tmpdir(), 'catalog.json');
+    const tmpDir = path.resolve(process.cwd(), '.tmp');
+    const tmpCatalog = path.join(tmpDir, 'catalog.json');
 
     const primaryOverrides = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
-    const tmpOverrides = path.join(os.tmpdir(), 'manual_overrides.json');
+    const tmpOverrides = path.join(tmpDir, 'manual_overrides.json');
 
     let catalogToUse = baseCatalog;
 
@@ -71,7 +54,7 @@ function loadMergedCatalog(): CatalogData {
     }
 
     const primaryCatOverrides = path.resolve(process.cwd(), 'src', 'data', 'categories_overrides.json');
-    const tmpCatOverrides = path.join(os.tmpdir(), 'categories_overrides.json');
+    const tmpCatOverrides = path.join(tmpDir, 'categories_overrides.json');
 
     // Read categories overrides from disk if available
     let customCategories: any[] | null = null;

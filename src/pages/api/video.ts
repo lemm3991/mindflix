@@ -2,38 +2,52 @@ import type { APIRoute } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Centralized courses root directory resolution from env only
+// Centralized courses root directory resolution from env, .env file, or system candidate
 function getCoursesRoot(): string {
   if (process.env.COURSES_ROOT) {
-    const candidate = path.resolve(process.env.COURSES_ROOT);
+    const candidate = path.resolve(process.env.COURSES_ROOT.trim().replace(/^["']|["']$/g, ''));
     if (fs.existsSync(candidate)) {
       return candidate;
     }
   }
+
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf-8');
+      const match = content.match(/^COURSES_ROOT=["']?([^"'\r\n]+)["']?/m);
+      if (match && match[1]) {
+        const candidate = path.resolve(match[1].trim());
+        if (fs.existsSync(candidate)) {
+          return candidate;
+        }
+      }
+    }
+  } catch {}
+
+  const gDriveCandidate = 'G:\\Meu Drive\\Cursos\\Cursos Mindflix';
+  if (fs.existsSync(gDriveCandidate)) {
+    return gDriveCandidate;
+  }
+
   return path.resolve(process.cwd(), '..');
 }
 
-const COURSES_ROOT = getCoursesRoot();
-
 // Helper to lookup lesson drive ID from catalog.json
-let cachedCatalog: any = null;
-
 function getDriveIdFromCatalog(relPath: string): string | null {
   try {
-    if (!cachedCatalog) {
-      const catalogPath = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
-      if (fs.existsSync(catalogPath)) {
-        cachedCatalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
-      }
-    }
-    if (!cachedCatalog || !cachedCatalog.courses) return null;
+    const catalogPath = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
+    if (fs.existsSync(catalogPath)) {
+      const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
+      if (!catalog || !catalog.courses) return null;
 
-    const normTarget = relPath.replace(/\\/g, '/').toLowerCase();
-    for (const course of cachedCatalog.courses) {
-      for (const mod of (course.modules || [])) {
-        for (const les of (mod.lessons || [])) {
-          if (les.relative_path && les.relative_path.replace(/\\/g, '/').toLowerCase() === normTarget) {
-            return les.drive_file_id || les.drive_url || null;
+      const normTarget = relPath.replace(/\\/g, '/').toLowerCase();
+      for (const course of catalog.courses) {
+        for (const mod of (course.modules || [])) {
+          for (const les of (mod.lessons || [])) {
+            if (les.relative_path && les.relative_path.replace(/\\/g, '/').toLowerCase() === normTarget) {
+              return les.drive_file_id || les.drive_url || null;
+            }
           }
         }
       }
@@ -191,7 +205,8 @@ export const GET: APIRoute = async ({ request }) => {
     return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
   }
 
-  const resolved = resolveSafeFilePath(COURSES_ROOT, relPath);
+  const coursesRoot = getCoursesRoot();
+  const resolved = resolveSafeFilePath(coursesRoot, relPath);
 
   if (!resolved) {
     return new Response(JSON.stringify({ 

@@ -20,6 +20,9 @@ export const POST: APIRoute = async ({ request }) => {
     const flag = dryRun ? '--dry-run' : '--apply';
 
     const args: string[] = [SCRIPT_PATH, flag];
+    if (body.drive !== true) {
+      args.push('--no-drive');
+    }
 
     if (body.root && typeof body.root === 'string') {
       const sanitizedRoot = path.resolve(body.root.trim());
