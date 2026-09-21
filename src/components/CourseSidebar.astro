@@ -69,7 +69,19 @@ const { course, currentLessonId } = Astro.props;
     }
   }
 
+  function scrollToActiveLesson() {
+    const scrollContainer = document.querySelector<HTMLElement>('.sidebar-modules-scroll');
+    const activeLesson = document.querySelector<HTMLElement>('.lesson-item.current-lesson');
+
+    if (scrollContainer && activeLesson) {
+      setTimeout(() => {
+        activeLesson.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }
+
   updateSidebarStats();
+  scrollToActiveLesson();
   window.addEventListener('mindflix:progress-updated', updateSidebarStats);
   window.addEventListener('storage', updateSidebarStats);
 </script>

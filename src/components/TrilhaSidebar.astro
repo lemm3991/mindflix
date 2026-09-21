@@ -192,7 +192,19 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
     if (fillEl) fillEl.style.width = `${pct}%`;
   }
 
+  function scrollToActiveLesson() {
+    const scrollContainer = document.querySelector<HTMLElement>('.sidebar-courses-scroll');
+    const activeLesson = document.querySelector<HTMLElement>('.trilha-lesson-item.active');
+
+    if (scrollContainer && activeLesson) {
+      setTimeout(() => {
+        activeLesson.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }
+
   updateTrilhaProgressUI();
+  scrollToActiveLesson();
   window.addEventListener('mindflix:progress-updated', updateTrilhaProgressUI);
   window.addEventListener('storage', updateTrilhaProgressUI);
 </script>
