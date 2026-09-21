@@ -1,13 +1,13 @@
 {
-  "last_scan_at": "2026-09-14T16:11:28.788548-03:00",
-  "courses_root": "Google Drive (https://drive.google.com)",
-  "total_courses": 212,
-  "total_modules": 563,
-  "total_lessons": 7527,
-  "new_courses": 1,
-  "new_lessons": 200,
-  "missing_courses": 17,
-  "missing_lessons": 2093,
+  "last_scan_at": "2026-09-20T22:53:28.624973-03:00",
+  "courses_root": "G:\\Meu Drive\\Cursos\\Cursos Mindflix",
+  "total_courses": 237,
+  "total_modules": 572,
+  "total_lessons": 5710,
+  "new_courses": 25,
+  "new_lessons": 224,
+  "missing_courses": 20,
+  "missing_lessons": 3983,
   "dry_run": false,
   "status": "success"
 }

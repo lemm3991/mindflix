@@ -197,7 +197,7 @@ CATEGORY_RULES = {
         "pnl", "neurolinguística", "neurolinguistica", "soft skills", "liderança", "mindset", "psicologia", "desenvolvimento pessoal"
     ],
     "saude-lifestyle": [
-        "marmita", "marmitas", "fit", "nutri", "massagem", "stress", "saudável", "funcional"
+        "marmita", "marmitas", "fit", "nutri", "massagem", "stress", "saudável", "funcional", "pão", "pao", "gluten", "glúten", "panificação", "panificacao", "culinária", "culinaria", "receita", "receitas"
     ],
     "musica": [
         "violão", "violo", "violao", "música", "musica", "harmonia", "percepção", "tríade"
@@ -250,6 +250,9 @@ TITLE_OVERRIDES = {
     "Massagem Anti-Stress - Thiago Nishida": "Massagem Anti-Stress — Método Thiago Nishida",
     "Practitioner em PNL - Otavio Castanho": "Practitioner em PNL — Otavio Castanho",
     "Projeto 60 Dias": "Projeto 60 Dias — Transformação Completa",
+    "Pão sem glúten": "Pão Sem Glúten — Panificação Saudável",
+    "Pao sem gluten": "Pão Sem Glúten — Panificação Saudável",
+    "Po sem glten": "Pão Sem Glúten — Panificação Saudável",
     "SCTEC": "SCTEC — Formação em Data & Tech",
     "Supabase Impressionador": "Supabase Impressionador — Backend Moderno",
     "TRILHA NOCODE - IA": "Trilha NoCode com Inteligência Artificial",

@@ -151,21 +151,22 @@ def scan_google_drive(
         raw_name = item['name']
         folder_id = item['id']
 
-        # Verificar se é contêiner multi-cursos (como Asimov, SCTEC ou Asimov Skills)
-        if raw_name.lower() in {'asimov', 'sctec', 'asimov skills'}:
+        # Verificar se é contêiner multi-cursos (como Asimov, SCTEC, Outros, Hashtag, AI LAB, etc.)
+        sub_items = list_drive_folder(service, folder_id)
+        sub_items = sorted(sub_items, key=lambda x: natural_sort_key(x['name']))
+        sub_folders = [sc for sc in sub_items if sc['mimeType'] == 'application/vnd.google-apps.folder']
+
+        if raw_name.lower() in {'asimov', 'sctec', 'asimov skills', 'outros', 'outra', 'outras', 'hashtag', 'ai lab', 'ai-lab', 'diversos'} or len(sub_folders) > 0:
             container_name = raw_name
             is_asimov = container_name.lower() == 'asimov'
-            sub_items = list_drive_folder(service, folder_id)
-            sub_items = sorted(sub_items, key=lambda x: natural_sort_key(x['name']))
-            for sc in sub_items:
-                if sc['mimeType'] == 'application/vnd.google-apps.folder':
-                    course_candidates.append({
-                        "raw_name": sc['name'],
-                        "folder_id": sc['id'],
-                        "rel_path": f"{container_name}/{sc['name']}",
-                        "is_asimov": is_asimov,
-                        "container": container_name
-                    })
+            for sc in sub_folders:
+                course_candidates.append({
+                    "raw_name": sc['name'],
+                    "folder_id": sc['id'],
+                    "rel_path": f"{container_name}/{sc['name']}",
+                    "is_asimov": is_asimov,
+                    "container": container_name
+                })
         else:
             course_candidates.append({
                 "raw_name": raw_name,
