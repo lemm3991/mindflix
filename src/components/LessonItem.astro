@@ -6,10 +6,11 @@ interface Props {
   courseId: string;
   lesson: Lesson;
   isCurrent?: boolean;
+  watchHref?: string;
 }
 
-const { courseId, lesson, isCurrent = false } = Astro.props;
-const watchHref = `/watch/${courseId}/${lesson.id}`;
+const { courseId, lesson, isCurrent = false, watchHref } = Astro.props;
+const targetHref = watchHref || `/watch/${courseId}/${lesson.id}`;
 ---
 
 <div
@@ -32,7 +33,7 @@ const watchHref = `/watch/${courseId}/${lesson.id}`;
   </button>
 
   <!-- Demais áreas da faixa para navegação -->
-  <a href={watchHref} class="lesson-link" title={lesson.display_title}>
+  <a href={targetHref} class="lesson-link" title={lesson.display_title}>
     <div class="lesson-info">
       <span class="lesson-index">{String(lesson.order_index).padStart(2, '0')}</span>
       <span class="lesson-title" title={lesson.display_title}>{lesson.display_title}</span>

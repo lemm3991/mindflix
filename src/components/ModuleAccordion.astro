@@ -8,9 +8,12 @@ interface Props {
   module: Module;
   defaultOpen?: boolean;
   currentLessonId?: string;
+  titleOverride?: string;
+  watchHrefBuilder?: (lesson: any) => string;
 }
 
-const { courseId, module, defaultOpen = false, currentLessonId } = Astro.props;
+const { courseId, module, defaultOpen = false, currentLessonId, titleOverride, watchHrefBuilder } = Astro.props;
+const displayTitle = titleOverride || module.display_title;
 const hasCurrentLesson = currentLessonId ? module.lessons.some(l => l.id === currentLessonId) : false;
 const isOpen = defaultOpen || hasCurrentLesson;
 
@@ -32,7 +35,7 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
         </svg>
       </div>
       <div class="module-title-group">
-        <h4 class="module-title" title={module.display_title}>{module.display_title}</h4>
+        <h4 class="module-title" title={displayTitle}>{displayTitle}</h4>
       </div>
     </div>
 
@@ -55,6 +58,7 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
           courseId={courseId}
           lesson={lesson}
           isCurrent={currentLessonId === lesson.id}
+          watchHref={watchHrefBuilder ? watchHrefBuilder(lesson) : undefined}
         />
       ))}
     </div>
