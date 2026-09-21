@@ -392,26 +392,27 @@ def probe_media_file(full_path, cache, deep=False):
     }
     return duration, dur_formatted, meta
 
-def extract_thumbnail_if_needed(video_full_path, course_id, cache):
-    """Extracts a frame at ~15% into public/covers/{course_id}.jpg if not already present."""
+def extract_thumbnail_if_needed(video_full_path, course_id, cache, force=False):
+    """Extracts a frame from the course video into public/covers/{course_id}.jpg."""
     os.makedirs(COVERS_DIR, exist_ok=True)
     out_path = os.path.join(COVERS_DIR, f"{course_id}.jpg")
     web_cover_url = f"/covers/{course_id}.jpg"
 
-    if os.path.isfile(out_path):
+    if not force and os.path.isfile(out_path) and os.path.getsize(out_path) > 1000:
         return web_cover_url
 
-    try:
-        # Extract frame at 15s or 15% using ffmpeg
-        cmd = [
-            "ffmpeg", "-y", "-ss", "00:00:15", "-i", video_full_path,
-            "-vframes", "1", "-q:v", "3", out_path
-        ]
-        subprocess.run(cmd, capture_output=True, timeout=8)
-        if os.path.isfile(out_path) and os.path.getsize(out_path) > 1000:
-            return web_cover_url
-    except Exception:
-        pass
+    offsets = ["00:00:15", "00:00:05", "00:00:30", "00:00:01"]
+    for ss in offsets:
+        try:
+            cmd = [
+                "ffmpeg", "-y", "-ss", ss, "-i", video_full_path,
+                "-vframes", "1", "-q:v", "3", out_path
+            ]
+            subprocess.run(cmd, capture_output=True, timeout=10)
+            if os.path.isfile(out_path) and os.path.getsize(out_path) > 1000:
+                return web_cover_url
+        except Exception:
+            pass
     return None
 
 def infer_source(rel_path, raw_folder):
@@ -656,28 +657,6 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         if is_project and "projetos" not in categories:
             categories.insert(0, "projetos")
 
-        # Check local cover image in folder
-        local_cover = None
-        for img_name in ["cover.jpg", "cover.png", "capa.jpg", "capa.png", "thumb.jpg"]:
-            candidate_cover = os.path.join(full_path, img_name)
-            if os.path.isfile(candidate_cover):
-                local_cover = f"/api/video?path={rel_path}/{img_name}"
-                break
-
-        # Also check 'imagens cursos' directory if exists
-        if not local_cover:
-            covers_dir_cand = os.path.join(courses_root, "imagens cursos")
-            if os.path.isdir(covers_dir_cand):
-                candidates_names = [raw_name, clean_title]
-                for c_name in candidates_names:
-                    for ext in [".png", ".jpg", ".jpeg"]:
-                        cand_img = os.path.join(covers_dir_cand, f"{c_name}{ext}")
-                        if os.path.isfile(cand_img):
-                            local_cover = f"/api/video?path=imagens cursos/{c_name}{ext}"
-                            break
-                    if local_cover:
-                        break
-
         # Scan modules and lessons
         modules = []
         entries = sorted(os.listdir(full_path), key=natural_sort_key)
@@ -915,9 +894,9 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         total_hours = total_seconds // 3600
         total_mins = (total_seconds % 3600) // 60
 
-        # Thumbnail extraction if no local cover
-        cover_image = local_cover
-        if not cover_image and first_video_for_thumb and not dry_run:
+        # Extract video frame thumbnail for card cover
+        cover_image = None
+        if first_video_for_thumb and not dry_run:
             cover_image = extract_thumbnail_if_needed(first_video_for_thumb, course_id, cache)
 
         desc = (f"Curso prático sobre {clean_title}, ministrado por {provider}. "
@@ -941,7 +920,7 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         final_provider = override.get("provider", provider)
         final_cats = override.get("categories", categories)
         final_tags = override.get("tags", tags)
-        final_cover = override.get("cover_image", cover_image)
+        final_cover = cover_image or f"/covers/{course_id}.jpg"
         is_hidden = override.get("is_hidden", False)
         is_featured = override.get("is_featured", clean_title in [
             "Dominando o Ecossistema Claude",

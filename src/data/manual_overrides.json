@@ -14,128 +14,108 @@
     ],
     "is_hidden": false,
     "is_featured": true,
-    "updated_at": "2026-09-04T15:55:42.883Z",
-    "cover_image": "/covers/course-claude-impressionador.png"
+    "updated_at": "2026-09-04T15:55:42.883Z"
   },
   "course-agentes-com-gpt": {
-    "cover_image": "/covers/course-agentes-com-gpt.png",
     "categories": [
       "automacao-agentes",
       "ia"
     ]
   },
   "course-algotrading-execucao-automatizada": {
-    "cover_image": "/covers/course-algotrading-execucao-automatizada.png",
     "categories": [
       "trading"
     ]
   },
   "course-analise-de-dados-com-ia": {
-    "cover_image": "/covers/course-analise-de-dados-com-ia.png",
     "categories": [
       "dados-datascience",
       "ia"
     ]
   },
   "course-analise-de-dados-com-python": {
-    "cover_image": "/covers/course-analise-de-dados-com-python.png",
     "categories": [
       "dados-datascience",
       "python"
     ]
   },
   "course-aplicacoes-de-ia-com-python": {
-    "cover_image": "/covers/course-aplicacoes-de-ia-com-python.png",
     "categories": [
       "python",
       "ia"
     ]
   },
   "course-aplicacoes-ia-comece-por-aqui": {
-    "cover_image": "/covers/course-aplicacoes-ia-comece-por-aqui.png",
     "categories": [
       "ia"
     ]
   },
   "course-backtesting-avaliando-estrategias-de-trading-com-dados-historicos": {
-    "cover_image": "/covers/course-backtesting-avaliando-estrategias-de-trading-com-dados-historicos.png",
     "categories": [
       "trading"
     ]
   },
   "course-como-migrar-de-carreira-para-analise-de-dados": {
-    "cover_image": "/covers/course-como-migrar-de-carreira-para-analise-de-dados.png",
     "categories": [
       "dados-datascience",
       "negocios"
     ]
   },
   "course-construindo-base-de-dados-para-trading": {
-    "cover_image": "/covers/course-construindo-base-de-dados-para-trading.png",
     "categories": [
       "trading",
       "dados-datascience"
     ]
   },
   "course-construindo-sites-estaticos-de-alto-nivel-com-ia": {
-    "cover_image": "/covers/course-construindo-sites-estaticos-de-alto-nivel-com-ia.png",
     "categories": [
       "web-vibe-coding",
       "ia"
     ]
   },
   "course-construindo-sites-profissionais-com-ia": {
-    "cover_image": "/covers/course-construindo-sites-profissionais-com-ia.png",
     "categories": [
       "web-vibe-coding",
       "ia"
     ]
   },
   "course-criando-agentes-de-atendimento-no-n8n": {
-    "cover_image": "/covers/course-criando-agentes-de-atendimento-no-n8n.png",
     "categories": [
       "automacao-agentes"
     ]
   },
   "course-criando-agentes-pessoais-com-hermes-agent": {
-    "cover_image": "/covers/course-criando-agentes-pessoais-com-hermes-agent.png",
     "categories": [
       "automacao-agentes"
     ]
   },
   "course-criando-nosso-primeiro-agente-com-chatgpt": {
-    "cover_image": "/covers/course-criando-nosso-primeiro-agente-com-chatgpt.png",
     "categories": [
       "automacao-agentes"
     ]
   },
   "course-dashboards-interativos-com-python": {
-    "cover_image": "/covers/course-dashboards-interativos-com-python.png",
     "categories": [
       "dados-datascience",
       "python"
     ]
   },
   "course-data-science-e-machine-learning": {
-    "cover_image": "/covers/course-data-science-e-machine-learning.png",
     "categories": [
       "dados-datascience"
     ]
   },
   "course-dominando-o-ecossistema-claude": {
-    "cover_image": "/covers/course-dominando-o-ecossistema-claude.png",
     "categories": [
       "ia"
     ]
   },
   "course-dominando-openclaw": {
-    "cover_image": "/covers/course-dominando-openclaw.png",
     "categories": [
       "ia"
     ]
   },
   "course-engenharia-de-dados-com-python": {
-    "cover_image": "/covers/course-engenharia-de-dados-com-python.png",
     "categories": [
       "backend-infra",
       "dados-datascience",
@@ -143,33 +123,28 @@
     ]
   },
   "course-ferramentas-de-ia-para-desenvolvedores": {
-    "cover_image": "/covers/course-ferramentas-de-ia-para-desenvolvedores.png",
     "categories": [
       "ia"
     ]
   },
   "course-integrando-python-e-bancos-de-dados": {
-    "cover_image": "/covers/course-integrando-python-e-bancos-de-dados.png",
     "categories": [
       "backend-infra",
       "python"
     ]
   },
   "course-integrando-python-e-excel": {
-    "cover_image": "/covers/course-integrando-python-e-excel.png",
     "categories": [
       "python"
     ]
   },
   "course-onboarding-engenheiro-de-agentes-de-ia": {
-    "cover_image": "/covers/course-onboarding-engenheiro-de-agentes-de-ia.png",
     "categories": [
       "automacao-agentes",
       "ia"
     ]
   },
   "course-web-apps-de-dados-com-python": {
-    "cover_image": "/covers/course-web-apps-de-dados-com-python.png",
     "categories": [
       "dados-datascience",
       "python",
@@ -177,64 +152,54 @@
     ]
   },
   "course-agentes-de-ia-e-n8n-impressionador": {
-    "cover_image": "/covers/course-agentes-de-ia-e-n8n-impressionador.png",
     "categories": [
       "automacao-agentes",
       "ia"
     ]
   },
   "course-carros-de-leilao-expert-2023": {
-    "cover_image": "/covers/course-carros-de-leilao-expert-2023.png",
     "categories": [
       "negocios"
     ]
   },
   "course-especializacao-em-soft-skills-lideranca": {
-    "cover_image": "/covers/course-especializacao-em-soft-skills-lideranca.png",
     "categories": [
       "desenvolvimento-pessoal",
       "negocios"
     ]
   },
   "course-fit-da-nutri-10-marmitas-fit-e-funcionais": {
-    "cover_image": "/covers/course-fit-da-nutri-10-marmitas-fit-e-funcionais.png",
     "categories": [
       "saude-lifestyle"
     ]
   },
   "course-inteligencia-artificial-impressionador": {
-    "cover_image": "/covers/course-inteligencia-artificial-impressionador.png",
     "categories": [
       "ia"
     ]
   },
   "course-lovable-impressionador-apps-com-ia": {
-    "cover_image": "/covers/course-lovable-impressionador-apps-com-ia.png",
     "categories": [
       "web-vibe-coding",
       "ia"
     ]
   },
   "course-marmitas-fit-congeladas-pratica-e-sabor": {
-    "cover_image": "/covers/course-marmitas-fit-congeladas-pratica-e-sabor.png",
     "categories": [
       "saude-lifestyle"
     ]
   },
   "course-massagem-anti-stress-metodo-thiago-nishida": {
-    "cover_image": "/covers/course-massagem-anti-stress-metodo-thiago-nishida.png",
     "categories": [
       "saude-lifestyle"
     ]
   },
   "course-practitioner-em-pnl-otavio-castanho": {
-    "cover_image": "/covers/course-practitioner-em-pnl-otavio-castanho.png",
     "categories": [
       "desenvolvimento-pessoal"
     ]
   },
   "course-projeto-60-dias-transformacao-completa": {
-    "cover_image": "/covers/course-projeto-60-dias-transformacao-completa.png",
     "display_title": "Projeto 60 Dias — Transformação Completa",
     "description": "Curso prático sobre Projeto 60 Dias — Transformação Completa, ministrado por Especialista Mindflix. Contém 25 módulos e 154 aulas (12h 24m).",
     "provider": "Especialista Mindflix",
@@ -249,25 +214,21 @@
     "updated_at": "2026-09-05T15:35:39.698Z"
   },
   "course-supabase-impressionador-backend-moderno": {
-    "cover_image": "/covers/course-supabase-impressionador-backend-moderno.png",
     "categories": [
       "backend-infra"
     ]
   },
   "course-trilha-nocode-com-inteligencia-artificial": {
-    "cover_image": "/covers/course-trilha-nocode-com-inteligencia-artificial.png",
     "categories": [
       "ia"
     ]
   },
   "course-violao-metodo-triade-heitor-castro": {
-    "cover_image": "/covers/course-violao-metodo-triade-heitor-castro.png",
     "categories": [
       "musica"
     ]
   },
   "course-sctec-formacao-em-data-tech": {
-    "cover_image": "/covers/course-sctec-formacao-em-data-tech.png",
     "categories": [
       "dados-datascience",
       "programacao-dev"
