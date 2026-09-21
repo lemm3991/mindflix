@@ -120,14 +120,15 @@ const remainingCount = trilha.courses.length - previewCourses.length;
     flex-direction: column;
     height: 100%;
     min-height: 500px;
-    width: 100%;
+    flex: 0 0 340px;
+    width: 340px;
+    min-width: 340px;
+    max-width: 340px;
+    flex-shrink: 0;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-    transform-style: preserve-3d;
-    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.45s ease,
-                border-color 0.45s ease,
-                opacity 0.45s ease;
-    will-change: transform, opacity;
+    transition: transform 0.3s var(--ease-out),
+                box-shadow 0.3s ease,
+                border-color 0.3s ease;
   }
 
   .trilha-card-inner {

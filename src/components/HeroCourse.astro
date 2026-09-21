@@ -35,6 +35,9 @@ if (featuredCourses && featuredCourses.length > 0) {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   courses = pool.slice(0, Math.min(limit, pool.length));
+  if (courses.length === 0) {
+    courses = allCourses.slice(0, Math.min(limit, allCourses.length));
+  }
 }
 ---
 
