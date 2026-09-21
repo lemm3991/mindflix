@@ -4,7 +4,7 @@ import Layout from '../../../layouts/Layout.astro';
 import VideoPlayer from '../../../components/VideoPlayer.astro';
 import CourseSidebar from '../../../components/CourseSidebar.astro';
 import ChallengeModal from '../../../components/ChallengeModal.astro';
-import { getCourseById, getFirstPlayableLesson } from '../../../lib/catalog';
+import { getCourseById, getFirstPlayableLesson, isPlayableVideoLesson } from '../../../lib/catalog';
 import { getCourseSourceId } from '../../../lib/sources';
 
 const { courseId, lessonId } = Astro.params;
@@ -170,49 +170,146 @@ const isLastLessonInModule = Boolean(
           </div>
         </div>
 
-        <!-- Complementary Materials & Documents (Excluding articles and transcripts) -->
+        <!-- Complementary Materials & Documents Section (Always visible by default) -->
         {(() => {
-          const validMaterials = (currentLesson.materials || []).filter((mat: any) => {
-            const t = (mat.title || '').toLowerCase();
-            const p = (mat.relative_path || '').toLowerCase();
-            return !t.includes('artigo') && !t.includes('transcri') && !t.includes('transcript') && !t.includes('article') &&
-                   !p.includes('artigo') && !p.includes('transcri') && !p.includes('transcript') && !p.includes('article');
+          // 1. Materials explicitly attached to currentLesson
+          const lessonMaterials = (currentLesson.materials || []).map((mat: any) => ({
+            id: mat.id || mat.relative_path,
+            title: mat.title || 'Material Complementar',
+            type: (mat.type || 'ARQUIVO').toUpperCase(),
+            relative_path: mat.relative_path || '',
+            url: mat.drive_file_id 
+              ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
+              : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}`),
+            driveId: mat.drive_file_id
+          }));
+
+          // 2. Non-video lessons in the current module (e.g. PDFs, docs, zips, spreadsheets)
+          const moduleFiles = (currentModule?.lessons || [])
+            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id)
+            .map((les: any) => {
+              const ext = (les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase();
+              return {
+                id: les.id,
+                title: les.display_title || les.raw_title,
+                type: ext,
+                relative_path: les.relative_path || '',
+                url: les.drive_file_id 
+                  ? `https://drive.google.com/uc?export=download&id=${les.drive_file_id}` 
+                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}`),
+                driveId: les.drive_file_id
+              };
+            });
+
+          // 3. Non-video lessons in other modules of the course if moduleFiles is empty
+          const otherCourseFiles = moduleFiles.length === 0 ? (course.modules || [])
+            .flatMap((mod: any) => mod.lessons || [])
+            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id)
+            .map((les: any) => {
+              const ext = (les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase();
+              return {
+                id: les.id,
+                title: les.display_title || les.raw_title,
+                type: ext,
+                relative_path: les.relative_path || '',
+                url: les.drive_file_id 
+                  ? `https://drive.google.com/uc?export=download&id=${les.drive_file_id}` 
+                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}`),
+                driveId: les.drive_file_id
+              };
+            }) : [];
+
+          // Combine and deduplicate materials
+          const seen = new Set<string>();
+          const allMaterials = [...lessonMaterials, ...moduleFiles, ...otherCourseFiles].filter(item => {
+            const key = item.url || item.id || item.title;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
           });
 
-          return validMaterials.length > 0 ? (
-            <div class="materials-box">
-              <h3 class="materials-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                </svg>
-                <span>Materiais Complementares</span>
-              </h3>
+          const driveFolderUrl = (course as any).drive_folder_url || ((course as any).drive_folder_id ? `https://drive.google.com/drive/folders/${(course as any).drive_folder_id}` : null);
 
-              <div class="materials-grid">
-                {validMaterials.map((mat: any) => (
-                  <div class="material-item-card">
-                    <div class="material-icon-badge">
-                      <span class="type-badge">{mat.type.toUpperCase()}</span>
-                    </div>
-                    <div class="material-meta">
-                      <strong class="material-name">{mat.title}</strong>
-                      <span class="material-path">{mat.relative_path}</span>
-                    </div>
-                    <a
-                      href={mat.drive_file_id ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` : mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="btn btn-secondary btn-sm"
-                      download
-                    >
-                      Baixar / Visualizar
-                    </a>
+          return (
+            <div class="materials-box" id="watch-materials-section">
+              <div class="materials-header">
+                <div class="materials-title-wrap">
+                  <div class="materials-icon-circle">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
                   </div>
-                ))}
+                  <div>
+                    <h3 class="materials-main-heading">Arquivos e Materiais para Download</h3>
+                    <p class="materials-subtitle">Apostilas, códigos, PDFs e materiais de apoio deste curso</p>
+                  </div>
+                </div>
+
+                {allMaterials.length > 0 && (
+                  <span class="materials-count-pill">{allMaterials.length} {allMaterials.length === 1 ? 'arquivo' : 'arquivos'}</span>
+                )}
               </div>
+
+              {allMaterials.length > 0 ? (
+                <div class="materials-grid">
+                  {allMaterials.map((mat: any) => (
+                    <div class="material-item-card">
+                      <div class="material-card-left">
+                        <span class={`type-badge type-badge-${mat.type.toLowerCase()}`}>{mat.type}</span>
+                        <div class="material-meta">
+                          <strong class="material-name">{mat.title}</strong>
+                          {mat.relative_path && <span class="material-path">{mat.relative_path}</span>}
+                        </div>
+                      </div>
+                      <a
+                        href={mat.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-secondary btn-sm material-download-btn"
+                        download
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Baixar / Visualizar</span>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div class="materials-empty-state">
+                  <div class="materials-empty-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                  </div>
+                  <div class="materials-empty-info">
+                    <p class="materials-empty-text">Nenhum arquivo ou documento adicional anexado para esta aula.</p>
+                    {driveFolderUrl && (
+                      <a
+                        href={driveFolderUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-secondary btn-sm materials-drive-btn"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>Acessar Pasta do Curso no Google Drive</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          ) : null;
+          );
         })()}
       </div>
     </div>
@@ -531,20 +628,65 @@ const isLastLessonInModule = Boolean(
   }
 
   .materials-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 1.25rem;
+    background: var(--bg-card, #121620);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-lg, 12px);
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 
-  .materials-title {
+  .materials-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: var(--text-primary);
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .materials-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .materials-icon-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(0, 242, 254, 0.12);
+    color: var(--accent-cyan, #00f2fe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 242, 254, 0.25);
+  }
+
+  .materials-main-heading {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .materials-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted, #94a3b8);
+    margin: 0.2rem 0 0;
+  }
+
+  .materials-count-pill {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: var(--radius-full, 9999px);
+    white-space: nowrap;
   }
 
   .materials-grid {
@@ -558,32 +700,56 @@ const isLastLessonInModule = Boolean(
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
+    padding: 0.85rem 1.15rem;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md, 8px);
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
   }
 
-  .material-icon-badge .type-badge {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 0.2rem 0.4rem;
-    background: rgba(0, 242, 254, 0.1);
-    color: var(--accent-cyan);
-    border-radius: 4px;
+  .material-item-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(0, 242, 254, 0.3);
+    transform: translateY(-1px);
   }
+
+  .material-card-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .type-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 242, 254, 0.12);
+    color: var(--accent-cyan, #00f2fe);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  .type-badge-pdf { background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.25); }
+  .type-badge-docx, .type-badge-doc { background: rgba(59, 130, 246, 0.12); color: #60a5fa; border-color: rgba(59, 130, 246, 0.25); }
+  .type-badge-zip, .type-badge-rar { background: rgba(234, 179, 8, 0.12); color: #facc15; border-color: rgba(234, 179, 8, 0.25); }
+  .type-badge-py, .type-badge-ipynb { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.25); }
 
   .material-meta {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.15rem;
   }
 
   .material-name {
     font-size: 0.875rem;
-    color: var(--text-primary);
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -591,10 +757,53 @@ const isLastLessonInModule = Boolean(
 
   .material-path {
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--text-muted, #94a3b8);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .material-download-btn {
+    flex-shrink: 0;
+  }
+
+  .materials-empty-state {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .materials-empty-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .materials-empty-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .materials-empty-text {
+    font-size: 0.84rem;
+    color: var(--text-muted, #94a3b8);
+    margin: 0;
+  }
+
+  .materials-drive-btn {
+    align-self: flex-start;
+    font-size: 0.78rem;
   }
 
   @media (max-width: 1024px) {
