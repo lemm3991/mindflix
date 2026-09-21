@@ -70,7 +70,7 @@ def load_categories_overrides():
 # Supported extensions
 VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".ts"}
 AUDIO_EXTS = {".mp3", ".m4a", ".wav", ".ogg"}
-DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r"}
+DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
 DEFAULT_IGNORE = {
@@ -774,6 +774,29 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                     video_files = [f for f in m_files if os.path.splitext(f)[1].lower() in VIDEO_EXTS]
                     other_files = [f for f in m_files if os.path.splitext(f)[1].lower() in DOC_EXTS or os.path.splitext(f)[1].lower() in AUDIO_EXTS]
 
+                    matching_mats = {}
+                    general_mats = []
+                    for o_file in other_files:
+                        o_lower = o_file.lower()
+                        if any(k in o_lower for k in ["artigo", "transcricao", "transcrição", "transcript", "article"]):
+                            continue
+                        matched_v = None
+                        for v_file in video_files:
+                            base_v_name = os.path.splitext(v_file)[0][:10]
+                            if o_file.startswith(base_v_name):
+                                matched_v = v_file
+                                break
+                        mat_item = {
+                            "id": f"mat-{slugify(os.path.splitext(o_file)[0])}",
+                            "title": clean_display_title(o_file),
+                            "type": "pdf" if o_file.lower().endswith(".pdf") else "document",
+                            "relative_path": f"{rel_path}/{m_entry}/{o_file}"
+                        }
+                        if matched_v:
+                            matching_mats.setdefault(matched_v, []).append(mat_item)
+                        else:
+                            general_mats.append(mat_item)
+
                     for idx, v_file in enumerate(video_files, 1):
                         v_full = os.path.join(m_full, v_file)
                         v_rel = f"{rel_path}/{m_entry}/{v_file}"
@@ -784,20 +807,7 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                         if not first_video_for_thumb:
                             first_video_for_thumb = v_full
 
-                        # Check for matching materials (strictly excluding articles and transcripts)
-                        base_v_name = os.path.splitext(v_file)[0][:10]
-                        mats = []
-                        for o_file in other_files:
-                            o_lower = o_file.lower()
-                            if any(k in o_lower for k in ["artigo", "transcricao", "transcrição", "transcript", "article"]):
-                                continue
-                            if o_file.startswith(base_v_name):
-                                mats.append({
-                                    "id": f"{les_id}-mat-{len(mats)+1}",
-                                    "title": clean_display_title(o_file),
-                                    "type": "pdf" if o_file.endswith(".pdf") else "document",
-                                    "relative_path": f"{rel_path}/{m_entry}/{o_file}"
-                                })
+                        mats = (matching_mats.get(v_file) or []) + general_mats
 
                         lessons.append({
                             "id": les_id,
@@ -843,7 +853,31 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         else:
             # Single-folder course (videos directly in root)
             video_files = [f for f in entries if os.path.splitext(f)[1].lower() in VIDEO_EXTS]
-            other_files = [f for f in entries if os.path.splitext(f)[1].lower() in DOC_EXTS]
+            other_files = [f for f in entries if os.path.splitext(f)[1].lower() in DOC_EXTS or os.path.splitext(f)[1].lower() in AUDIO_EXTS]
+
+            matching_mats = {}
+            general_mats = []
+            for o_file in other_files:
+                o_lower = o_file.lower()
+                if any(k in o_lower for k in ["artigo", "transcricao", "transcrição", "transcript", "article"]):
+                    continue
+                matched_v = None
+                for v_file in video_files:
+                    base_v_name = os.path.splitext(v_file)[0][:10]
+                    if o_file.startswith(base_v_name):
+                        matched_v = v_file
+                        break
+                mat_item = {
+                    "id": f"mat-{slugify(os.path.splitext(o_file)[0])}",
+                    "title": clean_display_title(o_file),
+                    "type": "pdf" if o_file.lower().endswith(".pdf") else "document",
+                    "relative_path": f"{rel_path}/{o_file}"
+                }
+                if matched_v:
+                    matching_mats.setdefault(matched_v, []).append(mat_item)
+                else:
+                    general_mats.append(mat_item)
+
             if video_files or other_files:
                 m_id = f"{course_id}-mod-01"
                 lessons = []
@@ -852,6 +886,9 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                     dur, dur_fmt, meta = probe_media_file(v_full, cache, deep=deep)
                     if not first_video_for_thumb:
                         first_video_for_thumb = v_full
+
+                    mats = (matching_mats.get(v_file) or []) + general_mats
+
                     lessons.append({
                         "id": f"{m_id}-les-{slugify(os.path.splitext(v_file)[0])}",
                         "order_index": idx,
@@ -861,7 +898,7 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                         "type": "video",
                         "duration_seconds": dur,
                         "duration_formatted": dur_fmt,
-                        "materials": []
+                        "materials": mats
                     })
                 modules.append({
                     "id": m_id,

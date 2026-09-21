@@ -145,21 +145,29 @@ const isLastLessonInModule = Boolean(
 
         <!-- Complementary Materials & Documents Section (Always visible by default) -->
         {(() => {
+          const isDownloadableMat = (pathOrTitle: string) => {
+            const ext = (pathOrTitle || '').split('.').pop()?.toLowerCase() || '';
+            const excluded = ['mp4', 'mkv', 'webm', 'mov', 'avi', 'm4v', 'ts', 'md', 'markdown', 'json', 'jpg', 'jpeg', 'png', 'webp', 'ini'];
+            return !excluded.includes(ext);
+          };
+
           // 1. Materials explicitly attached to currentLesson
-          const lessonMaterials = (currentLesson.materials || []).map((mat: any) => ({
-            id: mat.id || mat.relative_path,
-            title: mat.title || 'Material Complementar',
-            type: (mat.type || 'ARQUIVO').toUpperCase(),
-            relative_path: mat.relative_path || '',
-            url: mat.drive_file_id 
-              ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
-              : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}`),
-            driveId: mat.drive_file_id
-          }));
+          const lessonMaterials = (currentLesson.materials || [])
+            .filter((mat: any) => isDownloadableMat(mat.relative_path || mat.title))
+            .map((mat: any) => ({
+              id: mat.id || mat.relative_path,
+              title: mat.title || 'Material Complementar',
+              type: (mat.type || 'ARQUIVO').toUpperCase(),
+              relative_path: mat.relative_path || '',
+              url: mat.drive_file_id 
+                ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
+                : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}`),
+              driveId: mat.drive_file_id
+            }));
 
           // 2. Non-video lessons in the current module (e.g. PDFs, docs, zips, spreadsheets)
           const moduleFiles = (currentModule?.lessons || [])
-            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id)
+            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id && isDownloadableMat(les.relative_path || les.raw_title))
             .map((les: any) => {
               const ext = (les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase();
               return {
@@ -177,7 +185,7 @@ const isLastLessonInModule = Boolean(
           // 3. Non-video lessons in other modules of the course if moduleFiles is empty
           const otherCourseFiles = moduleFiles.length === 0 ? (course.modules || [])
             .flatMap((mod: any) => mod.lessons || [])
-            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id)
+            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id && isDownloadableMat(les.relative_path || les.raw_title))
             .map((les: any) => {
               const ext = (les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase();
               return {
@@ -200,8 +208,6 @@ const isLastLessonInModule = Boolean(
             seen.add(key);
             return true;
           });
-
-          const driveFolderUrl = (course as any).drive_folder_url || ((course as any).drive_folder_id ? `https://drive.google.com/drive/folders/${(course as any).drive_folder_id}` : null);
 
           return (
             <div class="materials-box" id="watch-materials-section">
@@ -265,19 +271,6 @@ const isLastLessonInModule = Boolean(
                   </div>
                   <div class="materials-empty-info">
                     <p class="materials-empty-text">Nenhum arquivo ou documento adicional anexado para esta aula.</p>
-                    {driveFolderUrl && (
-                      <a
-                        href={driveFolderUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="btn btn-secondary btn-sm materials-drive-btn"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                        </svg>
-                        <span>Acessar Pasta do Curso no Google Drive</span>
-                      </a>
-                    )}
                   </div>
                 </div>
               )}

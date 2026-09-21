@@ -91,21 +91,29 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
 
         <!-- Complementary Materials & Documents Section (Always visible by default) -->
         {(() => {
+          const isDownloadableMat = (pathOrTitle: string) => {
+            const ext = (pathOrTitle || '').split('.').pop()?.toLowerCase() || '';
+            const excluded = ['mp4', 'mkv', 'webm', 'mov', 'avi', 'm4v', 'ts', 'md', 'markdown', 'json', 'jpg', 'jpeg', 'png', 'webp', 'ini'];
+            return !excluded.includes(ext);
+          };
+
           // 1. Materials explicitly attached to currentLesson
-          const lessonMaterials = (currentLesson.materials || []).map((mat: any) => ({
-            id: mat.id || mat.relative_path,
-            title: mat.title || 'Material Complementar',
-            type: (mat.type || 'ARQUIVO').toUpperCase(),
-            relative_path: mat.relative_path || '',
-            url: mat.drive_file_id 
-              ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
-              : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}`),
-            driveId: mat.drive_file_id
-          }));
+          const lessonMaterials = (currentLesson.materials || [])
+            .filter((mat: any) => isDownloadableMat(mat.relative_path || mat.title))
+            .map((mat: any) => ({
+              id: mat.id || mat.relative_path,
+              title: mat.title || 'Material Complementar',
+              type: (mat.type || 'ARQUIVO').toUpperCase(),
+              relative_path: mat.relative_path || '',
+              url: mat.drive_file_id 
+                ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
+                : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}`),
+              driveId: mat.drive_file_id
+            }));
 
           // 2. Non-video lessons in all courses of the trilha
           const trilhaFiles = (allLessons || [])
-            .filter((lItem: any) => !isPlayableVideoLesson(lItem.lesson) && lItem.lesson.id !== currentLesson.id)
+            .filter((lItem: any) => !isPlayableVideoLesson(lItem.lesson) && lItem.lesson.id !== currentLesson.id && isDownloadableMat(lItem.lesson.relative_path || lItem.lesson.raw_title))
             .map((lItem: any) => {
               const les = lItem.lesson;
               const ext = (les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase();

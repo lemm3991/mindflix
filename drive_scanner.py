@@ -20,7 +20,7 @@ DRIVE_READONLY_SCOPE = ['https://www.googleapis.com/auth/drive.readonly']
 DEFAULT_DRIVE_FOLDER_ID = '1BFljfXrOGVTgiFXg3jmNcYcWlaafrxOz'
 
 VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".ts"}
-DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r"}
+DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r"}
 IMAGE_NAMES = {"cover.jpg", "cover.png", "capa.jpg", "capa.png", "thumb.jpg", "thumb.png"}
 
 def resolve_credentials_path(custom_path=None):
@@ -256,6 +256,28 @@ def scan_google_drive(
                 video_files, other_files = get_subfolder_media(sub['id'])
                 video_files = sorted(video_files, key=lambda x: natural_sort_key(x['name']))
 
+                matching_mats = {}
+                general_mats = []
+                for o in other_files:
+                    matched_v_id = None
+                    for v in video_files:
+                        b_name = os.path.splitext(v['name'])[0][:10]
+                        if o['name'].startswith(b_name):
+                            matched_v_id = v['id']
+                            break
+                    mat_obj = {
+                        "id": f"{course_id}-mat-{o['id']}",
+                        "title": clean_display_title(o['name']),
+                        "type": "pdf" if o['name'].lower().endswith('.pdf') else "document",
+                        "relative_path": f"drive:{o['id']}",
+                        "drive_file_id": o['id'],
+                        "drive_url": f"https://drive.google.com/file/d/{o['id']}/view"
+                    }
+                    if matched_v_id:
+                        matching_mats.setdefault(matched_v_id, []).append(mat_obj)
+                    else:
+                        general_mats.append(mat_obj)
+
                 lessons = []
                 for idx, v in enumerate(video_files, 1):
                     raw_v_name = v['name']
@@ -270,19 +292,7 @@ def scan_google_drive(
                     dur_sec = round(int(dur_ms) / 1000) if dur_ms else 300
                     dur_fmt = f"{dur_sec // 60:02d}:{dur_sec % 60:02d}"
 
-                    # Materiais da aula
-                    base_name = os.path.splitext(clean_v_name)[0][:10]
-                    mats = []
-                    for o in other_files:
-                        if o['name'].startswith(base_name):
-                            mats.append({
-                                "id": f"{les_id}-mat-{len(mats)+1}",
-                                "title": clean_display_title(o['name']),
-                                "type": "pdf" if o['name'].endswith('.pdf') else "document",
-                                "relative_path": f"drive:{o['id']}",
-                                "drive_file_id": o['id'],
-                                "drive_url": f"https://drive.google.com/file/d/{o['id']}/view"
-                            })
+                    mats = (matching_mats.get(v_id) or []) + general_mats
 
                     lessons.append({
                         "id": les_id,
@@ -311,7 +321,30 @@ def scan_google_drive(
             # Vídeos diretos na pasta do curso
             video_files = [f for f in course_items if f['mimeType'].startswith('video/') or os.path.splitext(f['name'])[1].lower() in VIDEO_EXTS]
             other_files = [f for f in course_items if os.path.splitext(f['name'])[1].lower() in DOC_EXTS]
-            if video_files:
+
+            matching_mats = {}
+            general_mats = []
+            for o in other_files:
+                matched_v_id = None
+                for v in video_files:
+                    b_name = os.path.splitext(v['name'])[0][:10]
+                    if o['name'].startswith(b_name):
+                        matched_v_id = v['id']
+                        break
+                mat_obj = {
+                    "id": f"{course_id}-mat-{o['id']}",
+                    "title": clean_display_title(o['name']),
+                    "type": "pdf" if o['name'].lower().endswith('.pdf') else "document",
+                    "relative_path": f"drive:{o['id']}",
+                    "drive_file_id": o['id'],
+                    "drive_url": f"https://drive.google.com/file/d/{o['id']}/view"
+                }
+                if matched_v_id:
+                    matching_mats.setdefault(matched_v_id, []).append(mat_obj)
+                else:
+                    general_mats.append(mat_obj)
+
+            if video_files or other_files:
                 m_id = f"{course_id}-mod-01"
                 lessons = []
                 for idx, v in enumerate(video_files, 1):
@@ -324,6 +357,8 @@ def scan_google_drive(
                     dur_sec = round(int(dur_ms) / 1000) if dur_ms else 300
                     dur_fmt = f"{dur_sec // 60:02d}:{dur_sec % 60:02d}"
 
+                    mats = (matching_mats.get(v_id) or []) + general_mats
+
                     lessons.append({
                         "id": f"{m_id}-les-{les_slug}",
                         "order_index": idx,
@@ -335,7 +370,7 @@ def scan_google_drive(
                         "type": "video",
                         "duration_seconds": dur_sec,
                         "duration_formatted": dur_fmt,
-                        "materials": []
+                        "materials": mats
                     })
                 modules.append({
                     "id": m_id,
