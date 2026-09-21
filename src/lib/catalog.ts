@@ -12,6 +12,15 @@ function getNodeModule(name: string): any {
   }
 }
 
+let cachedCatalog: CatalogData | null = null;
+let lastCatalogLoadTime = 0;
+const CATALOG_CACHE_TTL_MS = 5000;
+
+export function invalidateCatalogCache(): void {
+  cachedCatalog = null;
+  lastCatalogLoadTime = 0;
+}
+
 function loadMergedCatalog(): CatalogData {
   const baseCatalog = catalogData as CatalogData;
 
@@ -20,12 +29,21 @@ function loadMergedCatalog(): CatalogData {
     return baseCatalog;
   }
 
+  const now = Date.now();
+  if (cachedCatalog && (now - lastCatalogLoadTime) < CATALOG_CACHE_TTL_MS) {
+    return cachedCatalog;
+  }
+
   try {
     const fs = getNodeModule('node:fs');
     const path = getNodeModule('node:path');
     const os = getNodeModule('node:os');
 
-    if (!fs || !path) return baseCatalog;
+    if (!fs || !path) {
+      cachedCatalog = baseCatalog;
+      lastCatalogLoadTime = now;
+      return baseCatalog;
+    }
 
     const primaryCatalog = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
     const tmpCatalog = path.join(os.tmpdir(), 'catalog.json');
@@ -91,6 +109,8 @@ function loadMergedCatalog(): CatalogData {
     }
 
     if (Object.keys(overrides).length === 0) {
+      cachedCatalog = catalogToUse;
+      lastCatalogLoadTime = now;
       return catalogToUse;
     }
 
@@ -112,11 +132,17 @@ function loadMergedCatalog(): CatalogData {
       };
     });
 
-    return {
+    const finalResult = {
       ...catalogToUse,
       courses: mergedCourses
     };
+
+    cachedCatalog = finalResult;
+    lastCatalogLoadTime = now;
+    return finalResult;
   } catch (e) {
+    cachedCatalog = baseCatalog;
+    lastCatalogLoadTime = now;
     return baseCatalog;
   }
 }

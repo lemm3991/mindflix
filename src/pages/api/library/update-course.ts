@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { invalidateCatalogCache } from '../../../lib/catalog';
 
 const PRIMARY_OVERRIDES_PATH = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
 const TMP_OVERRIDES_PATH = path.join(os.tmpdir(), 'manual_overrides.json');
@@ -93,6 +94,8 @@ export const POST: APIRoute = async ({ request }) => {
         saveJsonSafe(PRIMARY_CATALOG_PATH, TMP_CATALOG_PATH, catalog);
       }
     }
+
+    invalidateCatalogCache();
 
     return new Response(JSON.stringify({ 
       success: true, 

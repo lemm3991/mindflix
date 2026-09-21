@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
+import { invalidateCatalogCache } from '../../../lib/catalog';
 
 const SCRIPT_PATH = path.resolve(process.cwd(), 'scan_library.py');
 const SUMMARY_PATH = path.resolve(process.cwd(), 'src', 'data', 'catalog_summary.json');
@@ -38,6 +39,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     return new Promise((resolve) => {
       execFile(pythonBin, args, { cwd: process.cwd() }, (error, stdout, stderr) => {
+        if (!dryRun) {
+          invalidateCatalogCache();
+        }
+
         if (error) {
           return resolve(new Response(JSON.stringify({ 
             error: error.message, 
