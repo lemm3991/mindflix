@@ -28,7 +28,7 @@ const { course, currentLessonId } = Astro.props;
       <span class="provider-pill">{course.provider}</span>
     </div>
 
-    <h2 class="sidebar-course-title">{course.display_title}</h2>
+    <h2 class="sidebar-course-title" title={course.display_title}>{course.display_title}</h2>
     
     <div class="sidebar-progress-box">
       <div class="progress-meta">

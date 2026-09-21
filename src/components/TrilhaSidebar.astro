@@ -61,11 +61,11 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
       return (
         <div class={`trilha-course-block ${isCurrentCourse ? 'open is-active-course' : ''}`} data-course-id={c.courseId}>
           <!-- Accordion Header (Click to expand/collapse Course) -->
-          <button type="button" class="course-accordion-btn" aria-expanded={isCurrentCourse ? 'true' : 'false'}>
+          <button type="button" class="course-accordion-btn" aria-expanded={isCurrentCourse ? 'true' : 'false'} title={c.courseTitle}>
             <div class="course-header-left">
               <span class="course-step-num">{c.ordem}</span>
               <div class="course-titles-wrap">
-                <span class="course-name">{c.courseTitle}</span>
+                <span class="course-name" title={c.courseTitle}>{c.courseTitle}</span>
               </div>
             </div>
             
@@ -86,27 +86,28 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
 
                 return (
                   <li class={`trilha-lesson-item ${isPlaying ? 'active' : ''}`} data-lesson-id={lesson.id}>
-                    <a href={lessonUrl} class="lesson-link">
+                    <button
+                      type="button"
+                      class="lesson-checkbox-btn"
+                      data-lesson-id={lesson.id}
+                      title="Marcar como concluída"
+                      aria-label="Marcar como concluída"
+                    >
+                      <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </button>
+
+                    <a href={lessonUrl} class="lesson-link" title={lesson.display_title}>
                       <div class="lesson-left">
-                        <button
-                          type="button"
-                          class="lesson-checkbox-btn"
-                          data-lesson-id={lesson.id}
-                          title="Marcar como concluída"
-                          aria-label="Marcar como concluída"
-                        >
-                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        </button>
-                        <span class="lesson-title-text">{lesson.display_title}</span>
+                        <span class="lesson-title-text" title={lesson.display_title}>{lesson.display_title}</span>
                       </div>
 
                       <div class="lesson-right">
                         {isPlaying && (
-                          <span class="playing-pulse-badge">
+                          <span class="playing-pulse-badge" title="Aula em reprodução">
                             <span class="dot"></span>
-                            Ouvindo
+                            Assistindo
                           </span>
                         )}
                         <span class="lesson-duration">{lesson.duration_formatted}</span>
@@ -424,6 +425,9 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
 
   .trilha-lesson-item {
     transition: background var(--motion-fast) ease;
+    position: relative;
+    display: flex;
+    align-items: center;
   }
 
   .trilha-lesson-item:hover {
@@ -435,14 +439,51 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
     border-left: 3px solid var(--accent-cyan);
   }
 
+  .lesson-checkbox-btn {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-subtle, rgba(255, 255, 255, 0.2));
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    color: transparent;
+    z-index: 5;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .lesson-checkbox-btn:hover {
+    border-color: var(--accent-cyan, #00f2fe);
+    background: rgba(0, 242, 254, 0.15);
+    color: var(--accent-cyan, #00f2fe);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .trilha-lesson-item.completed .lesson-checkbox-btn {
+    background: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  }
+
   .lesson-link {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.65rem 1rem;
+    padding: 0.65rem 1rem 0.65rem 2.6rem;
     text-decoration: none;
     color: inherit;
     gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
   }
 
   .lesson-left {
@@ -453,34 +494,14 @@ const { trilha, coursesWithModules, currentLessonId, currentCourseId } = Astro.p
     flex: 1;
   }
 
-  .lesson-checkbox-btn {
-    width: 20px;
-    height: 20px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: transparent;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    flex-shrink: 0;
-    color: transparent;
-    transition: all var(--motion-fast) ease;
-  }
-
-  .trilha-lesson-item.completed .lesson-checkbox-btn {
-    background: #10b981;
-    border-color: #10b981;
-    color: #ffffff;
-  }
-
   .lesson-title-text {
     font-size: 0.8125rem;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
   }
 
   .trilha-lesson-item.active .lesson-title-text {
