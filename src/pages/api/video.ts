@@ -41,12 +41,21 @@ function getDriveIdFromCatalog(relPath: string): string | null {
       const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
       if (!catalog || !catalog.courses) return null;
 
-      const normTarget = relPath.replace(/\\/g, '/').toLowerCase();
+      const normTarget = relPath.replace(/\\/g, '/').toLowerCase().trim();
+      const filenameTarget = path.basename(normTarget);
+
       for (const course of catalog.courses) {
         for (const mod of (course.modules || [])) {
           for (const les of (mod.lessons || [])) {
-            if (les.relative_path && les.relative_path.replace(/\\/g, '/').toLowerCase() === normTarget) {
-              return les.drive_file_id || les.drive_url || null;
+            if (les.relative_path) {
+              const lesNorm = les.relative_path.replace(/\\/g, '/').toLowerCase().trim();
+              const lesFilename = path.basename(lesNorm);
+              
+              if (lesNorm === normTarget || (filenameTarget && lesFilename === filenameTarget)) {
+                if (les.drive_file_id || les.drive_url) {
+                  return les.drive_file_id || les.drive_url || null;
+                }
+              }
             }
           }
         }

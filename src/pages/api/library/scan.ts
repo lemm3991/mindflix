@@ -20,7 +20,9 @@ export const POST: APIRoute = async ({ request }) => {
     const flag = dryRun ? '--dry-run' : '--apply';
 
     const args: string[] = [SCRIPT_PATH, flag];
-    if (body.drive !== true) {
+    if (body.drive !== false) {
+      args.push('--drive');
+    } else {
       args.push('--no-drive');
     }
 
