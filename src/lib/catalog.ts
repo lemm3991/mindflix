@@ -198,11 +198,11 @@ export function isOrganizationRootFolder(course: Course | undefined | null): boo
 }
 
 export function getAllCourses(): Course[] {
-  return getCatalog().courses.filter(c => !isOrganizationRootFolder(c) && !c.is_hidden);
+  return getCatalog().courses.filter(c => !isOrganizationRootFolder(c) && !c.is_hidden && (c.lessons_count ?? 0) > 0);
 }
 
 export function getCourseById(id: string): Course | undefined {
-  return getCatalog().courses.find(c => (c.id === id || c.slug === id) && !isOrganizationRootFolder(c));
+  return getCatalog().courses.find(c => (c.id === id || c.slug === id) && !isOrganizationRootFolder(c) && (c.lessons_count ?? 0) > 0);
 }
 
 export function getCategories(): Category[] {
@@ -251,7 +251,7 @@ export function isProjectCourse(course: Course | undefined): boolean {
 
 export function getCoursesByCategory(categoryId: string): Course[] {
   return getCatalog().courses.filter(c => 
-    c.categories.includes(categoryId) && !isComecePorAqui(c) && !isProjectCourse(c)
+    c.categories.includes(categoryId) && !isComecePorAqui(c) && !isProjectCourse(c) && !isOrganizationRootFolder(c) && !c.is_hidden && (c.lessons_count ?? 0) > 0
   );
 }
 

@@ -75,6 +75,7 @@ if (featuredCourses && featuredCourses.length > 0) {
               loading={idx === 0 ? 'eager' : 'lazy'}
               fetchpriority={idx === 0 ? 'high' : 'auto'}
               decoding={idx === 0 ? 'sync' : 'async'}
+              onerror="this.style.display='none'"
             />
           )}
           {videoSrc ? (
