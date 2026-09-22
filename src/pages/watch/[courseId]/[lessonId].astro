@@ -144,6 +144,16 @@ const isLastLessonInModule = Boolean(
           </div>
         </div>
 
+        <!-- Student Classroom Notes Area (Above Downloads Area) -->
+        <LessonNotes
+          lessonId={currentLesson.id}
+          courseId={course.id}
+          watchUrl={`/watch/${course.id}/${currentLesson.id}`}
+          courseTitle={course.display_title}
+          lessonTitle={currentLesson.display_title}
+          moduleTitle={currentModule?.display_title}
+        />
+
         <!-- Complementary Materials & Documents Section (Always visible by default) -->
         {(() => {
           const isDownloadableMat = (pathOrTitle: string) => {
@@ -279,16 +289,6 @@ const isLastLessonInModule = Boolean(
             </div>
           );
         })()}
-
-        <!-- Student Classroom Notes Area -->
-        <LessonNotes
-          lessonId={currentLesson.id}
-          courseId={course.id}
-          watchUrl={`/watch/${course.id}/${currentLesson.id}`}
-          courseTitle={course.display_title}
-          lessonTitle={currentLesson.display_title}
-          moduleTitle={currentModule?.display_title}
-        />
       </div>
     </div>
 

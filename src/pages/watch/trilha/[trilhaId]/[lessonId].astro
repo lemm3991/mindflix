@@ -90,6 +90,15 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
           </div>
         </div>
 
+        <!-- Student Classroom Notes Area (Above Downloads Area) -->
+        <LessonNotes
+          lessonId={currentLesson.id}
+          courseId={currentLessonItem.courseId}
+          watchUrl={`/watch/trilha/${trilha.id}/${currentLesson.id}`}
+          courseTitle={`${trilha.title} — ${currentLessonItem.courseTitle}`}
+          lessonTitle={currentLesson.display_title}
+        />
+
         <!-- Complementary Materials & Documents Section (Always visible by default) -->
         {(() => {
           const isDownloadableMat = (pathOrTitle: string) => {
@@ -208,15 +217,6 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
             </div>
           );
         })()}
-
-        <!-- Student Classroom Notes Area -->
-        <LessonNotes
-          lessonId={currentLesson.id}
-          courseId={currentLessonItem.courseId}
-          watchUrl={`/watch/trilha/${trilha.id}/${currentLesson.id}`}
-          courseTitle={`${trilha.title} — ${currentLessonItem.courseTitle}`}
-          lessonTitle={currentLesson.display_title}
-        />
       </div>
     </div>
 
