@@ -705,9 +705,16 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
   @media (max-width: 1024px) {
     .watch-layout {
       flex-direction: column;
+      padding-top: 64px;
     }
     .watch-main-column {
-      padding: 1rem;
+      padding: 0.5rem 0.5rem 3rem 0.5rem;
+      gap: 1rem;
+    }
+    .watch-video-section,
+    .lesson-details-section {
+      max-width: 100% !important;
+      width: 100% !important;
     }
   }
 </style>
