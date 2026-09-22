@@ -107,6 +107,14 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
             return !excluded.includes(ext);
           };
 
+          const getMatFilename = (relPath: string, title: string) => {
+            if (relPath) {
+              const fname = relPath.replace(/\\/g, '/').split('/').pop();
+              if (fname && fname.includes('.')) return fname;
+            }
+            return title ? `${title.replace(/[^a-zA-Z0-9_\- ]/g, '')}.pdf` : 'material.pdf';
+          };
+
           // 1. Materials explicitly attached to currentLesson
           const lessonMaterials = (currentLesson.materials || [])
             .filter((mat: any) => isDownloadableMat(mat.relative_path || mat.title))
@@ -115,9 +123,10 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
               title: mat.title || 'Material Complementar',
               type: (mat.type || 'ARQUIVO').toUpperCase(),
               relative_path: mat.relative_path || '',
+              filename: getMatFilename(mat.relative_path || '', mat.title || 'material'),
               url: mat.drive_file_id 
                 ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
-                : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}`),
+                : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`),
               driveId: mat.drive_file_id
             }));
 
@@ -132,9 +141,10 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
                 title: les.display_title || les.raw_title,
                 type: ext,
                 relative_path: les.relative_path || '',
+                filename: getMatFilename(les.relative_path || '', les.display_title || les.raw_title || 'material'),
                 url: les.drive_file_id 
                   ? `https://drive.google.com/uc?export=download&id=${les.drive_file_id}` 
-                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}`),
+                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`),
                 driveId: les.drive_file_id
               };
             });
@@ -186,9 +196,9 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
                         target="_blank"
                         rel="noopener noreferrer"
                         class="btn btn-secondary btn-sm material-download-btn"
-                        download
-                        title="Baixar / Visualizar arquivo"
-                        aria-label="Baixar / Visualizar arquivo"
+                        download={mat.filename}
+                        title={`Baixar ${mat.title}`}
+                        aria-label={`Baixar ${mat.title}`}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

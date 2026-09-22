@@ -215,13 +215,23 @@ export const GET: APIRoute = async ({ request }) => {
     if (streamParam === '1' || streamParam === 'true') {
       return proxyGoogleDriveStream(cleanId, request);
     }
-    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
+    return Response.redirect(`https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`, 302);
   }
 
   const coursesRoot = getCoursesRoot();
   const resolved = resolveSafeFilePath(coursesRoot, relPath);
 
   if (!resolved) {
+    const isDownload = url.searchParams.get('download') === '1' || url.searchParams.get('download') === 'true';
+    if (isDownload) {
+      return new Response(
+        `<!DOCTYPE html><html><body style="background:#0b0e14;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;"><div style="text-align:center;max-width:500px;padding:2rem;background:#161a23;border-radius:12px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 10px 40px rgba(0,0,0,0.5);"><h2 style="margin-top:0;">Arquivo Indisponível</h2><p style="color:#94a3b8;font-size:0.9rem;line-height:1.5;">O arquivo "${relPath}" não foi localizado na biblioteca local ou no Google Drive.</p><button onclick="window.close()" style="background:#00f2fe;color:#000;border:none;padding:0.5rem 1.25rem;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:0.5rem;">Fechar Janela</button></div></body></html>`,
+        {
+          status: 404,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        }
+      );
+    }
     return new Response(JSON.stringify({ 
       error: 'Arquivo não encontrado na biblioteca local.',
       expectedPath: relPath 
@@ -357,12 +367,16 @@ export const GET: APIRoute = async ({ request }) => {
       }
     });
 
+    const isDownload = url.searchParams.get('download') === '1' || url.searchParams.get('download') === 'true';
+    const filename = path.basename(resolved.rawPath);
+
     return new Response(webStream, {
       status: 200,
       headers: {
         'Content-Length': fileSize.toString(),
         'Content-Type': contentType,
-        'Accept-Ranges': 'bytes'
+        'Accept-Ranges': 'bytes',
+        ...(isDownload ? { 'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"` } : {})
       }
     });
   }
