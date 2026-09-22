@@ -5,6 +5,7 @@ import VideoPlayer from '../../../../components/VideoPlayer.astro';
 import TrilhaSidebar from '../../../../components/TrilhaSidebar.astro';
 import ChallengeModal from '../../../../components/ChallengeModal.astro';
 import FocusMode from '../../../../components/FocusMode.astro';
+import LessonNotes from '../../../../components/LessonNotes.astro';
 import { getTrilhaFullStructure, getFirstPlayableLessonInTrilha } from '../../../../lib/trilhas';
 import { isPlayableVideoLesson } from '../../../../lib/catalog';
 
@@ -206,6 +207,15 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
             </div>
           );
         })()}
+
+        <!-- Student Classroom Notes Area -->
+        <LessonNotes
+          lessonId={currentLesson.id}
+          courseId={currentLessonItem.courseId}
+          watchUrl={`/watch/trilha/${trilha.id}/${currentLesson.id}`}
+          courseTitle={`${trilha.title} — ${currentLessonItem.courseTitle}`}
+          lessonTitle={currentLesson.display_title}
+        />
       </div>
     </div>
 

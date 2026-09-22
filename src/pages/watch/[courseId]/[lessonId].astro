@@ -5,6 +5,7 @@ import VideoPlayer from '../../../components/VideoPlayer.astro';
 import CourseSidebar from '../../../components/CourseSidebar.astro';
 import ChallengeModal from '../../../components/ChallengeModal.astro';
 import FocusMode from '../../../components/FocusMode.astro';
+import LessonNotes from '../../../components/LessonNotes.astro';
 import { getCourseById, getFirstPlayableLesson, isPlayableVideoLesson } from '../../../lib/catalog';
 import { getCourseSourceId } from '../../../lib/sources';
 
@@ -277,6 +278,16 @@ const isLastLessonInModule = Boolean(
             </div>
           );
         })()}
+
+        <!-- Student Classroom Notes Area -->
+        <LessonNotes
+          lessonId={currentLesson.id}
+          courseId={course.id}
+          watchUrl={`/watch/${course.id}/${currentLesson.id}`}
+          courseTitle={course.display_title}
+          lessonTitle={currentLesson.display_title}
+          moduleTitle={currentModule?.display_title}
+        />
       </div>
     </div>
 
