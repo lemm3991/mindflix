@@ -70,7 +70,7 @@ const targetHref = watchHref || `/watch/${courseId}/${lesson.id}`;
 </div>
 
 <script>
-  import { getAllLocalProgress, saveLessonProgress } from '../lib/progress';
+  import { getAllLocalProgress, saveLessonProgress, getRealDurationForLesson } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
   function updateLessonItems() {
@@ -79,6 +79,12 @@ const targetHref = watchHref || `/watch/${courseId}/${lesson.id}`;
     document.querySelectorAll<HTMLElement>('.lesson-item').forEach(item => {
       const lessonId = item.getAttribute('data-lesson-id');
       if (!lessonId) return;
+
+      const realDur = getRealDurationForLesson(lessonId);
+      if (realDur && realDur.duration_formatted) {
+        const durSpan = item.querySelector<HTMLElement>('.lesson-duration');
+        if (durSpan) durSpan.textContent = realDur.duration_formatted;
+      }
 
       const progress = allProgress[lessonId];
       const checkBtn = item.querySelector<HTMLButtonElement>('.lesson-check-selector');
@@ -124,6 +130,7 @@ const targetHref = watchHref || `/watch/${courseId}/${lesson.id}`;
 
   updateLessonItems();
   window.addEventListener('mindflix:progress-updated', updateLessonItems);
+  window.addEventListener('mindflix-duration-updated', updateLessonItems);
   window.addEventListener('storage', updateLessonItems);
 </script>
 

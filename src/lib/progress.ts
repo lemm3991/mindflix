@@ -188,6 +188,30 @@ export async function saveLessonProgress(
       saveAllLocalProgress(existing);
     }
 
+    if (durationSeconds > 0) {
+      try {
+        const raw = localStorage.getItem('mindflix_real_durations');
+        const map = raw ? JSON.parse(raw) : {};
+        const totalSecs = Math.round(durationSeconds);
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        const hrs = Math.floor(mins / 60);
+        const m = mins % 60;
+        const durFormatted = hrs > 0 
+          ? `${String(hrs).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+          : `${String(m).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        
+        map[lessonId] = {
+          duration_seconds: totalSecs,
+          duration_formatted: durFormatted
+        };
+        localStorage.setItem('mindflix_real_durations', JSON.stringify(map));
+        window.dispatchEvent(new CustomEvent('mindflix-duration-updated', { 
+          detail: { lessonId, duration_seconds: totalSecs, duration_formatted: durFormatted } 
+        }));
+      } catch (e) {}
+    }
+
     // Update recent courses list
     trackRecentCourse(courseId);
 
@@ -544,5 +568,17 @@ export function getUserProgress(): { completed_lessons: Record<string, boolean>;
   }
 
   return { completed_lessons, lesson_positions };
+}
+
+export function getRealDurationForLesson(lessonId: string): { duration_seconds: number; duration_formatted: string } | null {
+  if (typeof window === 'undefined' || !lessonId) return null;
+  try {
+    const raw = localStorage.getItem('mindflix_real_durations');
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    return map[lessonId] || null;
+  } catch (e) {
+    return null;
+  }
 }
 
