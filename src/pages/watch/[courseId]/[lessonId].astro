@@ -249,13 +249,14 @@ const isLastLessonInModule = Boolean(
                         rel="noopener noreferrer"
                         class="btn btn-secondary btn-sm material-download-btn"
                         download
+                        title="Baixar / Visualizar arquivo"
+                        aria-label="Baixar / Visualizar arquivo"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                           <polyline points="7 10 12 15 17 10"></polyline>
                           <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span>Baixar / Visualizar</span>
                       </a>
                     </div>
                   ))}
@@ -723,6 +724,13 @@ const isLastLessonInModule = Boolean(
 
   .material-download-btn {
     flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
   }
 
   .materials-empty-state {
