@@ -148,8 +148,25 @@ if (isTrilha && trilha) {
 
     if (scrollContainer && activeLesson) {
       setTimeout(() => {
-        activeLesson.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 120);
+        const initialWindowX = window.scrollX;
+        const initialWindowY = window.scrollY;
+
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const activeRect = activeLesson.getBoundingClientRect();
+
+        const relativeTop = activeRect.top - containerRect.top;
+        const targetScrollTop = scrollContainer.scrollTop + relativeTop - (containerRect.height / 2) + (activeRect.height / 2);
+
+        scrollContainer.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: 'smooth'
+        });
+
+        // Ensure window scroll is strictly preserved (main page stays still)
+        if (window.scrollY !== initialWindowY || window.scrollX !== initialWindowX) {
+          window.scrollTo(initialWindowX, initialWindowY);
+        }
+      }, 100);
     }
   }
 
