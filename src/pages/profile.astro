@@ -4,20 +4,27 @@ import Layout from '../layouts/Layout.astro';
 import { getAllCourses } from '../lib/catalog';
 
 const allCourses = getAllCourses();
-// Lightweight lookup map for client-side lesson/course info
-const courseMap: Record<string, { title: string; cover: string; provider: string; lessons: Record<string, string> }> = {};
+interface LessonMeta {
+  title: string;
+  durationSeconds: number;
+}
+
+const courseMap: Record<string, { title: string; cover: string; provider: string; lessons: Record<string, LessonMeta> }> = {};
 for (const course of allCourses) {
-  const lessonNames: Record<string, string> = {};
+  const lessonMeta: Record<string, LessonMeta> = {};
   for (const mod of course.modules || []) {
     for (const les of mod.lessons || []) {
-      lessonNames[les.id] = les.display_title || les.title;
+      lessonMeta[les.id] = {
+        title: les.display_title || les.title,
+        durationSeconds: les.duration_seconds || 900
+      };
     }
   }
   courseMap[course.id] = {
     title: course.display_title || course.title,
     cover: course.cover_image || '',
     provider: course.provider || '',
-    lessons: lessonNames
+    lessons: lessonMeta
   };
 }
 ---
@@ -227,11 +234,12 @@ for (const course of allCourses) {
 
 <script>
   import { getAllLocalProgress, getFavoriteCourseIds, getRecentCourseIds, syncProgressFromSupabase } from '../lib/progress';
+  import { getAllUserNotes } from '../lib/notes';
   import { getLocalUser } from '../lib/supabase';
   import { logoutUser } from '../lib/auth';
 
   // Read embedded course map
-  let courseLookup: Record<string, { title: string; cover: string; provider: string; lessons: Record<string, string> }> = {};
+  let courseLookup: Record<string, { title: string; cover: string; provider: string; lessons: Record<string, { title: string; durationSeconds: number }> }> = {};
   try {
     const raw = document.getElementById('mindflix-courses-data')?.textContent;
     if (raw) courseLookup = JSON.parse(raw);
@@ -256,6 +264,11 @@ for (const course of allCourses) {
     if (emailEl) emailEl.textContent = user.email;
     if (avatarInitials) avatarInitials.textContent = displayName.substring(0, 2).toUpperCase();
   }
+
+  // Logout button
+  document.getElementById('btn-logout')?.addEventListener('click', () => {
+    logoutUser();
+  });
 
   // Load saved goal from localStorage
   const savedGoal = localStorage.getItem('mindflix_daily_goal_minutes');
@@ -284,33 +297,55 @@ for (const course of allCourses) {
     });
   });
 
+  function getLessonDuration(courseId: string, lessonId: string, itemDuration?: number): number {
+    if (itemDuration && itemDuration > 0) return itemDuration;
+    const catMeta = courseLookup[courseId]?.lessons?.[lessonId];
+    if (catMeta && catMeta.durationSeconds) return catMeta.durationSeconds;
+    return 900; // Default 15 min fallback
+  }
+
+  function getCalculatedStudySeconds(item: any): number {
+    const durSecs = getLessonDuration(item.course_id, item.lesson_id, item.duration_seconds);
+    if (item.completed) return durSecs;
+    if (item.position_seconds && item.position_seconds > 0) {
+      return Math.min(item.position_seconds, durSecs);
+    }
+    return Math.min(300, durSecs);
+  }
+
   // Calculate Streak
   function calculateCurrentStreak(allProgress: Record<string, any>): number {
-    const daysWithStudy = new Set<string>();
+    const daysWithActivity = new Set<string>();
+    
     Object.values(allProgress).forEach((item: any) => {
       if (item.last_watched_at && (item.position_seconds > 0 || item.completed)) {
         try {
           const d = new Date(item.last_watched_at);
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          daysWithStudy.add(`${y}-${m}-${day}`);
+          daysWithActivity.add(getIsoDate(d));
         } catch (e) {}
       }
     });
 
+    try {
+      const userNotes = getAllUserNotes();
+      userNotes.forEach((note: any) => {
+        if (note.updatedAt) {
+          daysWithActivity.add(getIsoDate(new Date(note.updatedAt)));
+        }
+      });
+    } catch (e) {}
+
     let streak = 0;
     const now = new Date();
     
-    // Check from today or yesterday
     const todayStr = getIsoDate(now);
     const yest = new Date(now);
     yest.setDate(yest.getDate() - 1);
     const yestStr = getIsoDate(yest);
 
     let checkDate = new Date(now);
-    if (!daysWithStudy.has(todayStr)) {
-      if (daysWithStudy.has(yestStr)) {
+    if (!daysWithActivity.has(todayStr)) {
+      if (daysWithActivity.has(yestStr)) {
         checkDate = yest;
       } else {
         return 0; // No streak
@@ -319,7 +354,7 @@ for (const course of allCourses) {
 
     while (true) {
       const dateStr = getIsoDate(checkDate);
-      if (daysWithStudy.has(dateStr)) {
+      if (daysWithActivity.has(dateStr)) {
         streak++;
         checkDate.setDate(checkDate.getDate() - 1);
       } else {
@@ -351,7 +386,7 @@ for (const course of allCourses) {
 
     const lessons = Object.values(allProgress);
     const completedLessons = lessons.filter(l => l.completed);
-    const totalSeconds = lessons.reduce((acc, curr) => acc + (curr.position_seconds || 0), 0);
+    const totalSeconds = lessons.reduce((acc, curr) => acc + getCalculatedStudySeconds(curr), 0);
 
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -390,18 +425,29 @@ for (const course of allCourses) {
 
     if (!container) return;
 
+    if (selectedPeriodDays === 30) {
+      container.classList.add('is-30-days');
+    } else {
+      container.classList.remove('is-30-days');
+    }
+
     const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const dayInitials = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     const fullDayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
     const now = new Date();
     const days: {
       index: number;
       dateStr: string;
       label: string;
+      initial: string;
       fullDayName: string;
       formattedDate: string;
+      dayNumber: string;
       totalSeconds: number;
       lessonsCount: number;
+      notesCount: number;
       lessonsList: any[];
+      notesList: any[];
       isToday: boolean;
       goalReached: boolean;
     }[] = [];
@@ -412,21 +458,26 @@ for (const course of allCourses) {
       d.setDate(d.getDate() - i);
 
       const dateStr = getIsoDate(d);
-      const day = String(d.getDate()).padStart(2, '0');
+      const dayNum = String(d.getDate()).padStart(2, '0');
       const month = String(d.getMonth() + 1).padStart(2, '0');
-      const formattedDate = `${day}/${month}`;
+      const formattedDate = `${dayNum}/${month}`;
       const label = dayNames[d.getDay()];
+      const initial = dayInitials[d.getDay()];
       const fullDayName = fullDayNames[d.getDay()];
 
       days.push({
         index: days.length,
         dateStr,
         label,
+        initial,
         fullDayName,
         formattedDate,
+        dayNumber: dayNum,
         totalSeconds: 0,
         lessonsCount: 0,
+        notesCount: 0,
         lessonsList: [],
+        notesList: [],
         isToday: i === 0,
         goalReached: false
       });
@@ -441,14 +492,37 @@ for (const course of allCourses) {
 
         const dayObj = days.find(d => d.dateStr === watchedDateStr);
         if (dayObj) {
-          const duration = item.duration_seconds || 3600;
-          const watchedSecs = Math.min(item.position_seconds || 0, duration);
-          dayObj.totalSeconds += watchedSecs;
+          const studySecs = getCalculatedStudySeconds(item);
+          dayObj.totalSeconds += studySecs;
           dayObj.lessonsCount += 1;
-          dayObj.lessonsList.push(item);
+          dayObj.lessonsList.push({
+            ...item,
+            calculatedSeconds: studySecs,
+            effectiveDuration: getLessonDuration(item.course_id, item.lesson_id, item.duration_seconds)
+          });
         }
       } catch (e) {}
     });
+
+    // Accumulate user notes activity
+    try {
+      const userNotes = getAllUserNotes();
+      userNotes.forEach((note: any) => {
+        if (!note.updatedAt) return;
+        try {
+          const noteDate = new Date(note.updatedAt);
+          const noteDateStr = getIsoDate(noteDate);
+          const dayObj = days.find(d => d.dateStr === noteDateStr);
+          if (dayObj) {
+            dayObj.notesList.push(note);
+            dayObj.notesCount += 1;
+            if (dayObj.totalSeconds === 0) {
+              dayObj.totalSeconds += 300; // Credit 5 mins for classroom notes session
+            }
+          }
+        } catch (e) {}
+      });
+    } catch (e) {}
 
     const goalSeconds = dailyGoalMinutes * 60;
     let goalsMetCount = 0;
@@ -495,7 +569,19 @@ for (const course of allCourses) {
 
       const isSelected = day.index === selectedDayIndex;
       const timeFormatted = day.totalSeconds > 0 ? formatDuration(day.totalSeconds) : 'Sem atividade';
-      const tooltipText = `${day.label} (${day.formattedDate}) • ${timeFormatted}${day.lessonsCount > 0 ? ` • ${day.lessonsCount} aula(s)` : ''}`;
+      const tooltipText = `${day.fullDayName} (${day.formattedDate}) • ${timeFormatted}${day.lessonsCount > 0 ? ` • ${day.lessonsCount} aula(s)` : ''}${day.notesCount > 0 ? ` • ${day.notesCount} anotação(ões)` : ''}`;
+
+      const dayNameDisplay = selectedPeriodDays === 30 
+        ? day.initial 
+        : (day.isToday ? 'Hoje' : day.label);
+      
+      const dayDateDisplay = selectedPeriodDays === 30 
+        ? day.dayNumber 
+        : day.formattedDate;
+
+      const activityMeta = day.lessonsCount > 0 
+        ? `${day.lessonsCount} aula(s)` 
+        : (day.notesCount > 0 ? `${day.notesCount} anotação(ões)` : 'Sem atividade');
 
       return `
         <div class="day-pillar-col ${day.isToday ? 'is-today' : ''} ${isSelected ? 'is-selected' : ''} ${day.goalReached ? 'goal-met' : ''}" 
@@ -508,15 +594,15 @@ for (const course of allCourses) {
             <div class="pillar-fill-bar" style="height: ${heightPercent}%;">
               <span class="pillar-hover-tooltip">
                 <strong class="tooltip-time">${timeFormatted}</strong>
-                <span class="tooltip-meta">${day.lessonsCount > 0 ? `${day.lessonsCount} aula(s)` : 'Sem aulas'}</span>
+                <span class="tooltip-meta">${activityMeta}</span>
                 ${day.goalReached ? '<span class="tooltip-badge">🎯 Meta Atingida</span>' : ''}
               </span>
             </div>
           </div>
 
           <div class="pillar-labels">
-            <span class="pillar-day-name">${day.isToday ? 'Hoje' : day.label}</span>
-            <span class="pillar-day-date">${day.formattedDate}</span>
+            <span class="pillar-day-name">${dayNameDisplay}</span>
+            <span class="pillar-day-date">${dayDateDisplay}</span>
           </div>
         </div>
       `;
@@ -555,7 +641,10 @@ for (const course of allCourses) {
     if (timeBadgeEl) {
       if (dayObj.totalSeconds > 0) {
         timeBadgeEl.className = 'detail-summary-badge active';
-        timeBadgeEl.innerHTML = `<span>⚡ ${formatDuration(dayObj.totalSeconds)}</span> • <span>${dayObj.lessonsCount} aula(s)</span>`;
+        let metaHtml = `<span>⚡ ${formatDuration(dayObj.totalSeconds)}</span>`;
+        if (dayObj.lessonsCount > 0) metaHtml += ` • <span>${dayObj.lessonsCount} aula(s)</span>`;
+        if (dayObj.notesCount > 0) metaHtml += ` • <span>${dayObj.notesCount} anotação(ões)</span>`;
+        timeBadgeEl.innerHTML = metaHtml;
       } else {
         timeBadgeEl.className = 'detail-summary-badge';
         timeBadgeEl.textContent = '0 min de estudo';
@@ -568,49 +657,82 @@ for (const course of allCourses) {
           ? 'Parabéns! Você bateu sua meta diária de estudos nesta data! 🚀' 
           : 'Aulas assistidas e tempo contabilizado nesta data:';
       } else {
-        subtitleEl.textContent = 'Nenhuma aula assistida nesta data.';
+        subtitleEl.textContent = 'Nenhuma atividade registrada nesta data.';
       }
     }
 
-    if (dayObj.lessonsList && dayObj.lessonsList.length > 0) {
-      contentBox.innerHTML = `
-        <div class="day-lessons-list">
-          ${dayObj.lessonsList.map((item: any) => {
-            const courseInfo = courseLookup[item.course_id] || { title: 'Curso Mindflix', cover: '', provider: 'Mindflix', lessons: {} };
-            const lessonTitle = courseInfo.lessons[item.lesson_id] || `Aula #${item.lesson_id}`;
-            const watchSeconds = item.position_seconds || 0;
-            const durSeconds = item.duration_seconds || 3600;
-            const pct = Math.min(100, Math.round((watchSeconds / durSeconds) * 100));
+    const hasLessons = dayObj.lessonsList && dayObj.lessonsList.length > 0;
+    const hasNotes = dayObj.notesList && dayObj.notesList.length > 0;
 
-            return `
-              <div class="day-lesson-card">
-                <div class="lesson-card-left">
-                  <div class="lesson-course-badge">${courseInfo.provider || 'Curso'}</div>
-                  <div class="lesson-titles">
-                    <h5 class="lesson-name">${lessonTitle}</h5>
-                    <span class="lesson-course-name">${courseInfo.title}</span>
-                  </div>
-                </div>
+    if (hasLessons || hasNotes) {
+      let html = '<div class="day-activity-wrapper">';
+      
+      if (hasLessons) {
+        html += `
+          <div class="day-lessons-list">
+            ${dayObj.lessonsList.map((item: any) => {
+              const courseInfo = courseLookup[item.course_id] || { title: 'Curso Mindflix', cover: '', provider: 'Mindflix', lessons: {} };
+              const lessonMeta = courseInfo.lessons?.[item.lesson_id];
+              const lessonTitle = (typeof lessonMeta === 'object' ? lessonMeta?.title : lessonMeta) || `Aula #${item.lesson_id}`;
+              const durSeconds = item.effectiveDuration || getLessonDuration(item.course_id, item.lesson_id, item.duration_seconds);
+              const watchSeconds = item.calculatedSeconds || Math.min(item.position_seconds || durSeconds, durSeconds);
+              const pct = item.completed ? 100 : Math.min(100, Math.round((watchSeconds / durSeconds) * 100));
 
-                <div class="lesson-card-right">
-                  <div class="lesson-progress-meta">
-                    <div class="lesson-progress-bar">
-                      <div class="lesson-progress-fill" style="width: ${pct}%;"></div>
+              return `
+                <div class="day-lesson-card">
+                  <div class="lesson-card-left">
+                    <div class="lesson-course-badge">${courseInfo.provider || 'Curso'}</div>
+                    <div class="lesson-titles">
+                      <h5 class="lesson-name">${lessonTitle}</h5>
+                      <span class="lesson-course-name">${courseInfo.title}</span>
                     </div>
-                    <span class="lesson-time-spent">${formatDuration(watchSeconds)} (${pct}%)</span>
                   </div>
-                  <a href="/watch/${item.course_id}/${item.lesson_id}" class="btn-continue-lesson">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                    <span>${pct >= 90 ? 'Reassistir' : 'Continuar'}</span>
-                  </a>
+
+                  <div class="lesson-card-right">
+                    <div class="lesson-progress-meta">
+                      <div class="lesson-progress-bar">
+                        <div class="lesson-progress-fill" style="width: ${pct}%;"></div>
+                      </div>
+                      <span class="lesson-time-spent">${formatDuration(watchSeconds)} (${pct}%)</span>
+                    </div>
+                    <a href="/watch/${item.course_id}/${item.lesson_id}" class="btn-continue-lesson">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                      <span>${pct >= 90 ? 'Reassistir' : 'Continuar'}</span>
+                    </a>
+                  </div>
                 </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+
+      if (hasNotes) {
+        html += `
+          <div class="day-notes-summary">
+            <div class="day-notes-header">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              <span>Anotações da Aula registradas nesta data (${dayObj.notesCount}):</span>
+            </div>
+            <div class="day-notes-list">
+              ${dayObj.notesList.map((n: any) => `
+                <a href="${n.watchUrl || '#'}" class="day-note-chip">
+                  <span class="note-chip-lesson">${n.lessonTitle || 'Aula'}</span>
+                  <span class="note-chip-course">${n.courseTitle || ''}</span>
+                </a>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      html += '</div>';
+      contentBox.innerHTML = html;
     } else {
       // Empty state for selected day with Quick Resume or Explore action
       const recentIds = getRecentCourseIds();
@@ -647,11 +769,6 @@ for (const course of allCourses) {
   // Sync latest progress from Supabase if configured
   syncProgressFromSupabase().then(() => {
     renderProfileStatsAndActivity();
-  });
-
-  // Logout button
-  document.getElementById('btn-logout')?.addEventListener('click', async () => {
-    await logoutUser();
   });
 </script>
 
@@ -1046,6 +1163,16 @@ for (const course of allCourses) {
     color: rgba(255, 255, 255, 0.3);
   }
 
+  .chart-visual-wrapper {
+    position: relative;
+    height: 230px;
+    padding-top: 1.5rem;
+    padding-bottom: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
   .weekly-bars-container {
     position: relative;
     z-index: 2;
@@ -1053,28 +1180,34 @@ for (const course of allCourses) {
     align-items: flex-end;
     justify-content: space-between;
     height: 100%;
-    gap: 0.75rem;
+    gap: 0.6rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .weekly-bars-container.is-30-days {
+    gap: 2px;
   }
 
   /* Pillar Column */
   .day-pillar-col {
-    flex: 1;
+    flex: 1 1 0%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     height: 100%;
     justify-content: flex-end;
-    gap: 0.5rem;
+    gap: 0.35rem;
     cursor: pointer;
     position: relative;
-    min-width: 0;
   }
 
   .pillar-slot-track {
     position: relative;
     width: 100%;
     max-width: 44px;
-    height: calc(100% - 35px);
+    height: calc(100% - 32px);
     background: rgba(255, 255, 255, 0.025);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: var(--radius-sm);
@@ -1083,7 +1216,13 @@ for (const course of allCourses) {
     justify-content: center;
     padding: 3px;
     transition: all var(--motion-fast) ease;
-    overflow: visible;
+    box-sizing: border-box;
+  }
+
+  .weekly-bars-container.is-30-days .pillar-slot-track {
+    max-width: 18px;
+    border-radius: 4px;
+    padding: 1px;
   }
 
   .day-pillar-col:hover .pillar-slot-track {
@@ -1132,22 +1271,23 @@ for (const course of allCourses) {
   /* Pillar Tooltip */
   .pillar-hover-tooltip {
     position: absolute;
-    bottom: calc(100% + 12px);
+    bottom: calc(100% + 10px);
     left: 50%;
-    transform: translateX(-50%) translateY(6px);
+    transform: translateX(-50%) translateY(4px);
     background: rgba(15, 20, 32, 0.96);
     border: 1px solid rgba(0, 242, 254, 0.35);
     border-radius: var(--radius-sm);
-    padding: 0.45rem 0.65rem;
+    padding: 0.4rem 0.65rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.15rem;
     white-space: nowrap;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: all var(--motion-fast) var(--ease-out);
-    z-index: 20;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    z-index: 100;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -1168,6 +1308,7 @@ for (const course of allCourses) {
 
   .day-pillar-col:hover .pillar-hover-tooltip {
     opacity: 1;
+    visibility: visible;
     transform: translateX(-50%) translateY(0);
   }
 
@@ -1194,21 +1335,40 @@ for (const course of allCourses) {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.1rem;
-    height: 32px;
+    gap: 1px;
+    height: 28px;
     justify-content: center;
+    width: 100%;
+    overflow: hidden;
   }
 
   .pillar-day-name {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     color: var(--text-secondary);
-    transition: color var(--motion-fast) ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
   }
 
   .pillar-day-date {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .weekly-bars-container.is-30-days .pillar-day-name {
+    font-size: 0.58rem;
+  }
+
+  .weekly-bars-container.is-30-days .pillar-day-date {
+    font-size: 0.56rem;
   }
 
   .day-pillar-col.is-today .pillar-day-name {
@@ -1219,6 +1379,65 @@ for (const course of allCourses) {
   .day-pillar-col.is-selected .pillar-day-name {
     color: #ffffff;
     font-weight: 800;
+  }
+
+  /* Day Activity Wrapper & Notes Summary */
+  .day-activity-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .day-notes-summary {
+    background: rgba(0, 242, 254, 0.04);
+    border: 1px solid rgba(0, 242, 254, 0.15);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .day-notes-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+  }
+
+  .day-notes-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .day-note-chip {
+    display: inline-flex;
+    flex-direction: column;
+    padding: 0.4rem 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-xs);
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .day-note-chip:hover {
+    background: rgba(0, 242, 254, 0.12);
+    border-color: rgba(0, 242, 254, 0.3);
+  }
+
+  .note-chip-lesson {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .note-chip-course {
+    font-size: 0.68rem;
+    color: var(--text-muted);
   }
 
   /* Selected Day Drilldown Section */
