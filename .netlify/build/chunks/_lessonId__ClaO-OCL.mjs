@@ -4,7 +4,7 @@ import { t as createComponent } from "./compiler_Cw7rCC9Q.mjs";
 import { n as renderScript, t as $$Layout } from "./Layout_DQEGFcGL.mjs";
 import { l as isPlayableVideoLesson } from "./catalog_BH-ygd_W.mjs";
 import { n as getFirstPlayableLessonInTrilha, r as getTrilhaFullStructure } from "./trilhas_CUzDCp4m.mjs";
-import { a as $$VideoPlayer, i as $$PlaylistSidebar, n as $$FocusMode, r as $$ChallengeModal, t as $$LessonNotes } from "./LessonNotes_DyFBSdNn.mjs";
+import { a as $$VideoPlayer, i as $$PlaylistSidebar, n as $$FocusMode, r as $$ChallengeModal, t as $$LessonNotes } from "./LessonNotes_Bq0NeK2u.mjs";
 //#region src/components/TrilhaSidebar.astro
 createAstro("https://astro.build");
 var $$TrilhaSidebar = createComponent(($$result, $$props, $$slots) => {

@@ -125,6 +125,46 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
       </div>
     </div>
 
+    <!-- Media Server & Provider Configuration Card -->
+    <div class="media-provider-config-card">
+      <div class="card-header-row">
+        <div class="card-header-info">
+          <h3 class="card-title">🌐 Fonte de Reprodução dos Vídeos</h3>
+          <p class="card-desc">Escolha de onde os vídeos serão reproduzidos (Servidor de Streaming ou Google Drive). Se o servidor estiver offline, o sistema faz fallback automático para o Drive sem duplicar aulas.</p>
+        </div>
+        <div class="server-status-pill" id="server-status-pill">
+          <span class="pulse-dot-indicator" id="status-dot"></span>
+          <span id="status-text">Testando Conexão...</span>
+        </div>
+      </div>
+
+      <div class="provider-controls-row">
+        <div class="form-group flex-2">
+          <label for="input-media-server-url">URL do Servidor de Streaming (HTTP / Cloudflare Tunnel)</label>
+          <div class="input-with-btn">
+            <input
+              type="url"
+              id="input-media-server-url"
+              class="form-input mono"
+              placeholder="https://everyone-prototype-invitation-estimated.trycloudflare.com"
+            />
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-save-server-url">
+              <span>Testar e Salvar</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group flex-1">
+          <label for="select-media-mode">Modo de Operação</label>
+          <select id="select-media-mode" class="form-select">
+            <option value="auto">⚡ Auto (Servidor com Fallback p/ Drive)</option>
+            <option value="server">🟢 Apenas Servidor Local / Cloudflare</option>
+            <option value="drive">🔵 Apenas Google Drive</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- Navigation Tabs -->
     <div class="admin-nav-tabs">
       <button type="button" class="tab-btn active" id="tab-btn-courses" data-tab="courses">
@@ -471,6 +511,57 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 
 <script>
   import { showToast } from '../lib/toast';
+  import {
+    getMediaMode,
+    setMediaMode,
+    getMediaServerUrl,
+    setMediaServerUrl,
+    checkServerHealth
+  } from '../lib/mediaProvider';
+
+  const mediaServerUrlInput = document.getElementById('input-media-server-url') as HTMLInputElement | null;
+  const mediaModeSelect = document.getElementById('select-media-mode') as HTMLSelectElement | null;
+  const btnSaveServerUrl = document.getElementById('btn-save-server-url');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+
+  if (mediaServerUrlInput) mediaServerUrlInput.value = getMediaServerUrl();
+  if (mediaModeSelect) mediaModeSelect.value = getMediaMode();
+
+  async function updateServerStatusUI() {
+    if (!statusText || !statusDot) return;
+    statusText.textContent = 'Testando Conexão...';
+    statusDot.className = 'pulse-dot-indicator pulse-testing';
+
+    const url = mediaServerUrlInput?.value || getMediaServerUrl();
+    const isOnline = await checkServerHealth(url);
+
+    if (isOnline) {
+      statusText.textContent = 'Servidor Online 🟢';
+      statusDot.className = 'pulse-dot-indicator pulse-online';
+    } else {
+      statusText.textContent = 'Servidor Offline 🔴 (Fallback Drive Ativo)';
+      statusDot.className = 'pulse-dot-indicator pulse-offline';
+    }
+  }
+
+  updateServerStatusUI();
+
+  btnSaveServerUrl?.addEventListener('click', async () => {
+    const val = mediaServerUrlInput?.value?.trim() || '';
+    if (val) {
+      setMediaServerUrl(val);
+      showToast('URL do Servidor salva!', 'success', 2000);
+      await updateServerStatusUI();
+    }
+  });
+
+  mediaModeSelect?.addEventListener('change', () => {
+    const mode = mediaModeSelect.value as any;
+    setMediaMode(mode);
+    showToast(`Modo alterado para: ${mediaModeSelect.options[mediaModeSelect.selectedIndex].text}`, 'info', 2000);
+    updateServerStatusUI();
+  });
 
   // Navigation Tabs Logic
   const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
@@ -1274,5 +1365,82 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
     font-size: 0.875rem;
     color: var(--text-secondary);
     cursor: pointer;
+  }
+
+  /* Media Provider Config Card */
+  .media-provider-config-card {
+    background: var(--bg-card, #121620);
+    border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.12));
+    border-radius: var(--radius-lg, 12px);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .card-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .card-header-info {
+    flex: 1;
+    min-width: 260px;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .card-desc {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .server-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .pulse-dot-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .pulse-testing { background: #eab308; box-shadow: 0 0 8px #eab308; }
+  .pulse-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
+  .pulse-offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+  .provider-controls-row {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .flex-2 { flex: 2; min-width: 280px; }
+  .flex-1 { flex: 1; min-width: 200px; }
+
+  .input-with-btn {
+    display: flex;
+    gap: 0.5rem;
   }
 </style>

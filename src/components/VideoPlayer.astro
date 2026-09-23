@@ -32,6 +32,8 @@ const isVideo = !isPdf && !isDoc;
   data-next-href={nextLessonHref || ''}
   data-next-title={nextLessonTitle}
   data-is-drive={isDrive ? 'true' : 'false'}
+  data-relative-path={lesson.relative_path || ''}
+  data-drive-id={driveId || ''}
 >
   <!-- Next Lesson Countdown Overlay (Shown on Video End) -->
   <div class="next-lesson-overlay" id="next-lesson-overlay" style="display: none;">
@@ -167,6 +169,15 @@ const isVideo = !isPdf && !isDoc;
     </div>
 
     <div class="nav-right">
+      <!-- Media Source Provider Selector -->
+      <div class="media-source-select-wrap" title="Fonte dos vídeos (Servidor ou Google Drive)">
+        <select id="player-media-source-select" class="player-media-source-select">
+          <option value="auto">⚡ Auto (Servidor + Fallback)</option>
+          <option value="server">🟢 Servidor Local</option>
+          <option value="drive">🔵 Google Drive</option>
+        </select>
+      </div>
+
       <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
@@ -193,6 +204,12 @@ const isVideo = !isPdf && !isDoc;
     getUserPreferences,
     saveUserPreferences
   } from '../lib/progress';
+  import {
+    getMediaMode,
+    setMediaMode,
+    getActiveMediaProvider,
+    buildServerStreamUrl
+  } from '../lib/mediaProvider';
   import { showToast } from '../lib/toast';
 
   const wrapper = document.getElementById('player-wrapper');
@@ -213,10 +230,62 @@ const isVideo = !isPdf && !isDoc;
   const courseId = wrapper?.getAttribute('data-course-id') || '';
   const lessonId = wrapper?.getAttribute('data-lesson-id') || '';
   const nextHref = wrapper?.getAttribute('data-next-href') || '';
+  const relPath = wrapper?.getAttribute('data-relative-path') || '';
+  const dId = wrapper?.getAttribute('data-drive-id') || '';
 
   if (courseId && lessonId) {
     const prefs = getUserPreferences();
-    const isDrive = wrapper?.getAttribute('data-is-drive') === 'true';
+
+    // Source Provider Selector
+    const sourceSelect = document.getElementById('player-media-source-select') as HTMLSelectElement | null;
+    if (sourceSelect) {
+      sourceSelect.value = getMediaMode();
+      sourceSelect.addEventListener('change', () => {
+        const mode = sourceSelect.value as any;
+        setMediaMode(mode);
+        initPlayerSource();
+        showToast(`Fonte alterada para: ${sourceSelect.options[sourceSelect.selectedIndex].text}`, 'info', 2000);
+      });
+    }
+
+    async function initPlayerSource() {
+      const activeProvider = await getActiveMediaProvider();
+      const viewport = document.getElementById('video-viewport');
+      if (!viewport) return;
+
+      const wrapperDiv = viewport.querySelector('.drive-video-wrapper');
+      if (!wrapperDiv) return;
+
+      if (activeProvider === 'server' && relPath) {
+        const serverStreamUrl = buildServerStreamUrl(relPath);
+        wrapperDiv.innerHTML = `
+          <video
+            id="main-video-player"
+            class="html5-video"
+            src="${serverStreamUrl}"
+            controls
+            autoplay
+            playsinline
+            title="${lessonId}"
+          ></video>
+        `;
+      } else if (dId) {
+        const driveUrl = `https://drive.google.com/file/d/${dId}/preview`;
+        wrapperDiv.innerHTML = `
+          <iframe
+            id="drive-video-iframe"
+            class="drive-player-frame"
+            src="${driveUrl}"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+          <div class="drive-popout-blocker"></div>
+        `;
+      }
+    }
+
+    initPlayerSource();
+    window.addEventListener('mindflix:media-mode-changed', initPlayerSource);
 
     // Mark completed toggle (Shared across Video and Drive)
     const saved = getLessonProgress(lessonId);
@@ -1017,6 +1086,36 @@ const isVideo = !isPdf && !isDoc;
   .btn-mode.active {
     color: var(--accent-cyan);
     background: rgba(var(--accent-primary-rgb), 0.12);
+  }
+
+  /* Media Source Provider Selector Dropdown */
+  .media-source-select-wrap {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .player-media-source-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-primary, #f1f5f9);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.45rem;
+    height: 24px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+
+  .player-media-source-select:hover {
+    border-color: var(--accent-cyan, #00f2fe);
+    background: rgba(0, 242, 254, 0.08);
+  }
+
+  .player-media-source-select option {
+    background: #121620;
+    color: #ffffff;
   }
 
   /* Speed Popover */

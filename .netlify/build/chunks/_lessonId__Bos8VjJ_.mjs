@@ -4,7 +4,7 @@ import { t as createComponent } from "./compiler_Cw7rCC9Q.mjs";
 import { n as renderScript, t as $$Layout } from "./Layout_DQEGFcGL.mjs";
 import { i as getCourseById, l as isPlayableVideoLesson, o as getFirstPlayableLesson } from "./catalog_BH-ygd_W.mjs";
 import { t as getCourseSourceId } from "./sources_NGS4vvxz.mjs";
-import { a as $$VideoPlayer, i as $$PlaylistSidebar, n as $$FocusMode, r as $$ChallengeModal, t as $$LessonNotes } from "./LessonNotes_DyFBSdNn.mjs";
+import { a as $$VideoPlayer, i as $$PlaylistSidebar, n as $$FocusMode, r as $$ChallengeModal, t as $$LessonNotes } from "./LessonNotes_Bq0NeK2u.mjs";
 //#region src/components/CourseSidebar.astro
 createAstro("https://astro.build");
 var $$CourseSidebar = createComponent(($$result, $$props, $$slots) => {
