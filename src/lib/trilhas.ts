@@ -87,8 +87,11 @@ export function getTrilhaFullStructure(trilhaId: string): {
     const courseObj = getCourseById(item.course_id);
     if (!courseObj) continue;
 
-    if (trilha.source === 'hashtag' || trilha.source === 'hashtag-soft-skills' || trilha.source === 'ailab' || trilha.source === 'ai-lab' || trilha.source === 'sctec') {
-      // For Hashtag, Soft Skills, AI LAB, and SCTEC Trilhas, each item corresponds to a specific subfolder/module
+    const sameCourseCount = trilha.courses.filter(c => c.course_id === courseObj.id).length;
+    const isSingleModuleItem = sameCourseCount > 1 && courseObj.modules.length > 1;
+
+    if (isSingleModuleItem) {
+      // For Trilhas where multiple items point to the same course (each item corresponds to a specific module)
       const targetMod = courseObj.modules[item.ordem - 1] || courseObj.modules.find(m => m.display_title === item.nome_trilha || m.raw_title === item.nome_trilha);
       const modLessons = targetMod ? targetMod.lessons : [];
 
@@ -115,12 +118,12 @@ export function getTrilhaFullStructure(trilhaId: string): {
         });
       }
     } else {
-      // For Asimov Trilhas, each item is a complete Course
+      // Each item is a complete Course with its own modules
       coursesWithModules.push({
         ordem: item.ordem,
         tipo: item.tipo,
         courseId: courseObj.id,
-        courseTitle: courseObj.display_title,
+        courseTitle: item.course_title || courseObj.display_title,
         courseCover: courseObj.cover_image,
         modules: courseObj.modules,
         lessonsCount: courseObj.lessons_count
@@ -131,7 +134,7 @@ export function getTrilhaFullStructure(trilhaId: string): {
           allLessons.push({
             lesson: les,
             courseId: courseObj.id,
-            courseTitle: courseObj.display_title,
+            courseTitle: item.course_title || courseObj.display_title,
             courseOrder: item.ordem,
             courseType: item.tipo,
             moduleId: mod.id,

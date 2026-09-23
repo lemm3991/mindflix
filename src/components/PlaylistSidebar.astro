@@ -102,15 +102,51 @@ if (isTrilha && trilha) {
 
   <!-- Scrollable Module Accordions Container -->
   <div class="sidebar-modules-scroll">
-    {modulesToRender.map(item => (
-      <ModuleAccordion
-        courseId={item.courseId}
-        module={item.module}
-        titleOverride={item.titleOverride}
-        currentLessonId={currentLessonId}
-        watchHrefBuilder={item.watchHrefBuilder}
-      />
-    ))}
+    {isTrilha && coursesWithModules.length > 1 ? (
+      coursesWithModules.map(c => {
+        const hasCurrentLesson = c.modules.some(m => m.lessons.some(l => l.id === currentLessonId));
+        return (
+          <div class={`trilha-course-group ${hasCurrentLesson ? 'group-open is-active-course' : ''}`}>
+            <button type="button" class="trilha-course-btn" aria-expanded={hasCurrentLesson ? 'true' : 'false'}>
+              <div class="trilha-course-left">
+                <div class="trilha-course-chevron">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+                <div class="trilha-course-title-block">
+                  <span class="trilha-course-tag">{c.tipo} {c.ordem}</span>
+                  <h3 class="trilha-course-name" title={c.courseTitle}>{c.courseTitle}</h3>
+                </div>
+              </div>
+              <span class="trilha-course-pill">
+                {c.modules.length} {c.modules.length === 1 ? 'módulo' : 'módulos'}
+              </span>
+            </button>
+            <div class="trilha-course-content" style={hasCurrentLesson ? 'display: block;' : 'display: none;'}>
+              {c.modules.map(mod => (
+                <ModuleAccordion
+                  courseId={c.courseId}
+                  module={mod}
+                  currentLessonId={currentLessonId}
+                  watchHrefBuilder={(les: any) => `/watch/trilha/${trilha!.id}/${les.id}`}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })
+    ) : (
+      modulesToRender.map(item => (
+        <ModuleAccordion
+          courseId={item.courseId}
+          module={item.module}
+          titleOverride={item.titleOverride}
+          currentLessonId={currentLessonId}
+          watchHrefBuilder={item.watchHrefBuilder}
+        />
+      ))
+    )}
   </div>
 </aside>
 
@@ -169,6 +205,28 @@ if (isTrilha && trilha) {
       }, 100);
     }
   }
+
+  // Click listeners para grupos de cursos em trilhas
+  document.querySelectorAll<HTMLElement>('.trilha-course-group').forEach(group => {
+    if (group.dataset.groupInit === 'true') return;
+    group.dataset.groupInit = 'true';
+
+    const btn = group.querySelector<HTMLButtonElement>('.trilha-course-btn');
+    const content = group.querySelector<HTMLElement>('.trilha-course-content');
+
+    btn?.addEventListener('click', () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      if (isExpanded) {
+        btn.setAttribute('aria-expanded', 'false');
+        group.classList.remove('group-open');
+        if (content) content.style.display = 'none';
+      } else {
+        btn.setAttribute('aria-expanded', 'true');
+        group.classList.add('group-open');
+        if (content) content.style.display = 'block';
+      }
+    });
+  });
 
   updatePlaylistProgress();
   scrollToActiveLesson();
@@ -282,6 +340,103 @@ if (isTrilha && trilha) {
     overflow-y: auto;
     padding: 0.75rem;
     max-height: calc(100vh - 200px);
+  }
+
+  /* Grupos de Cursos na Trilha */
+  .trilha-course-group {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.85rem;
+    background: rgba(255, 255, 255, 0.015);
+    overflow: hidden;
+    transition: all 0.25s ease;
+  }
+
+  .trilha-course-group.is-active-course {
+    border-color: rgba(0, 242, 254, 0.35);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  .trilha-course-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.85rem;
+    background: rgba(18, 22, 32, 0.85);
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease;
+  }
+
+  .trilha-course-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .trilha-course-left {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .trilha-course-chevron {
+    color: var(--text-muted);
+    transition: transform var(--motion-normal) var(--ease-spring);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .trilha-course-group.group-open .trilha-course-chevron {
+    transform: rotate(180deg);
+    color: var(--accent-cyan);
+  }
+
+  .trilha-course-title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .trilha-course-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-cyan);
+  }
+
+  .trilha-course-name {
+    font-size: 0.925rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .trilha-course-pill {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+  }
+
+  .trilha-course-content {
+    padding: 0.5rem;
+    background: rgba(11, 13, 19, 0.5);
+    border-top: 1px solid var(--border-subtle);
   }
 
   @media (max-width: 1024px) {

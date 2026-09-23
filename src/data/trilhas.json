@@ -34,9 +34,9 @@
       "provider": "AI LAB",
       "description": "Trilha de formação completa para Artistas Visuais com IA: Formação Artista AI, Color Grading Cinematográfico, Photoshop Starter, Pós-Produção de CGI, Retoque de Produto e Retoque Fotográfico High-End.",
       "total_cursos": 8,
-      "total_lessons_count": 68,
-      "total_duration_seconds": 25160,
-      "total_duration_formatted": "6h 59min",
+      "total_lessons_count": 114,
+      "total_duration_seconds": 42180,
+      "total_duration_formatted": "11h 43min",
       "cover_image": "/covers/trilha-artista-ai.jpg",
       "courses": [
         {
@@ -59,11 +59,11 @@
           "course_id": "course-bonus-exclusivo",
           "course_title": "Bônus - Exclusivo",
           "cover_image": "/covers/course-bonus-exclusivo.jpg",
-          "modules_count": 0,
-          "lessons_count": 0,
-          "total_duration_seconds": 0,
-          "total_duration_formatted": "0 min",
-          "relative_path": "AI LAB/Artista AI/Bunas - Exclusivo"
+          "modules_count": 1,
+          "lessons_count": 2,
+          "total_duration_seconds": 740,
+          "total_duration_formatted": "12 min",
+          "relative_path": "AI LAB/Artista AI/Bônus - Exclusivo"
         },
         {
           "ordem": 3,
@@ -111,11 +111,11 @@
           "course_id": "course-pos-producao-de-cgi",
           "course_title": "Pós Produção de CGI",
           "cover_image": "/covers/course-pos-producao-de-cgi.jpg",
-          "modules_count": 0,
-          "lessons_count": 0,
-          "total_duration_seconds": 0,
-          "total_duration_formatted": "0 min",
-          "relative_path": "AI LAB/Artista AI/Pus Produao de CGI"
+          "modules_count": 5,
+          "lessons_count": 30,
+          "total_duration_seconds": 11100,
+          "total_duration_formatted": "3h 05m",
+          "relative_path": "AI LAB/Artista AI/Pós Produção de CGI"
         },
         {
           "ordem": 7,
@@ -124,11 +124,11 @@
           "course_id": "course-retoque-fotografico",
           "course_title": "Retoque Fotográfico",
           "cover_image": "/covers/course-retoque-fotografico.jpg",
-          "modules_count": 2,
-          "lessons_count": 7,
-          "total_duration_seconds": 2590,
-          "total_duration_formatted": "43 min",
-          "relative_path": "AI LAB/Artista AI/Retoque de Produto"
+          "modules_count": 6,
+          "lessons_count": 21,
+          "total_duration_seconds": 7770,
+          "total_duration_formatted": "2h 09m",
+          "relative_path": "AI LAB/Artista AI/Retoque Fotográfico"
         },
         {
           "ordem": 8,

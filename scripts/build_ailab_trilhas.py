@@ -34,42 +34,44 @@ def clean_display_title(raw_title):
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
+def norm(s):
+    return re.sub(r'[^a-z0-9]', '', unicodedata.normalize('NFKD', s).lower())
+
 def scan_folder_as_course(full_path, rel_path, display_name):
     slug = slugify(display_name)
     course_id = f"course-{slug}"
     
     modules = []
     if os.path.exists(full_path):
-        mod_entries = sorted(os.listdir(full_path), key=natural_sort_key)
+        mod_entries = sorted([m for m in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, m))], key=natural_sort_key)
         mod_idx = 1
         for m_entry in mod_entries:
             m_full = os.path.join(full_path, m_entry)
-            if not os.path.isdir(m_full):
-                continue
-            
             clean_m_name = clean_display_title(m_entry)
             m_id = f"{course_id}-mod-{mod_idx:02d}"
             
             lessons = []
-            files = sorted(os.listdir(m_full), key=natural_sort_key)
-            v_files = [f for f in files if f.lower().endswith(('.mp4', '.mkv', '.webm'))]
-            
             l_idx = 1
-            for vf in v_files:
-                vf_rel = f"{rel_path}/{m_entry}/{vf}"
-                lesson_id = f"{m_id}-les-{l_idx:02d}"
-                lessons.append({
-                    "id": lesson_id,
-                    "order_index": l_idx,
-                    "raw_title": vf,
-                    "display_title": clean_display_title(vf),
-                    "relative_path": vf_rel,
-                    "type": "video",
-                    "duration_seconds": 370,
-                    "duration_formatted": "06:10",
-                    "materials": []
-                })
-                l_idx += 1
+            for root_dir, dirs, files in os.walk(m_full):
+                dirs.sort(key=natural_sort_key)
+                files_sorted = sorted([f for f in files if f.lower().endswith(('.mp4', '.mkv', '.webm'))], key=natural_sort_key)
+                for vf in files_sorted:
+                    vf_full = os.path.join(root_dir, vf)
+                    sub_rel = os.path.relpath(vf_full, full_path).replace("\\", "/")
+                    vf_rel = f"{rel_path}/{sub_rel}"
+                    lesson_id = f"{m_id}-les-{l_idx:02d}"
+                    lessons.append({
+                        "id": lesson_id,
+                        "order_index": l_idx,
+                        "raw_title": vf,
+                        "display_title": clean_display_title(vf),
+                        "relative_path": vf_rel,
+                        "type": "video",
+                        "duration_seconds": 370,
+                        "duration_formatted": "06:10",
+                        "materials": []
+                    })
+                    l_idx += 1
                 
             if lessons:
                 modules.append({
@@ -123,27 +125,27 @@ def main():
     # Scan Artista AI subfolders
     artista_ai_dir = os.path.join(AI_LAB_ROOT, "Artista AI")
     artista_subcourses = [
-        ("Color Grading Cinematográfico", "Color Grading Cinematogrúfico", False),
-        ("Formação Artista AI", "Formaao Artista AI", False),
-        ("Photoshop Starter", "Photoshop Starter", False),
-        ("Pós Produção de CGI", "Pus Produao de CGI", False),
-        ("Retoque de Produto", "Retoque de Produto", False),
-        ("Retoque Fotográfico", "Retoque FotogrUfico", False),
-        ("Apresentação", "Apresentaao", True), # Hidden as standalone, visible in trilha
-        ("Bônus - Exclusivo", "Bunas - Exclusivo", True) # Hidden as standalone, visible in trilha
+        ("Color Grading Cinematográfico", False),
+        ("Formação Artista AI", False),
+        ("Photoshop Starter", False),
+        ("Pós Produção de CGI", False),
+        ("Retoque de Produto", False),
+        ("Retoque Fotográfico", False),
+        ("Apresentação", True),
+        ("Bônus - Exclusivo", True)
     ]
 
+    entries = os.listdir(artista_ai_dir) if os.path.exists(artista_ai_dir) else []
     new_artista_courses = []
-    for display_name, dir_name, is_hidden in artista_subcourses:
-        cand_path = os.path.join(artista_ai_dir, dir_name)
-        if not os.path.exists(cand_path):
-            # Try finding folder matching start
-            for item in os.listdir(artista_ai_dir):
-                if item.lower().startswith(dir_name[:5].lower()):
-                    cand_path = os.path.join(artista_ai_dir, item)
-                    break
+    for display_name, is_hidden in artista_subcourses:
+        target_norm = norm(display_name)
+        match_folder = next((e for e in entries if norm(e) == target_norm), None)
+        if not match_folder:
+            print(f"Warning: could not find folder for {display_name}")
+            continue
         
-        rel_p = f"AI LAB/Artista AI/{os.path.basename(cand_path)}"
+        cand_path = os.path.join(artista_ai_dir, match_folder)
+        rel_p = f"AI LAB/Artista AI/{match_folder}"
         c_obj = scan_folder_as_course(cand_path, rel_p, display_name)
         c_obj["is_hidden"] = is_hidden
         

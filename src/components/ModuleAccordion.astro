@@ -1,6 +1,6 @@
 ---
-// ModuleAccordion.astro - Collapsible module with progress tracking and lesson list
-import type { Module } from '../types/catalog';
+// ModuleAccordion.astro - Collapsible module with progress tracking, lesson list, and nested subdobras support
+import type { Module, Lesson } from '../types/catalog';
 import LessonItem from './LessonItem.astro';
 
 interface Props {
@@ -20,6 +20,87 @@ const isOpen = defaultOpen || hasCurrentLesson;
 // Total estimated duration in minutes
 const totalDurationSecs = module.lessons.reduce((acc, l) => acc + l.duration_seconds, 0);
 const totalMinutes = Math.round(totalDurationSecs / 60);
+
+// Subfolders / Partes detection
+function cleanSubTitle(raw: string): string {
+  let title = raw;
+  const replacements: Record<string, string> = {
+    "Execuo": "Execução", "Anlise": "Análise", "Aplicaes": "Aplicações",
+    "Estratgias": "Estratégias", "Histricos": "Históricos", "estticos": "estáticos",
+    "nvel": "nível", "Especializao": "Especialização", "Inteligncia": "Inteligência",
+    "Violo": "Violão", "Mtodo": "Método", "Trade": "Tríade", "Msica": "Música",
+    "Mdulo": "Módulo", "Comear": "Começar", "informao": "informação",
+    "udios": "áudios", "Nmero": "Número", "Ciuncia": "Ciência", "Formaao": "Formação",
+    "Pus": "Pós", "Produao": "Produção", "FotogrUfico": "Fotográfico", "Apresentaao": "Apresentação",
+    "Bunas": "Bônus", "Introduao": "Introdução"
+  };
+  for (const [k, v] of Object.entries(replacements)) {
+    title = title.replaceAll(k, v);
+  }
+  return title.trim();
+}
+
+interface SubGroup {
+  subKey: string;
+  displayTitle: string;
+  lessons: Lesson[];
+  isOpen: boolean;
+}
+
+const modRel = (module.relative_path || '').replace(/\\/g, '/').replace(/\/$/, '');
+
+const lessonSubItems = module.lessons.map(lesson => {
+  const lesRel = (lesson.relative_path || '').replace(/\\/g, '/');
+  let sub = '';
+  if (modRel && lesRel.startsWith(modRel + '/')) {
+    const after = lesRel.slice(modRel.length + 1);
+    const parts = after.split('/');
+    if (parts.length > 1) {
+      sub = parts.slice(0, parts.length - 1).join(' / ');
+    }
+  } else {
+    const lastSlash = lesRel.lastIndexOf('/');
+    if (lastSlash > 0) {
+      const dir = lesRel.substring(0, lastSlash);
+      const dirParts = dir.split('/');
+      if (dirParts.length > 2) {
+        const lastPart = dirParts[dirParts.length - 1];
+        if (lastPart && !modRel.endsWith(lastPart)) {
+          sub = lastPart;
+        }
+      }
+    }
+  }
+  return { lesson, sub };
+});
+
+const hasSubfolders = lessonSubItems.some(item => item.sub.length > 0);
+
+const subGroups: SubGroup[] = [];
+if (hasSubfolders) {
+  const groupMap = new Map<string, SubGroup>();
+  for (const { lesson, sub } of lessonSubItems) {
+    if (!groupMap.has(sub)) {
+      const grp: SubGroup = {
+        subKey: sub || '_root_',
+        displayTitle: sub ? cleanSubTitle(sub) : 'Aulas Gerais',
+        lessons: [],
+        isOpen: false
+      };
+      groupMap.set(sub, grp);
+      subGroups.push(grp);
+    }
+    const grp = groupMap.get(sub)!;
+    grp.lessons.push(lesson);
+    if (currentLessonId && lesson.id === currentLessonId) {
+      grp.isOpen = true;
+    }
+  }
+  // Se nenhuma subdobra contiver a aula atual mas o módulo estiver aberto, abre a primeira subdobra
+  if (isOpen && !subGroups.some(g => g.isOpen) && subGroups.length > 0) {
+    subGroups[0].isOpen = true;
+  }
+}
 ---
 
 <div
@@ -52,16 +133,66 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
   </button>
 
   <div class="module-content" style={isOpen ? 'display: block;' : 'display: none;'}>
-    <div class="lessons-list">
-      {module.lessons.map(lesson => (
-        <LessonItem
-          courseId={courseId}
-          lesson={lesson}
-          isCurrent={currentLessonId === lesson.id}
-          watchHref={watchHrefBuilder ? watchHrefBuilder(lesson) : undefined}
-        />
-      ))}
-    </div>
+    {hasSubfolders ? (
+      <div class="submodules-wrapper">
+        {subGroups.map(grp => (
+          <div
+            class={`submodule-item ${grp.isOpen ? 'sub-open' : ''}`}
+            data-submodule-id={grp.subKey}
+            data-total-sub-lessons={grp.lessons.length}
+          >
+            <button
+              type="button"
+              class="submodule-header-btn"
+              aria-expanded={grp.isOpen ? 'true' : 'false'}
+            >
+              <div class="sub-header-left">
+                <div class="sub-expand-chevron">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+                <div class="sub-folder-icon">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </div>
+                <span class="submodule-title" title={grp.displayTitle}>{grp.displayTitle}</span>
+              </div>
+              <div class="sub-header-right">
+                <span class="submodule-counter">
+                  <span class="sub-completed-count">0</span>/{grp.lessons.length}
+                </span>
+              </div>
+            </button>
+
+            <div class="submodule-content" style={grp.isOpen ? 'display: block;' : 'display: none;'}>
+              <div class="lessons-list">
+                {grp.lessons.map(lesson => (
+                  <LessonItem
+                    courseId={courseId}
+                    lesson={lesson}
+                    isCurrent={currentLessonId === lesson.id}
+                    watchHref={watchHrefBuilder ? watchHrefBuilder(lesson) : undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="lessons-list">
+        {module.lessons.map(lesson => (
+          <LessonItem
+            courseId={courseId}
+            lesson={lesson}
+            isCurrent={currentLessonId === lesson.id}
+            watchHref={watchHrefBuilder ? watchHrefBuilder(lesson) : undefined}
+          />
+        ))}
+      </div>
+    )}
   </div>
 </div>
 
@@ -71,6 +202,7 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
   function updateModules() {
     const allProgress = getAllLocalProgress();
 
+    // Atualiza progresso dos módulos principais
     document.querySelectorAll<HTMLElement>('.module-accordion-item').forEach(item => {
       const totalLessons = parseInt(item.getAttribute('data-total-lessons') || '0', 10);
       const countEl = item.querySelector('.module-completed-count');
@@ -91,9 +223,23 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
         fillEl.style.width = `${pct}%`;
       }
     });
+
+    // Atualiza progresso das subdobras (submódulos)
+    document.querySelectorAll<HTMLElement>('.submodule-item').forEach(subItem => {
+      const countEl = subItem.querySelector('.sub-completed-count');
+      const lessonItems = subItem.querySelectorAll('.lesson-item');
+      let completedInSub = 0;
+      lessonItems.forEach(l => {
+        const lId = l.getAttribute('data-lesson-id');
+        if (lId && allProgress[lId]?.completed) {
+          completedInSub++;
+        }
+      });
+      if (countEl) countEl.textContent = completedInSub.toString();
+    });
   }
 
-  // Setup click listeners once
+  // Click listeners para os módulos principais
   document.querySelectorAll<HTMLElement>('.module-accordion-item').forEach(item => {
     if (item.dataset.accordionInit === 'true') return;
     item.dataset.accordionInit = 'true';
@@ -111,6 +257,29 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
         btn.setAttribute('aria-expanded', 'true');
         item.classList.add('open');
         if (content) content.style.display = 'block';
+      }
+    });
+  });
+
+  // Click listeners para as subdobras (subpastas)
+  document.querySelectorAll<HTMLElement>('.submodule-item').forEach(subItem => {
+    if (subItem.dataset.subInit === 'true') return;
+    subItem.dataset.subInit = 'true';
+
+    const subBtn = subItem.querySelector<HTMLButtonElement>('.submodule-header-btn');
+    const subContent = subItem.querySelector<HTMLElement>('.submodule-content');
+
+    subBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isExpanded = subBtn.getAttribute('aria-expanded') === 'true';
+      if (isExpanded) {
+        subBtn.setAttribute('aria-expanded', 'false');
+        subItem.classList.remove('sub-open');
+        if (subContent) subContent.style.display = 'none';
+      } else {
+        subBtn.setAttribute('aria-expanded', 'true');
+        subItem.classList.add('sub-open');
+        if (subContent) subContent.style.display = 'block';
       }
     });
   });
@@ -175,14 +344,6 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
     min-width: 0;
   }
 
-  .module-index {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--accent-cyan);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
   .module-title {
     font-size: 0.875rem;
     font-weight: 600;
@@ -236,5 +397,120 @@ const totalMinutes = Math.round(totalDurationSecs / 60);
   .lessons-list {
     display: flex;
     flex-direction: column;
+  }
+
+  /* Subdobras (submódulos dentro do módulo principal) */
+  .submodules-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.45rem 0.45rem 0.45rem 0.65rem;
+  }
+
+  .submodule-item {
+    border-radius: var(--radius-sm, 6px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 3px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.015);
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+
+  .submodule-item:hover {
+    border-left-color: rgba(0, 242, 254, 0.5);
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .submodule-item.sub-open {
+    border-left-color: var(--accent-cyan);
+    border-color: rgba(0, 242, 254, 0.15);
+    background: rgba(0, 242, 254, 0.025);
+  }
+
+  .submodule-header-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.7rem;
+    min-height: 38px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text-secondary);
+    transition: color 0.15s ease;
+  }
+
+  .submodule-header-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .sub-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sub-expand-chevron {
+    color: var(--text-muted);
+    transition: transform var(--motion-normal) var(--ease-spring);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .submodule-item.sub-open .sub-expand-chevron {
+    transform: rotate(180deg);
+    color: var(--accent-cyan);
+  }
+
+  .sub-folder-icon {
+    color: var(--text-muted);
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .submodule-item.sub-open .sub-folder-icon {
+    color: var(--accent-cyan);
+    opacity: 1;
+  }
+
+  .submodule-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: inherit;
+  }
+
+  .sub-header-right {
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+  }
+
+  .submodule-counter {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .submodule-item.sub-open .submodule-counter {
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--accent-cyan);
+  }
+
+  .submodule-content {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(0, 0, 0, 0.2);
   }
 </style>

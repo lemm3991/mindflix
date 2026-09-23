@@ -39,3 +39,6 @@ src/data/security_state.json
 service_account.json
 __pycache__/
 *.pyc
+
+# Local Netlify folder
+.netlify
