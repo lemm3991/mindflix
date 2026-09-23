@@ -208,6 +208,47 @@ export const GET: APIRoute = async ({ request }) => {
     return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
   }
 
+  // If relPath is a .url or .webloc internet shortcut, redirect directly to the target web page
+  if (relPath.toLowerCase().endsWith('.url') || relPath.toLowerCase().endsWith('.webloc')) {
+    try {
+      const catalogPath = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
+      if (fs.existsSync(catalogPath)) {
+        const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
+        const normTarget = relPath.replace(/\\/g, '/').toLowerCase().trim();
+        for (const course of (catalog.courses || [])) {
+          for (const mod of (course.modules || [])) {
+            for (const les of (mod.lessons || [])) {
+              for (const mat of (les.materials || [])) {
+                if (mat.relative_path && mat.relative_path.replace(/\\/g, '/').toLowerCase().trim() === normTarget) {
+                  const target = mat.target_url || mat.url;
+                  if (target && !target.startsWith('/api/video')) {
+                    return Response.redirect(target, 302);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+
+    const coursesRoot = getCoursesRoot();
+    const resolvedShort = resolveSafeFilePath(coursesRoot, relPath);
+    if (resolvedShort && fs.existsSync(resolvedShort.filePath)) {
+      try {
+        const content = fs.readFileSync(resolvedShort.filePath, 'utf-8');
+        const match = content.match(/URL=(https?:\/\/[^\r\n]+)/i);
+        if (match && match[1]) {
+          return Response.redirect(match[1].trim(), 302);
+        }
+        const weblocMatch = content.match(/<string>(https?:\/\/[^<]+)<\/string>/i);
+        if (weblocMatch && weblocMatch[1]) {
+          return Response.redirect(weblocMatch[1].trim(), 302);
+        }
+      } catch {}
+    }
+  }
+
   // Check catalog for Google Drive file ID
   const driveIdFromCatalog = getDriveIdFromCatalog(relPath);
   if (driveIdFromCatalog) {

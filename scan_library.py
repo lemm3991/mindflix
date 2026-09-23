@@ -70,7 +70,7 @@ def load_categories_overrides():
 # Supported extensions
 VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".ts"}
 AUDIO_EXTS = {".mp3", ".m4a", ".wav", ".ogg"}
-DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r"}
+DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r", ".url", ".webloc"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
 DEFAULT_IGNORE = {

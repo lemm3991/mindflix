@@ -5,6 +5,9 @@ export interface LessonMaterial {
   title: string;
   type: string;
   relative_path: string;
+  url?: string;
+  target_url?: string;
+  is_link?: boolean;
 }
 
 export interface Lesson {

@@ -20,7 +20,7 @@ DRIVE_READONLY_SCOPE = ['https://www.googleapis.com/auth/drive.readonly']
 DEFAULT_DRIVE_FOLDER_ID = '1BFljfXrOGVTgiFXg3jmNcYcWlaafrxOz'
 
 VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".ts"}
-DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r"}
+DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r", ".url", ".webloc"}
 IMAGE_NAMES = {"cover.jpg", "cover.png", "capa.jpg", "capa.png", "thumb.jpg", "thumb.png"}
 
 def resolve_credentials_path(custom_path=None):

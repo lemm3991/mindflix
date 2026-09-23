@@ -162,6 +162,12 @@ const isLastLessonInModule = Boolean(
             return !excluded.includes(ext);
           };
 
+          const isLinkMat = (matOrLes: any) => {
+            if (matOrLes?.is_link || matOrLes?.type === 'link' || matOrLes?.type === 'LINK' || matOrLes?.type === 'url' || matOrLes?.type === 'URL') return true;
+            const path = (matOrLes?.relative_path || matOrLes?.filename || '').toLowerCase();
+            return path.endsWith('.url') || path.endsWith('.webloc');
+          };
+
           const getMatFilename = (relPath: string, title: string) => {
             if (relPath) {
               const fname = relPath.replace(/\\/g, '/').split('/').pop();
@@ -172,53 +178,64 @@ const isLastLessonInModule = Boolean(
 
           // 1. Materials explicitly attached to currentLesson
           const lessonMaterials = (currentLesson.materials || [])
-            .filter((mat: any) => isDownloadableMat(mat.relative_path || mat.title))
-            .map((mat: any) => ({
-              id: mat.id || mat.relative_path,
-              title: mat.title || 'Material Complementar',
-              type: (mat.type || 'ARQUIVO').toUpperCase(),
-              relative_path: mat.relative_path || '',
-              filename: getMatFilename(mat.relative_path || '', mat.title || 'material'),
-              url: mat.drive_file_id 
-                ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
-                : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`),
-              driveId: mat.drive_file_id
-            }));
+            .filter((mat: any) => isLinkMat(mat) || isDownloadableMat(mat.relative_path || mat.title))
+            .map((mat: any) => {
+              const isLink = isLinkMat(mat);
+              const targetUrl = mat.target_url || (isLink ? mat.url : undefined);
+              return {
+                id: mat.id || mat.relative_path,
+                title: mat.title || 'Material Complementar',
+                type: isLink ? 'LINK' : (mat.type || 'ARQUIVO').toUpperCase(),
+                relative_path: mat.relative_path || '',
+                filename: getMatFilename(mat.relative_path || '', mat.title || 'material'),
+                url: targetUrl || (mat.drive_file_id 
+                  ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
+                  : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`)),
+                driveId: mat.drive_file_id,
+                is_link: isLink
+              };
+            });
 
-          // 2. Non-video lessons in the current module (e.g. PDFs, docs, zips, spreadsheets)
+          // 2. Non-video lessons in the current module (e.g. PDFs, docs, zips, spreadsheets, links)
           const moduleFiles = (currentModule?.lessons || [])
-            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id && isDownloadableMat(les.relative_path || les.raw_title))
+            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id && (isLinkMat(les) || isDownloadableMat(les.relative_path || les.raw_title)))
             .map((les: any) => {
-              const ext = (les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase();
+              const isLink = isLinkMat(les);
+              const ext = isLink ? 'LINK' : ((les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase());
+              const targetUrl = les.target_url || (isLink ? les.url : undefined);
               return {
                 id: les.id,
                 title: les.display_title || les.raw_title,
                 type: ext,
                 relative_path: les.relative_path || '',
                 filename: getMatFilename(les.relative_path || '', les.display_title || les.raw_title || 'material'),
-                url: les.drive_file_id 
+                url: targetUrl || (les.drive_file_id 
                   ? `https://drive.google.com/uc?export=download&id=${les.drive_file_id}` 
-                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`),
-                driveId: les.drive_file_id
+                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`)),
+                driveId: les.drive_file_id,
+                is_link: isLink
               };
             });
 
           // 3. Non-video lessons in other modules of the course if moduleFiles is empty
           const otherCourseFiles = moduleFiles.length === 0 ? (course.modules || [])
             .flatMap((mod: any) => mod.lessons || [])
-            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id && isDownloadableMat(les.relative_path || les.raw_title))
+            .filter((les: any) => !isPlayableVideoLesson(les) && les.id !== currentLesson.id && (isLinkMat(les) || isDownloadableMat(les.relative_path || les.raw_title)))
             .map((les: any) => {
-              const ext = (les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase();
+              const isLink = isLinkMat(les);
+              const ext = isLink ? 'LINK' : ((les.relative_path || '').split('.').pop()?.toUpperCase() || (les.type || 'FILE').toUpperCase());
+              const targetUrl = les.target_url || (isLink ? les.url : undefined);
               return {
                 id: les.id,
                 title: les.display_title || les.raw_title,
                 type: ext,
                 relative_path: les.relative_path || '',
                 filename: getMatFilename(les.relative_path || '', les.display_title || les.raw_title || 'material'),
-                url: les.drive_file_id 
+                url: targetUrl || (les.drive_file_id 
                   ? `https://drive.google.com/uc?export=download&id=${les.drive_file_id}` 
-                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`),
-                driveId: les.drive_file_id
+                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`)),
+                driveId: les.drive_file_id,
+                is_link: isLink
               };
             }) : [];
 
@@ -243,13 +260,13 @@ const isLastLessonInModule = Boolean(
                     </svg>
                   </div>
                   <div>
-                    <h3 class="materials-main-heading">Arquivos e Materiais para Download</h3>
-                    <p class="materials-subtitle">Apostilas, códigos, PDFs e materiais de apoio deste curso</p>
+                    <h3 class="materials-main-heading">Arquivos e Materiais de Apoio</h3>
+                    <p class="materials-subtitle">Links, apostilas, códigos, PDFs e materiais deste curso</p>
                   </div>
                 </div>
 
                 {allMaterials.length > 0 && (
-                  <span class="materials-count-pill">{allMaterials.length} {allMaterials.length === 1 ? 'arquivo' : 'arquivos'}</span>
+                  <span class="materials-count-pill">{allMaterials.length} {allMaterials.length === 1 ? 'item' : 'itens'}</span>
                 )}
               </div>
 
@@ -264,21 +281,37 @@ const isLastLessonInModule = Boolean(
                           {mat.relative_path && <span class="material-path">{mat.relative_path}</span>}
                         </div>
                       </div>
-                      <a
-                        href={mat.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="btn btn-secondary btn-sm material-download-btn"
-                        download={mat.filename}
-                        title={`Baixar ${mat.title}`}
-                        aria-label={`Baixar ${mat.title}`}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="7 10 12 15 17 10"></polyline>
-                          <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                      </a>
+                      {mat.is_link ? (
+                        <a
+                          href={mat.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="btn btn-secondary btn-sm material-download-btn material-link-btn"
+                          title={`Acessar link: ${mat.title} (abre em nova guia)`}
+                          aria-label={`Acessar link: ${mat.title} (abre em nova guia)`}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                          </svg>
+                        </a>
+                      ) : (
+                        <a
+                          href={mat.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="btn btn-secondary btn-sm material-download-btn"
+                          download={mat.filename}
+                          title={`Baixar ${mat.title}`}
+                          aria-label={`Baixar ${mat.title}`}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                        </a>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -713,6 +746,7 @@ const isLastLessonInModule = Boolean(
   .type-badge-docx, .type-badge-doc { background: rgba(59, 130, 246, 0.12); color: #60a5fa; border-color: rgba(59, 130, 246, 0.25); }
   .type-badge-zip, .type-badge-rar { background: rgba(234, 179, 8, 0.12); color: #facc15; border-color: rgba(234, 179, 8, 0.25); }
   .type-badge-py, .type-badge-ipynb { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.25); }
+  .type-badge-link, .type-badge-url { background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.35); }
 
   .material-meta {
     flex: 1;
@@ -748,6 +782,19 @@ const isLastLessonInModule = Boolean(
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+  }
+
+  .material-link-btn {
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #c084fc;
+    background: rgba(168, 85, 247, 0.08);
+  }
+
+  .material-link-btn:hover {
+    background: rgba(168, 85, 247, 0.25);
+    border-color: #c084fc;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.45);
   }
 
   .materials-empty-state {
