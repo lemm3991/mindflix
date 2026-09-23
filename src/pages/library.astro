@@ -519,419 +519,488 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
     checkServerHealth
   } from '../lib/mediaProvider';
 
-  const mediaServerUrlInput = document.getElementById('input-media-server-url') as HTMLInputElement | null;
-  const mediaModeSelect = document.getElementById('select-media-mode') as HTMLSelectElement | null;
-  const btnSaveServerUrl = document.getElementById('btn-save-server-url');
-  const statusDot = document.getElementById('status-dot');
-  const statusText = document.getElementById('status-text');
+  function initLibraryAdmin() {
+    const pageContainer = document.querySelector('.library-admin-page');
+    if (!pageContainer) return;
 
-  if (mediaServerUrlInput) mediaServerUrlInput.value = getMediaServerUrl();
-  if (mediaModeSelect) mediaModeSelect.value = getMediaMode();
+    const mediaServerUrlInput = document.getElementById('input-media-server-url') as HTMLInputElement | null;
+    const mediaModeSelect = document.getElementById('select-media-mode') as HTMLSelectElement | null;
+    const btnSaveServerUrl = document.getElementById('btn-save-server-url');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
 
-  async function updateServerStatusUI() {
-    if (!statusText || !statusDot) return;
-    statusText.textContent = 'Testando Conexão...';
-    statusDot.className = 'pulse-dot-indicator pulse-testing';
+    if (mediaServerUrlInput) mediaServerUrlInput.value = getMediaServerUrl();
+    if (mediaModeSelect) mediaModeSelect.value = getMediaMode();
 
-    const url = mediaServerUrlInput?.value || getMediaServerUrl();
-    const isOnline = await checkServerHealth(url);
+    async function updateServerStatusUI() {
+      if (!statusText || !statusDot) return;
+      statusText.textContent = 'Testando Conexão...';
+      statusDot.className = 'pulse-dot-indicator pulse-testing';
 
-    if (isOnline) {
-      statusText.textContent = 'Servidor Online 🟢';
-      statusDot.className = 'pulse-dot-indicator pulse-online';
-    } else {
-      statusText.textContent = 'Servidor Offline 🔴 (Fallback Drive Ativo)';
-      statusDot.className = 'pulse-dot-indicator pulse-offline';
-    }
-  }
+      const url = mediaServerUrlInput?.value || getMediaServerUrl();
+      const isOnline = await checkServerHealth(url);
 
-  updateServerStatusUI();
-
-  btnSaveServerUrl?.addEventListener('click', async () => {
-    const val = mediaServerUrlInput?.value?.trim() || '';
-    if (val) {
-      setMediaServerUrl(val);
-      showToast('URL do Servidor salva!', 'success', 2000);
-      await updateServerStatusUI();
-    }
-  });
-
-  mediaModeSelect?.addEventListener('change', () => {
-    const mode = mediaModeSelect.value as any;
-    setMediaMode(mode);
-    showToast(`Modo alterado para: ${mediaModeSelect.options[mediaModeSelect.selectedIndex].text}`, 'info', 2000);
-    updateServerStatusUI();
-  });
-
-  // Navigation Tabs Logic
-  const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
-  const tabSections = document.querySelectorAll<HTMLElement>('.tab-section');
-
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetTab = btn.getAttribute('data-tab');
-      tabBtns.forEach(b => b.classList.remove('active'));
-      tabSections.forEach(s => s.classList.remove('active'));
-
-      btn.classList.add('active');
-      const targetSec = document.getElementById(`section-${targetTab}`);
-      if (targetSec) targetSec.classList.add('active');
-    });
-  });
-
-  const btnDryRun = document.getElementById('btn-dry-run-scan');
-  const btnApply = document.getElementById('btn-apply-scan');
-  const dryRunModal = document.getElementById('dryrun-modal');
-  const dryRunOutput = document.getElementById('dryrun-output');
-  const btnCloseDryRun = document.getElementById('btn-close-dryrun');
-  const btnCancelDryRun = document.getElementById('btn-cancel-dryrun');
-  const btnConfirmApply = document.getElementById('btn-confirm-apply');
-
-  // Edit Course Modal Elements
-  const editModal = document.getElementById('edit-modal');
-  const btnCloseEdit = document.getElementById('btn-close-edit');
-  const btnCancelEdit = document.getElementById('btn-cancel-edit');
-  const btnSaveEdit = document.getElementById('btn-save-course-meta');
-  const editId = document.getElementById('edit-course-id') as HTMLInputElement | null;
-  const editTitle = document.getElementById('edit-display-title') as HTMLInputElement | null;
-  const editProvider = document.getElementById('edit-provider') as HTMLInputElement | null;
-  const editTags = document.getElementById('edit-tags') as HTMLInputElement | null;
-  const editDesc = document.getElementById('edit-description') as HTMLTextAreaElement | null;
-  const editHidden = document.getElementById('edit-is-hidden') as HTMLInputElement | null;
-  const editFeatured = document.getElementById('edit-is-featured') as HTMLInputElement | null;
-
-  // Filter Course Table
-  const filterInput = document.getElementById('filter-course-input') as HTMLInputElement | null;
-  const filterProvider = document.getElementById('filter-provider-select') as HTMLSelectElement | null;
-  const rows = Array.from(document.querySelectorAll<HTMLElement>('.course-row-item'));
-
-  function filterTable() {
-    const q = (filterInput?.value || '').toLowerCase().trim();
-    const p = filterProvider?.value || '';
-
-    rows.forEach(r => {
-      const title = r.getAttribute('data-title') || '';
-      const raw = r.getAttribute('data-raw') || '';
-      const provider = r.getAttribute('data-provider') || '';
-
-      const matchesQ = !q || title.includes(q) || raw.includes(q) || provider.toLowerCase().includes(q);
-      const matchesP = !p || provider === p;
-
-      r.style.display = matchesQ && matchesP ? '' : 'none';
-    });
-  }
-
-  filterInput?.addEventListener('input', filterTable);
-  filterProvider?.addEventListener('change', filterTable);
-
-  // Filter Category Table
-  const filterCatInput = document.getElementById('filter-cat-input') as HTMLInputElement | null;
-  const catRows = Array.from(document.querySelectorAll<HTMLElement>('.cat-row-item'));
-
-  function filterCategoryTable() {
-    const q = (filterCatInput?.value || '').toLowerCase().trim();
-    catRows.forEach(r => {
-      const name = r.getAttribute('data-name') || '';
-      const id = r.getAttribute('data-id') || '';
-      const desc = r.getAttribute('data-desc') || '';
-
-      const matches = !q || name.includes(q) || id.includes(q) || desc.includes(q);
-      r.style.display = matches ? '' : 'none';
-    });
-  }
-
-  filterCatInput?.addEventListener('input', filterCategoryTable);
-
-  // Trigger Dry Run Scan
-  async function triggerScan(dryRun = true) {
-    if (dryRunModal && dryRunOutput) {
-      dryRunModal.style.display = 'flex';
-      dryRunOutput.textContent = 'Executando varredura na pasta raiz... Aguarde.';
-    }
-
-    try {
-      const res = await fetch('/api/library/scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dry_run: dryRun })
-      });
-      const data = await res.json();
-
-      if (dryRunOutput) {
-        dryRunOutput.textContent = data.output || JSON.stringify(data.summary, null, 2);
-      }
-
-      if (!dryRun) {
-        showToast('Biblioteca atualizada com sucesso!', 'success');
-        setTimeout(() => window.location.reload(), 1500);
-      }
-    } catch (err: any) {
-      if (dryRunOutput) dryRunOutput.textContent = `Erro ao executar varredura: ${err?.message || err}`;
-    }
-  }
-
-  btnDryRun?.addEventListener('click', () => triggerScan(true));
-  btnApply?.addEventListener('click', () => {
-    if (confirm('Deseja atualizar a biblioteca com os arquivos detectados? Seus metadados manuais e categorias serão 100% preservados.')) {
-      triggerScan(false);
-    }
-  });
-
-  btnConfirmApply?.addEventListener('click', () => {
-    dryRunModal && (dryRunModal.style.display = 'none');
-    triggerScan(false);
-  });
-
-  btnCloseDryRun?.addEventListener('click', () => dryRunModal && (dryRunModal.style.display = 'none'));
-  btnCancelDryRun?.addEventListener('click', () => dryRunModal && (dryRunModal.style.display = 'none'));
-
-  // Edit Course Modal Logic
-  document.querySelectorAll<HTMLButtonElement>('.btn-edit-course').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const raw = btn.getAttribute('data-course');
-      if (!raw || !editModal) return;
-      const c = JSON.parse(raw);
-
-      if (editId) editId.value = c.id;
-      if (editTitle) editTitle.value = c.display_title;
-      if (editProvider) editProvider.value = c.provider;
-      if (editTags) editTags.value = (c.tags || []).join(', ');
-      if (editDesc) editDesc.value = c.description;
-      if (editHidden) editHidden.checked = Boolean(c.is_hidden);
-      if (editFeatured) editFeatured.checked = Boolean(c.is_featured);
-
-      // Checkboxes
-      const catCheckboxes = document.querySelectorAll<HTMLInputElement>('input[name="edit-cat"]');
-      catCheckboxes.forEach(cb => {
-        cb.checked = (c.categories || []).includes(cb.value);
-      });
-
-      editModal.style.display = 'flex';
-    });
-  });
-
-  btnCloseEdit?.addEventListener('click', () => editModal && (editModal.style.display = 'none'));
-  btnCancelEdit?.addEventListener('click', () => editModal && (editModal.style.display = 'none'));
-
-  btnSaveEdit?.addEventListener('click', async () => {
-    const courseId = editId?.value;
-    if (!courseId) return;
-
-    const selectedCats = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="edit-cat"]:checked')).map(cb => cb.value);
-    const tagsArr = (editTags?.value || '').split(',').map(t => t.trim()).filter(Boolean);
-
-    try {
-      btnSaveEdit.textContent = 'Salvando...';
-      const res = await fetch('/api/library/update-course', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          courseId,
-          display_title: editTitle?.value,
-          provider: editProvider?.value,
-          description: editDesc?.value,
-          categories: selectedCats,
-          tags: tagsArr,
-          is_hidden: editHidden?.checked,
-          is_featured: editFeatured?.checked
-        })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        showToast('Metadados salvos com sucesso!', 'success');
-        setTimeout(() => window.location.reload(), 1000);
+      if (isOnline) {
+        statusText.textContent = 'Servidor Online 🟢';
+        statusDot.className = 'pulse-dot-indicator pulse-online';
       } else {
-        showToast(data.error || 'Erro ao salvar metadados', 'error');
+        statusText.textContent = 'Servidor Offline 🔴 (Fallback Drive Ativo)';
+        statusDot.className = 'pulse-dot-indicator pulse-offline';
       }
-    } catch (err: any) {
-      showToast(err?.message || 'Erro de conexão', 'error');
-    } finally {
-      btnSaveEdit.textContent = 'Salvar Metadados';
     }
-  });
 
-  // Category CRUD Logic
-  const catModal = document.getElementById('cat-modal');
-  const catModalTitle = document.getElementById('cat-modal-title');
-  const btnCloseCatModal = document.getElementById('btn-close-cat-modal');
-  const btnCancelCatModal = document.getElementById('btn-cancel-cat-modal');
-  const btnCreateCat = document.getElementById('btn-create-category');
-  const btnSaveCat = document.getElementById('btn-save-category');
+    updateServerStatusUI();
 
-  const catFormAction = document.getElementById('cat-form-action') as HTMLInputElement | null;
-  const catFormOriginalId = document.getElementById('cat-form-original-id') as HTMLInputElement | null;
-  const catFormName = document.getElementById('cat-form-name') as HTMLInputElement | null;
-  const catFormId = document.getElementById('cat-form-id') as HTMLInputElement | null;
-  const catFormIcon = document.getElementById('cat-form-icon') as HTMLSelectElement | null;
-  const catFormDesc = document.getElementById('cat-form-desc') as HTMLTextAreaElement | null;
+    btnSaveServerUrl?.addEventListener('click', async () => {
+      const val = mediaServerUrlInput?.value?.trim() || '';
+      if (val) {
+        setMediaServerUrl(val);
+        showToast('URL do Servidor salva!', 'success', 2000);
+        await updateServerStatusUI();
+      }
+    });
 
-  // Delete Category Modal Elements
-  const deleteCatModal = document.getElementById('delete-cat-modal');
-  const btnCloseDeleteCat = document.getElementById('btn-close-delete-cat');
-  const btnCancelDeleteCat = document.getElementById('btn-cancel-delete-cat');
-  const btnConfirmDeleteCat = document.getElementById('btn-confirm-delete-cat');
-  const deleteCatNameDisplay = document.getElementById('delete-cat-name-display');
-  const deleteCatIdDisplay = document.getElementById('delete-cat-id-display');
-  const deleteCatWarningText = document.getElementById('delete-cat-warning-text');
-  let categoryToDeleteId: string | null = null;
+    mediaModeSelect?.addEventListener('change', () => {
+      const mode = mediaModeSelect.value as any;
+      setMediaMode(mode);
+      showToast(`Modo alterado para: ${mediaModeSelect.options[mediaModeSelect.selectedIndex].text}`, 'info', 2000);
+      updateServerStatusUI();
+    });
 
-  // Open Create Category Modal
-  btnCreateCat?.addEventListener('click', () => {
-    if (!catModal) return;
-    if (catModalTitle) catModalTitle.textContent = 'Nova Categoria';
-    if (catFormAction) catFormAction.value = 'create';
-    if (catFormOriginalId) catFormOriginalId.value = '';
-    if (catFormName) catFormName.value = '';
-    if (catFormId) {
-      catFormId.value = '';
-      catFormId.readOnly = false;
+    // Navigation Tabs Logic
+    const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
+    const tabSections = document.querySelectorAll<HTMLElement>('.tab-section');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabSections.forEach(s => s.classList.remove('active'));
+
+        btn.classList.add('active');
+        const targetSec = document.getElementById(`section-${targetTab}`);
+        if (targetSec) targetSec.classList.add('active');
+      });
+    });
+
+    const btnDryRun = document.getElementById('btn-dry-run-scan') as HTMLButtonElement | null;
+    const btnApply = document.getElementById('btn-apply-scan') as HTMLButtonElement | null;
+    const dryRunModal = document.getElementById('dryrun-modal');
+    const dryRunModalTitle = document.getElementById('dryrun-modal-title');
+    const dryRunOutput = document.getElementById('dryrun-output');
+    const btnCloseDryRun = document.getElementById('btn-close-dryrun');
+    const btnCancelDryRun = document.getElementById('btn-cancel-dryrun');
+    const btnConfirmApply = document.getElementById('btn-confirm-apply');
+
+    // Edit Course Modal Elements
+    const editModal = document.getElementById('edit-modal');
+    const btnCloseEdit = document.getElementById('btn-close-edit');
+    const btnCancelEdit = document.getElementById('btn-cancel-edit');
+    const btnSaveEdit = document.getElementById('btn-save-course-meta');
+    const editId = document.getElementById('edit-course-id') as HTMLInputElement | null;
+    const editTitle = document.getElementById('edit-display-title') as HTMLInputElement | null;
+    const editProvider = document.getElementById('edit-provider') as HTMLInputElement | null;
+    const editTags = document.getElementById('edit-tags') as HTMLInputElement | null;
+    const editDesc = document.getElementById('edit-description') as HTMLTextAreaElement | null;
+    const editHidden = document.getElementById('edit-is-hidden') as HTMLInputElement | null;
+    const editFeatured = document.getElementById('edit-is-featured') as HTMLInputElement | null;
+
+    // Filter Course Table
+    const filterInput = document.getElementById('filter-course-input') as HTMLInputElement | null;
+    const filterProvider = document.getElementById('filter-provider-select') as HTMLSelectElement | null;
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('.course-row-item'));
+
+    function filterTable() {
+      const q = (filterInput?.value || '').toLowerCase().trim();
+      const p = filterProvider?.value || '';
+
+      rows.forEach(r => {
+        const title = r.getAttribute('data-title') || '';
+        const raw = r.getAttribute('data-raw') || '';
+        const provider = r.getAttribute('data-provider') || '';
+
+        const matchesQ = !q || title.includes(q) || raw.includes(q) || provider.toLowerCase().includes(q);
+        const matchesP = !p || provider === p;
+
+        r.style.display = matchesQ && matchesP ? '' : 'none';
+      });
     }
-    if (catFormIcon) catFormIcon.value = 'sparkles';
-    if (catFormDesc) catFormDesc.value = '';
 
-    catModal.style.display = 'flex';
-  });
+    filterInput?.addEventListener('input', filterTable);
+    filterProvider?.addEventListener('change', filterTable);
 
-  // Open Edit Category Modal
-  document.querySelectorAll<HTMLButtonElement>('.btn-edit-category').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const raw = btn.getAttribute('data-category');
-      if (!raw || !catModal) return;
-      const cat = JSON.parse(raw);
+    // Filter Category Table
+    const filterCatInput = document.getElementById('filter-cat-input') as HTMLInputElement | null;
+    const catRows = Array.from(document.querySelectorAll<HTMLElement>('.cat-row-item'));
 
-      if (catModalTitle) catModalTitle.textContent = 'Editar Categoria';
-      if (catFormAction) catFormAction.value = 'update';
-      if (catFormOriginalId) catFormOriginalId.value = cat.id;
-      if (catFormName) catFormName.value = cat.name;
+    function filterCategoryTable() {
+      const q = (filterCatInput?.value || '').toLowerCase().trim();
+      catRows.forEach(r => {
+        const name = r.getAttribute('data-name') || '';
+        const id = r.getAttribute('data-id') || '';
+        const desc = r.getAttribute('data-desc') || '';
+
+        const matches = !q || name.includes(q) || id.includes(q) || desc.includes(q);
+        r.style.display = matches ? '' : 'none';
+      });
+    }
+
+    filterCatInput?.addEventListener('input', filterCategoryTable);
+
+    // Trigger Dry Run / Apply Scan
+    async function triggerScan(dryRun = true) {
+      const activeBtn = dryRun ? btnDryRun : btnApply;
+      const originalHtml = activeBtn ? activeBtn.innerHTML : '';
+
+      if (activeBtn) {
+        activeBtn.disabled = true;
+        activeBtn.innerHTML = `
+          <svg class="spin-animation" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+          </svg>
+          <span>${dryRun ? 'Escaneando...' : 'Atualizando...'}</span>
+        `;
+      }
+
+      if (dryRunModal && dryRunOutput) {
+        dryRunModal.style.display = 'flex';
+        if (dryRunModalTitle) {
+          dryRunModalTitle.textContent = dryRun ? 'Relatório de Varredura (Dry Run)' : 'Atualização da Biblioteca & Catálogo';
+        }
+        if (btnConfirmApply) {
+          btnConfirmApply.style.display = dryRun ? 'inline-flex' : 'none';
+        }
+        dryRunOutput.textContent = '⏳ Executando varredura na biblioteca...\n\nProcessando diretórios, verificando arquivos locais e Google Drive...\nPor favor, aguarde.';
+      }
+
+      try {
+        const res = await fetch('/api/library/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dry_run: dryRun })
+        });
+        const data = await res.json().catch(() => ({ error: 'Resposta não pôde ser interpretada como JSON.' }));
+
+        if (!res.ok || (data && data.success === false)) {
+          const errMsg = data?.error || data?.stderr || 'Erro ao processar a varredura.';
+          if (dryRunOutput) {
+            dryRunOutput.textContent = `❌ ${errMsg}\n\n${data?.output || ''}`;
+          }
+          showToast(errMsg, 'error', 4000);
+          return;
+        }
+
+        if (dryRunOutput) {
+          dryRunOutput.textContent = data.output || (data.summary ? JSON.stringify(data.summary, null, 2) : 'Varredura concluída com sucesso.');
+        }
+
+        if (!dryRun) {
+          if (!data.is_cloud) {
+            showToast('Biblioteca atualizada com sucesso!', 'success');
+            setTimeout(() => window.location.reload(), 2000);
+          } else {
+            showToast('Instruções de sincronização exibidas no relatório.', 'info', 4000);
+          }
+        } else {
+          showToast('Varredura (Dry Run) finalizada!', 'info', 2000);
+        }
+      } catch (err: any) {
+        const errMsg = `Erro ao executar varredura: ${err?.message || err}`;
+        if (dryRunOutput) dryRunOutput.textContent = `❌ ${errMsg}`;
+        showToast(errMsg, 'error', 4000);
+      } finally {
+        if (activeBtn) {
+          activeBtn.disabled = false;
+          activeBtn.innerHTML = originalHtml;
+        }
+      }
+    }
+
+    btnDryRun?.addEventListener('click', () => triggerScan(true));
+    btnApply?.addEventListener('click', () => {
+      triggerScan(false);
+    });
+
+    btnConfirmApply?.addEventListener('click', () => {
+      triggerScan(false);
+    });
+
+    btnCloseDryRun?.addEventListener('click', () => dryRunModal && (dryRunModal.style.display = 'none'));
+    btnCancelDryRun?.addEventListener('click', () => dryRunModal && (dryRunModal.style.display = 'none'));
+    dryRunModal?.addEventListener('click', (e) => {
+      if (e.target === dryRunModal) dryRunModal.style.display = 'none';
+    });
+
+    // Edit Course Modal Logic
+    document.querySelectorAll<HTMLButtonElement>('.btn-edit-course').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const raw = btn.getAttribute('data-course');
+        if (!raw || !editModal) return;
+        const c = JSON.parse(raw);
+
+        if (editId) editId.value = c.id;
+        if (editTitle) editTitle.value = c.display_title;
+        if (editProvider) editProvider.value = c.provider;
+        if (editTags) editTags.value = (c.tags || []).join(', ');
+        if (editDesc) editDesc.value = c.description;
+        if (editHidden) editHidden.checked = Boolean(c.is_hidden);
+        if (editFeatured) editFeatured.checked = Boolean(c.is_featured);
+
+        // Checkboxes
+        const catCheckboxes = document.querySelectorAll<HTMLInputElement>('input[name="edit-cat"]');
+        catCheckboxes.forEach(cb => {
+          cb.checked = (c.categories || []).includes(cb.value);
+        });
+
+        editModal.style.display = 'flex';
+      });
+    });
+
+    btnCloseEdit?.addEventListener('click', () => editModal && (editModal.style.display = 'none'));
+    btnCancelEdit?.addEventListener('click', () => editModal && (editModal.style.display = 'none'));
+    editModal?.addEventListener('click', (e) => {
+      if (e.target === editModal) editModal.style.display = 'none';
+    });
+
+    btnSaveEdit?.addEventListener('click', async () => {
+      const courseId = editId?.value;
+      if (!courseId) return;
+
+      const selectedCats = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="edit-cat"]:checked')).map(cb => cb.value);
+      const tagsArr = (editTags?.value || '').split(',').map(t => t.trim()).filter(Boolean);
+
+      try {
+        btnSaveEdit.textContent = 'Salvando...';
+        const res = await fetch('/api/library/update-course', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            courseId,
+            display_title: editTitle?.value,
+            provider: editProvider?.value,
+            description: editDesc?.value,
+            categories: selectedCats,
+            tags: tagsArr,
+            is_hidden: editHidden?.checked,
+            is_featured: editFeatured?.checked
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast('Metadados salvos com sucesso!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showToast(data.error || 'Erro ao salvar metadados', 'error');
+        }
+      } catch (err: any) {
+        showToast(err?.message || 'Erro de conexão', 'error');
+      } finally {
+        btnSaveEdit.textContent = 'Salvar Metadados';
+      }
+    });
+
+    // Category CRUD Logic
+    const catModal = document.getElementById('cat-modal');
+    const catModalTitle = document.getElementById('cat-modal-title');
+    const btnCloseCatModal = document.getElementById('btn-close-cat-modal');
+    const btnCancelCatModal = document.getElementById('btn-cancel-cat-modal');
+    const btnCreateCat = document.getElementById('btn-create-category');
+    const btnSaveCat = document.getElementById('btn-save-category');
+
+    const catFormAction = document.getElementById('cat-form-action') as HTMLInputElement | null;
+    const catFormOriginalId = document.getElementById('cat-form-original-id') as HTMLInputElement | null;
+    const catFormName = document.getElementById('cat-form-name') as HTMLInputElement | null;
+    const catFormId = document.getElementById('cat-form-id') as HTMLInputElement | null;
+    const catFormIcon = document.getElementById('cat-form-icon') as HTMLSelectElement | null;
+    const catFormDesc = document.getElementById('cat-form-desc') as HTMLTextAreaElement | null;
+
+    // Delete Category Modal Elements
+    const deleteCatModal = document.getElementById('delete-cat-modal');
+    const btnCloseDeleteCat = document.getElementById('btn-close-delete-cat');
+    const btnCancelDeleteCat = document.getElementById('btn-cancel-delete-cat');
+    const btnConfirmDeleteCat = document.getElementById('btn-confirm-delete-cat');
+    const deleteCatNameDisplay = document.getElementById('delete-cat-name-display');
+    const deleteCatIdDisplay = document.getElementById('delete-cat-id-display');
+    const deleteCatWarningText = document.getElementById('delete-cat-warning-text');
+    let categoryToDeleteId: string | null = null;
+
+    // Open Create Category Modal
+    btnCreateCat?.addEventListener('click', () => {
+      if (!catModal) return;
+      if (catModalTitle) catModalTitle.textContent = 'Nova Categoria';
+      if (catFormAction) catFormAction.value = 'create';
+      if (catFormOriginalId) catFormOriginalId.value = '';
+      if (catFormName) catFormName.value = '';
       if (catFormId) {
-        catFormId.value = cat.id;
-        catFormId.readOnly = true;
+        catFormId.value = '';
+        catFormId.readOnly = false;
       }
-      if (catFormIcon) catFormIcon.value = cat.icon || 'folder';
-      if (catFormDesc) catFormDesc.value = cat.description || '';
+      if (catFormIcon) catFormIcon.value = 'sparkles';
+      if (catFormDesc) catFormDesc.value = '';
 
       catModal.style.display = 'flex';
     });
-  });
 
-  // Auto slug generator on Category Name input (only when creating)
-  catFormName?.addEventListener('input', () => {
-    if (catFormAction?.value === 'create' && catFormId) {
-      const slug = catFormName.value
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9 -]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-');
-      catFormId.value = slug;
-    }
-  });
+    // Open Edit Category Modal
+    document.querySelectorAll<HTMLButtonElement>('.btn-edit-category').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const raw = btn.getAttribute('data-category');
+        if (!raw || !catModal) return;
+        const cat = JSON.parse(raw);
 
-  btnCloseCatModal?.addEventListener('click', () => catModal && (catModal.style.display = 'none'));
-  btnCancelCatModal?.addEventListener('click', () => catModal && (catModal.style.display = 'none'));
+        if (catModalTitle) catModalTitle.textContent = 'Editar Categoria';
+        if (catFormAction) catFormAction.value = 'update';
+        if (catFormOriginalId) catFormOriginalId.value = cat.id;
+        if (catFormName) catFormName.value = cat.name;
+        if (catFormId) {
+          catFormId.value = cat.id;
+          catFormId.readOnly = true;
+        }
+        if (catFormIcon) catFormIcon.value = cat.icon || 'folder';
+        if (catFormDesc) catFormDesc.value = cat.description || '';
 
-  // Save Category (Create or Update)
-  btnSaveCat?.addEventListener('click', async () => {
-    const action = catFormAction?.value || 'create';
-    const name = catFormName?.value?.trim();
-    const id = catFormId?.value?.trim() || catFormOriginalId?.value;
-    const icon = catFormIcon?.value;
-    const description = catFormDesc?.value?.trim();
-
-    if (!name) {
-      showToast('O nome da categoria é obrigatório.', 'error');
-      return;
-    }
-
-    try {
-      btnSaveCat.textContent = 'Salvando...';
-      const res = await fetch('/api/library/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          id,
-          name,
-          icon,
-          description
-        })
+        catModal.style.display = 'flex';
       });
-
-      const data = await res.json();
-      if (data.success) {
-        showToast(action === 'create' ? 'Categoria criada com sucesso!' : 'Categoria atualizada!', 'success');
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        showToast(data.error || 'Erro ao salvar categoria.', 'error');
-      }
-    } catch (err: any) {
-      showToast(err?.message || 'Erro de conexão.', 'error');
-    } finally {
-      btnSaveCat.textContent = 'Salvar Categoria';
-    }
-  });
-
-  // Open Delete Category Modal
-  document.querySelectorAll<HTMLButtonElement>('.btn-delete-category').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-id');
-      const name = btn.getAttribute('data-name');
-      const count = parseInt(btn.getAttribute('data-count') || '0', 10);
-      if (!id || !deleteCatModal) return;
-
-      categoryToDeleteId = id;
-      if (deleteCatNameDisplay) deleteCatNameDisplay.textContent = name || id;
-      if (deleteCatIdDisplay) deleteCatIdDisplay.textContent = id;
-      if (deleteCatWarningText) {
-        deleteCatWarningText.textContent = count > 0 
-          ? `Atenção: Há ${count} curso(s) vinculado(s) a esta categoria. A exclusão removerá o filtro da categoria.`
-          : 'Esta categoria não possui nenhum curso vinculado no momento.';
-      }
-
-      deleteCatModal.style.display = 'flex';
     });
-  });
 
-  btnCloseDeleteCat?.addEventListener('click', () => deleteCatModal && (deleteCatModal.style.display = 'none'));
-  btnCancelDeleteCat?.addEventListener('click', () => deleteCatModal && (deleteCatModal.style.display = 'none'));
-
-  // Confirm Delete Category
-  btnConfirmDeleteCat?.addEventListener('click', async () => {
-    if (!categoryToDeleteId) return;
-
-    try {
-      btnConfirmDeleteCat.textContent = 'Excluindo...';
-      const res = await fetch('/api/library/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'delete',
-          id: categoryToDeleteId
-        })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        showToast('Categoria removida com sucesso!', 'success');
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        showToast(data.error || 'Erro ao excluir categoria.', 'error');
+    // Auto slug generator on Category Name input (only when creating)
+    catFormName?.addEventListener('input', () => {
+      if (catFormAction?.value === 'create' && catFormId) {
+        const slug = catFormName.value
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9 -]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+        catFormId.value = slug;
       }
-    } catch (err: any) {
-      showToast(err?.message || 'Erro de conexão.', 'error');
-    } finally {
-      btnConfirmDeleteCat.textContent = 'Sim, Excluir Categoria';
-    }
-  });
+    });
+
+    btnCloseCatModal?.addEventListener('click', () => catModal && (catModal.style.display = 'none'));
+    btnCancelCatModal?.addEventListener('click', () => catModal && (catModal.style.display = 'none'));
+    catModal?.addEventListener('click', (e) => {
+      if (e.target === catModal) catModal.style.display = 'none';
+    });
+
+    // Save Category (Create or Update)
+    btnSaveCat?.addEventListener('click', async () => {
+      const action = catFormAction?.value || 'create';
+      const name = catFormName?.value?.trim();
+      const id = catFormId?.value?.trim() || catFormOriginalId?.value;
+      const icon = catFormIcon?.value;
+      const description = catFormDesc?.value?.trim();
+
+      if (!name) {
+        showToast('O nome da categoria é obrigatório.', 'error');
+        return;
+      }
+
+      try {
+        btnSaveCat.textContent = 'Salvando...';
+        const res = await fetch('/api/library/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            id,
+            name,
+            icon,
+            description
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast(action === 'create' ? 'Categoria criada com sucesso!' : 'Categoria atualizada!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showToast(data.error || 'Erro ao salvar categoria.', 'error');
+        }
+      } catch (err: any) {
+        showToast(err?.message || 'Erro de conexão.', 'error');
+      } finally {
+        btnSaveCat.textContent = 'Salvar Categoria';
+      }
+    });
+
+    // Open Delete Category Modal
+    document.querySelectorAll<HTMLButtonElement>('.btn-delete-category').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const count = parseInt(btn.getAttribute('data-count') || '0', 10);
+        if (!id || !deleteCatModal) return;
+
+        categoryToDeleteId = id;
+        if (deleteCatNameDisplay) deleteCatNameDisplay.textContent = name || id;
+        if (deleteCatIdDisplay) deleteCatIdDisplay.textContent = id;
+        if (deleteCatWarningText) {
+          deleteCatWarningText.textContent = count > 0 
+            ? `Atenção: Há ${count} curso(s) vinculado(s) a esta categoria. A exclusão removerá o filtro da categoria.`
+            : 'Esta categoria não possui nenhum curso vinculado no momento.';
+        }
+
+        deleteCatModal.style.display = 'flex';
+      });
+    });
+
+    btnCloseDeleteCat?.addEventListener('click', () => deleteCatModal && (deleteCatModal.style.display = 'none'));
+    btnCancelDeleteCat?.addEventListener('click', () => deleteCatModal && (deleteCatModal.style.display = 'none'));
+    deleteCatModal?.addEventListener('click', (e) => {
+      if (e.target === deleteCatModal) deleteCatModal.style.display = 'none';
+    });
+
+    // Confirm Delete Category
+    btnConfirmDeleteCat?.addEventListener('click', async () => {
+      if (!categoryToDeleteId) return;
+
+      try {
+        btnConfirmDeleteCat.textContent = 'Excluindo...';
+        const res = await fetch('/api/library/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'delete',
+            id: categoryToDeleteId
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast('Categoria removida com sucesso!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showToast(data.error || 'Erro ao excluir categoria.', 'error');
+        }
+      } catch (err: any) {
+        showToast(err?.message || 'Erro de conexão.', 'error');
+      } finally {
+        btnConfirmDeleteCat.textContent = 'Sim, Excluir Categoria';
+      }
+    });
+  }
+
+  document.addEventListener('astro:page-load', initLibraryAdmin);
+  initLibraryAdmin();
 </script>
 
 <style>
   .library-admin-page {
     padding-top: 100px;
     padding-bottom: 5rem;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .spin-animation {
+    animation: spin 0.8s linear infinite;
   }
 
   .page-header {

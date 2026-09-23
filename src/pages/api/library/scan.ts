@@ -33,6 +33,50 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
+    const isCloudEnv = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+    if (isCloudEnv) {
+      return new Response(JSON.stringify({
+        success: true,
+        dry_run: dryRun,
+        is_cloud: true,
+        output: [
+          '======================================================',
+          'ℹ️  VARREDURA DE BIBLIOTECA — AMBIENTE EM NUVEM (NETLIFY)',
+          '======================================================',
+          '',
+          'A varredura física do acervo precisa ler a pasta de cursos na sua máquina',
+          '(ex: "G:\\Meu Drive\\Cursos\\Cursos Mindflix" ou caminho configurado).',
+          '',
+          'Como o Netlify opera em servidores em nuvem isolados, o scanner direto',
+          'deve ser executado no terminal do seu computador:',
+          '',
+          '1. Abra o PowerShell ou terminal na pasta do Mindflix:',
+          '   cd "d:\\projetos antigravity\\mindflix"',
+          '',
+          '2. Execute o scanner:',
+          dryRun 
+            ? '   python scan_library.py --dry-run' 
+            : '   python scan_library.py --apply',
+          '',
+          '3. Para sincronizar as alterações com o Netlify:',
+          '   git add src/data/catalog.json src/data/trilhas.json',
+          '   git commit -m "atualizar catalogo"',
+          '   git push origin main',
+          '',
+          'Seu site no Netlify será atualizado automaticamente!',
+          '======================================================'
+        ].join('\n'),
+        summary: {
+          status: 'cloud_environment_notice',
+          dry_run: dryRun,
+          scanned_at: new Date().toISOString()
+        }
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const venvPythonWin = path.resolve(process.cwd(), '.venv', 'Scripts', 'python.exe');
     const venvPythonUnix = path.resolve(process.cwd(), '.venv', 'bin', 'python');
     let pythonBin = 'python';
@@ -50,10 +94,12 @@ export const POST: APIRoute = async ({ request }) => {
 
         if (error) {
           return resolve(new Response(JSON.stringify({ 
+            success: false,
             error: error.message, 
+            output: stderr ? stderr.toString() : stdout ? stdout.toString() : error.message,
             stderr: stderr ? stderr.toString() : '' 
           }), {
-            status: 500,
+            status: 200,
             headers: { 'Content-Type': 'application/json' }
           }));
         }
@@ -68,7 +114,7 @@ export const POST: APIRoute = async ({ request }) => {
         return resolve(new Response(JSON.stringify({
           success: true,
           dry_run: dryRun,
-          output: stdout ? stdout.toString() : '',
+          output: stdout ? stdout.toString() : 'Varredura concluída com sucesso.',
           summary: summary || {
             status: 'completed',
             dry_run: dryRun,
@@ -81,8 +127,12 @@ export const POST: APIRoute = async ({ request }) => {
       });
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || 'Falha ao executar scanner.' }), {
-      status: 500,
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: err?.message || 'Falha ao executar scanner.',
+      output: `Erro inesperado: ${err?.message || err}`
+    }), {
+      status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   }
