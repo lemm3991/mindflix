@@ -176,6 +176,12 @@ const isVideo = !isPdf && !isDoc;
           <option value="server">🟢 Servidor Local</option>
           <option value="drive">🔵 Google Drive</option>
         </select>
+        <button type="button" class="btn btn-ghost btn-sm btn-server-cfg" id="btn-config-server" title="Configurar URL do Servidor Cloudflare/Local">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
       </div>
 
       <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
@@ -208,7 +214,10 @@ const isVideo = !isPdf && !isDoc;
     getMediaMode,
     setMediaMode,
     getActiveMediaProvider,
-    buildServerStreamUrl
+    buildServerStreamUrl,
+    getMediaServerUrl,
+    setMediaServerUrl,
+    checkServerHealth
   } from '../lib/mediaProvider';
   import { showToast } from '../lib/toast';
 
@@ -248,15 +257,75 @@ const isVideo = !isPdf && !isDoc;
       });
     }
 
+    const btnConfigServer = document.getElementById('btn-config-server');
+    btnConfigServer?.addEventListener('click', async () => {
+      const currentUrl = getMediaServerUrl();
+      const newUrl = prompt('URL do Servidor de Streaming (Cloudflare Tunnel ou IP Local):', currentUrl);
+      if (newUrl !== null && newUrl.trim() !== '') {
+        setMediaServerUrl(newUrl.trim());
+        showToast('Testando conexão com o servidor...', 'info', 2000);
+        const isOnline = await checkServerHealth(newUrl.trim(), true);
+        if (isOnline) {
+          showToast('Servidor de streaming conectado com sucesso!', 'success', 3000);
+        } else {
+          showToast('Servidor offline ou inacessível nesta URL.', 'warning', 4000);
+        }
+        initPlayerSource();
+      }
+    });
+
+    function loadDrive(container: HTMLElement, fileId: string) {
+      const driveUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      const curIframe = container.querySelector('#drive-video-iframe') as HTMLIFrameElement | null;
+      if (!curIframe || curIframe.src !== driveUrl) {
+        container.innerHTML = `
+          <iframe
+            id="drive-video-iframe"
+            class="drive-player-frame"
+            src="${driveUrl}"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allowfullscreen
+            title="${lessonId}"
+          ></iframe>
+          <div class="drive-popout-blocker"></div>
+        `;
+      }
+    }
+
     async function initPlayerSource() {
       const activeProvider = await getActiveMediaProvider();
       const viewport = document.getElementById('video-viewport');
       if (!viewport) return;
 
-      const wrapperDiv = viewport.querySelector('.drive-video-wrapper');
+      const wrapperDiv = viewport.querySelector('.drive-video-wrapper') as HTMLElement | null;
       if (!wrapperDiv) return;
 
       if (activeProvider === 'server' && relPath) {
+        const serverStreamUrl = buildServerStreamUrl(relPath);
+        const curVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
+        if (!curVid || curVid.src !== serverStreamUrl) {
+          wrapperDiv.innerHTML = `
+            <video
+              id="main-video-player"
+              class="html5-video"
+              src="${serverStreamUrl}"
+              controls
+              autoplay
+              playsinline
+              title="${lessonId}"
+            ></video>
+          `;
+          const newVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
+          newVid?.addEventListener('error', () => {
+            if (dId) {
+              showToast('Servidor indisponível. Alternando para o Google Drive...', 'warning', 3000);
+              loadDrive(wrapperDiv, dId);
+            }
+          });
+        }
+      } else if (dId) {
+        loadDrive(wrapperDiv, dId);
+      } else if (relPath) {
         const serverStreamUrl = buildServerStreamUrl(relPath);
         wrapperDiv.innerHTML = `
           <video
@@ -268,18 +337,6 @@ const isVideo = !isPdf && !isDoc;
             playsinline
             title="${lessonId}"
           ></video>
-        `;
-      } else if (dId) {
-        const driveUrl = `https://drive.google.com/file/d/${dId}/preview`;
-        wrapperDiv.innerHTML = `
-          <iframe
-            id="drive-video-iframe"
-            class="drive-player-frame"
-            src="${driveUrl}"
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-          <div class="drive-popout-blocker"></div>
         `;
       }
     }
@@ -638,7 +695,7 @@ const isVideo = !isPdf && !isDoc;
     overflow: hidden;
   }
 
-  .drive-video-wrapper {
+  :global(.video-player-component .drive-video-wrapper) {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -647,12 +704,12 @@ const isVideo = !isPdf && !isDoc;
     overflow: hidden;
   }
 
-  .drive-player-frame {
+  :global(.video-player-component .drive-player-frame) {
     position: absolute;
-    top: -45px;
+    top: 0;
     left: 0;
     width: 100%;
-    height: calc(100% + 45px);
+    height: 100%;
     border: 0;
     margin: 0;
     padding: 0;
@@ -660,7 +717,7 @@ const isVideo = !isPdf && !isDoc;
     display: block;
   }
 
-  .drive-popout-blocker {
+  :global(.video-player-component .drive-popout-blocker) {
     position: absolute;
     top: 0;
     right: 0;
@@ -714,21 +771,12 @@ const isVideo = !isPdf && !isDoc;
     margin-top: 0.5rem;
   }
 
-  .html5-video {
+  :global(.video-player-component .html5-video) {
     width: 100%;
     height: 100%;
     object-fit: contain;
     outline: none;
     display: block;
-  }
-
-  /* Google Drive Video Embed */
-  .drive-video-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
     background: #000000;
   }
 

@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
   SERVER_URL: 'mindflix_media_server_url'
 };
 
-export const DEFAULT_MEDIA_SERVER_URL = 'https://everyone-prototype-invitation-estimated.trycloudflare.com';
+export const DEFAULT_MEDIA_SERVER_URL = 'https://par-movie-neighbors-authorized.trycloudflare.com';
 
 export function getMediaMode(): MediaSourceMode {
   if (typeof window === 'undefined') return 'auto';
@@ -50,26 +50,41 @@ export function setMediaServerUrl(url: string): void {
   try {
     const clean = url.trim().replace(/\/+$/, '');
     localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean);
+    // Invalidate cached health status
+    healthCache = null;
     window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean } }));
   } catch (e) {
     console.warn('Failed setting media server URL', e);
   }
 }
 
-export async function checkServerHealth(serverUrl?: string): Promise<boolean> {
+// In-memory health cache to prevent lagging requests on every lesson change
+let healthCache: { url: string; online: boolean; timestamp: number } | null = null;
+const HEALTH_CACHE_TTL_MS = 25000; // 25s
+
+export async function checkServerHealth(serverUrl?: string, force = false): Promise<boolean> {
   const base = serverUrl || getMediaServerUrl();
   if (!base) return false;
+
+  const now = Date.now();
+  if (!force && healthCache && healthCache.url === base && (now - healthCache.timestamp) < HEALTH_CACHE_TTL_MS) {
+    return healthCache.online;
+  }
+
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
     const res = await fetch(`${base}/api/catalog`, {
       method: 'GET',
       signal: controller.signal,
       cache: 'no-store'
     });
     clearTimeout(timeoutId);
-    return res.ok;
+    const isOk = res.ok;
+    healthCache = { url: base, online: isOk, timestamp: now };
+    return isOk;
   } catch {
+    healthCache = { url: base, online: false, timestamp: now };
     return false;
   }
 }

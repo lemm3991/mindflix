@@ -7,6 +7,14 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 CATALOG_PATH = os.path.join(BASE_DIR, "src", "data", "catalog.json")
 TRILHAS_PATH = os.path.join(BASE_DIR, "src", "data", "trilhas.json")
 AI_LAB_ROOT = "G:/Meu Drive/Cursos/Cursos Mindflix/AI LAB"
+MAP_PATH = os.path.join(BASE_DIR, "src", "data", "artista_drive_map.json")
+ARTISTA_DRIVE_MAP = {}
+if os.path.exists(MAP_PATH):
+    try:
+        with open(MAP_PATH, "r", encoding="utf-8") as mf:
+            ARTISTA_DRIVE_MAP = json.load(mf)
+    except Exception as e:
+        print("Warning loading ARTISTA_DRIVE_MAP:", e)
 
 def slugify(text):
     text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
@@ -60,7 +68,17 @@ def scan_folder_as_course(full_path, rel_path, display_name):
                     sub_rel = os.path.relpath(vf_full, full_path).replace("\\", "/")
                     vf_rel = f"{rel_path}/{sub_rel}"
                     lesson_id = f"{m_id}-les-{l_idx:02d}"
-                    lessons.append({
+                    vf_norm = re.sub(r'[^a-z0-9]', '', unicodedata.normalize('NFKD', vf).lower())
+                    rel_norm = re.sub(r'[^a-z0-9]', '', unicodedata.normalize('NFKD', vf_rel).lower())
+                    drive_id = ARTISTA_DRIVE_MAP.get(rel_norm) or ARTISTA_DRIVE_MAP.get(vf_norm)
+                    if not drive_id:
+                        for k, v in ARTISTA_DRIVE_MAP.items():
+                            clean_k = re.sub(r'[^a-z0-9]', '', k)
+                            if clean_k == vf_norm or clean_k == rel_norm:
+                                drive_id = v
+                                break
+
+                    lesson_item = {
                         "id": lesson_id,
                         "order_index": l_idx,
                         "raw_title": vf,
@@ -70,7 +88,11 @@ def scan_folder_as_course(full_path, rel_path, display_name):
                         "duration_seconds": 370,
                         "duration_formatted": "06:10",
                         "materials": []
-                    })
+                    }
+                    if drive_id:
+                        lesson_item["drive_file_id"] = drive_id
+                        lesson_item["drive_url"] = f"https://drive.google.com/file/d/{drive_id}/preview"
+                    lessons.append(lesson_item)
                     l_idx += 1
                 
             if lessons:
