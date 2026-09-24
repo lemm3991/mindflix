@@ -323,11 +323,13 @@ const nextInPathCourses = allCourses.filter(c =>
       myListGrid.innerHTML = '';
       const cardsToClone: HTMLElement[] = [];
       favIds.forEach(id => {
-        const card = document.querySelector(`.course-card-wrapper[data-course-id="${id}"]`);
-        if (card) {
-          const cardSource = card.closest('.card-item-wrapper')?.getAttribute('data-source') || '';
+        const courseCard = document.querySelector(`.course-card-wrapper[data-course-id="${id}"]`);
+        const trilhaCard = document.querySelector(`.trilha-card[data-trilha-id="${id}"]`);
+        const target = courseCard || trilhaCard;
+        if (target) {
+          const cardSource = target.getAttribute('data-source') || target.closest('[data-source]')?.getAttribute('data-source') || '';
           if (activeSource === 'all' || !cardSource || cardSource === activeSource) {
-            const cloned = card.cloneNode(true) as HTMLElement;
+            const cloned = target.cloneNode(true) as HTMLElement;
             cardsToClone.push(cloned);
           }
         }
@@ -339,10 +341,32 @@ const nextInPathCourses = allCourses.filter(c =>
       } else {
         myListSection.style.display = 'none';
       }
+
+      if (!myListGrid.dataset.bound) {
+        myListGrid.dataset.bound = 'true';
+        myListGrid.addEventListener('click', async (e) => {
+          const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action="favorite"], .card-fav-btn, .trilha-fav-btn');
+          if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = btn.getAttribute('data-fav-id') || btn.getAttribute('data-trilha-id');
+            if (id) {
+              const { toggleFavorite } = await import('../lib/progress');
+              const { showToast } = await import('../lib/toast');
+              const isFav = await toggleFavorite(id);
+              showToast(isFav ? 'Adicionado à Minha Lista' : 'Removido da Minha Lista', isFav ? 'success' : 'info');
+              renderDynamicHomeGrids();
+            }
+          }
+        });
+      }
     }
   }
 
   window.addEventListener('mindflix:source-changed', () => {
+    renderDynamicHomeGrids();
+  });
+  window.addEventListener('mindflix:favorites-changed', () => {
     renderDynamicHomeGrids();
   });
 

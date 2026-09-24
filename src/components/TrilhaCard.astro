@@ -105,6 +105,19 @@ const remainingCount = trilha.courses.length - previewCourses.length;
           </svg>
           <span class="btn-text">Iniciar Trilha</span>
         </a>
+        <button
+          type="button"
+          class="trilha-fav-btn"
+          data-fav-id={trilha.id}
+          data-trilha-id={trilha.id}
+          aria-label="Adicionar trilha à Minha Lista"
+          title="Adicionar à Minha Lista"
+          data-action="favorite"
+        >
+          <svg class="heart-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -120,16 +133,22 @@ const remainingCount = trilha.courses.length - previewCourses.length;
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 500px;
+    min-height: 480px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s var(--ease-out),
+                box-shadow 0.3s ease,
+                border-color 0.3s ease;
+  }
+
+  :global(.trilhas-carousel-track) .trilha-card {
     flex: 0 0 340px;
     width: 340px;
     min-width: 340px;
     max-width: 340px;
     flex-shrink: 0;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-    transition: transform 0.3s var(--ease-out),
-                box-shadow 0.3s ease,
-                border-color 0.3s ease;
   }
 
   .trilha-card-inner {
@@ -357,12 +376,88 @@ const remainingCount = trilha.courses.length - previewCourses.length;
 
   .trilha-actions {
     margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .btn-trilha-play {
-    width: 100%;
+    flex: 1;
     justify-content: center;
-    padding: 0.7rem 1.25rem;
+    padding: 0.7rem 1rem;
     font-size: 0.875rem;
   }
+
+  .trilha-fav-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md, 8px);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .trilha-fav-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    transform: scale(1.05);
+  }
+
+  .trilha-fav-btn.active {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .trilha-fav-btn.active .heart-icon {
+    fill: currentColor;
+  }
 </style>
+
+<script>
+  import { toggleFavorite, isCourseFavorite } from '../lib/progress';
+  import { showToast } from '../lib/toast';
+
+  function initTrilhaFavorites() {
+    const favButtons = document.querySelectorAll<HTMLButtonElement>('.trilha-fav-btn');
+    favButtons.forEach(btn => {
+      const id = btn.getAttribute('data-fav-id');
+      if (!id) return;
+
+      const isFav = isCourseFavorite(id);
+      btn.classList.toggle('active', isFav);
+      const heart = btn.querySelector('.heart-icon');
+      if (heart) {
+        heart.setAttribute('fill', isFav ? 'currentColor' : 'none');
+      }
+
+      if (!btn.dataset.bound) {
+        btn.dataset.bound = 'true';
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const nowFav = await toggleFavorite(id);
+          btn.classList.toggle('active', nowFav);
+          if (heart) {
+            heart.setAttribute('fill', nowFav ? 'currentColor' : 'none');
+          }
+          showToast(
+            nowFav ? 'Trilha adicionada à Minha Lista' : 'Trilha removida da Minha Lista',
+            nowFav ? 'success' : 'info'
+          );
+        });
+      }
+    });
+  }
+
+  document.addEventListener('astro:page-load', initTrilhaFavorites);
+  window.addEventListener('mindflix:favorites-changed', initTrilhaFavorites);
+  initTrilhaFavorites();
+</script>

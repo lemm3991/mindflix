@@ -1,25 +1,61 @@
 ---
-// my-list.astro - Minha Lista / Favoritos
+// my-list.astro - Minha Lista / Favoritos (Cursos & Trilhas de Formação)
 import Layout from '../layouts/Layout.astro';
 import CourseCard from '../components/CourseCard.astro';
+import TrilhaCard from '../components/TrilhaCard.astro';
 import EmptyState from '../components/EmptyState.astro';
-import { getAllCourses, getCourseSourceId, getActiveSource } from '../lib/catalog';
+import { getAllCourses, getCourseSourceId } from '../lib/catalog';
+import { getAllTrilhas } from '../lib/trilhas';
 
 const courses = getAllCourses();
+const trilhas = getAllTrilhas();
 ---
 
 <Layout title="Minha Lista — Mindflix">
   <div class="container my-list-page">
     <header class="page-header">
       <h1 class="page-title">Minha Lista</h1>
-      <p class="page-subtitle">Seus cursos favoritos e conteúdos salvos para estudar quando quiser.</p>
+      <p class="page-subtitle">Suas trilhas de formação e cursos favoritos salvos para estudar quando quiser.</p>
     </header>
 
+    <!-- Filter Tabs (Todos / Trilhas / Cursos) -->
+    <div class="my-list-filter-bar" id="my-list-filter-bar" style="display: none;">
+      <div class="filter-tabs">
+        <button type="button" class="tab-btn active" data-tab="all" id="tab-btn-all">
+          <span>Todos</span>
+          <span class="tab-count" id="count-all">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="trilha" id="tab-btn-trilha">
+          <span>Trilhas de Formação</span>
+          <span class="tab-count" id="count-trilha">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="course" id="tab-btn-course">
+          <span>Cursos</span>
+          <span class="tab-count" id="count-course">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Items Grid (Trilhas & Cursos) -->
     <div class="courses-grid" id="my-list-container">
+      {trilhas.map(trilha => (
+        <div 
+          class="my-list-item my-list-item-trilha" 
+          data-id={trilha.id}
+          data-course-id={trilha.id}
+          data-type="trilha"
+          data-source={trilha.source}
+          style="display: none;"
+        >
+          <TrilhaCard trilha={trilha} />
+        </div>
+      ))}
       {courses.map(course => (
         <div 
-          class="my-list-item" 
-          data-course-id={course.id} 
+          class="my-list-item my-list-item-course" 
+          data-id={course.id}
+          data-course-id={course.id}
+          data-type="course"
           data-source={getCourseSourceId(course)}
           style="display: none;"
         >
@@ -31,8 +67,8 @@ const courses = getAllCourses();
     <div id="empty-list-state" style="display: none;">
       <EmptyState
         title="Sua lista está vazia"
-        description="Explore o catálogo e clique no ícone de coração para adicionar cursos que deseja estudar à sua lista pessoal."
-        actionText="Explorar Cursos"
+        description="Explore o catálogo e clique no ícone de coração para adicionar cursos ou trilhas de formação à sua lista pessoal."
+        actionText="Explorar Catálogo"
         actionHref="/courses"
       />
     </div>
@@ -43,6 +79,8 @@ const courses = getAllCourses();
   import { getFavoriteCourseIds } from '../lib/progress';
   import { getLocalUser } from '../lib/supabase';
   import { getActiveSource } from '../lib/catalog';
+
+  let currentTab = 'all';
 
   function initMyList() {
     const user = getLocalUser();
@@ -55,31 +93,79 @@ const courses = getAllCourses();
     const activeSource = getActiveSource();
     const items = document.querySelectorAll<HTMLElement>('.my-list-item');
     const emptyState = document.getElementById('empty-list-state');
+    const filterBar = document.getElementById('my-list-filter-bar');
+    const countAllEl = document.getElementById('count-all');
+    const countTrilhaEl = document.getElementById('count-trilha');
+    const countCourseEl = document.getElementById('count-course');
 
+    let totalMatching = 0;
+    let trilhaMatching = 0;
+    let courseMatching = 0;
     let visibleCount = 0;
+
+    // 1. Calculate counts
     items.forEach(item => {
-      const id = item.getAttribute('data-course-id');
+      const id = item.getAttribute('data-id') || item.getAttribute('data-course-id');
       const itemSource = item.getAttribute('data-source');
-      const matchesFav = id && favIds.includes(id);
+      const itemType = item.getAttribute('data-type') || 'course';
+      const matchesFav = Boolean(id && favIds.includes(id));
       const matchesSource = !activeSource || activeSource === 'all' || itemSource === activeSource;
 
       if (matchesFav && matchesSource) {
-        item.style.display = 'block';
-        visibleCount++;
+        totalMatching++;
+        if (itemType === 'trilha') trilhaMatching++;
+        else courseMatching++;
+
+        const matchesTab = currentTab === 'all' || itemType === currentTab;
+        if (matchesTab) {
+          item.style.display = 'block';
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+        }
       } else {
         item.style.display = 'none';
       }
     });
 
+    // 2. Update count badges
+    if (countAllEl) countAllEl.textContent = String(totalMatching);
+    if (countTrilhaEl) countTrilhaEl.textContent = String(trilhaMatching);
+    if (countCourseEl) countCourseEl.textContent = String(courseMatching);
+
+    // 3. Show/hide filter bar & empty state
+    if (filterBar) {
+      filterBar.style.display = totalMatching > 0 ? 'block' : 'none';
+    }
+
     if (emptyState) {
-      emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+      emptyState.style.display = totalMatching === 0 ? 'block' : 'none';
     }
   }
 
-  document.addEventListener('astro:page-load', initMyList);
-  window.addEventListener('mindflix:source-changed', () => {
+  function setupTabs() {
+    const tabs = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
+    tabs.forEach(tab => {
+      if (tab.dataset.bound) return;
+      tab.dataset.bound = 'true';
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentTab = tab.getAttribute('data-tab') || 'all';
+        initMyList();
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    setupTabs();
     initMyList();
   });
+
+  window.addEventListener('mindflix:source-changed', initMyList);
+  window.addEventListener('mindflix:favorites-changed', initMyList);
+
+  setupTabs();
   initMyList();
 </script>
 
@@ -90,7 +176,7 @@ const courses = getAllCourses();
   }
 
   .page-header {
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
 
   .page-title {
@@ -104,9 +190,70 @@ const courses = getAllCourses();
     color: var(--text-secondary);
   }
 
+  /* Filter Tabs */
+  .my-list-filter-bar {
+    margin-bottom: 2rem;
+  }
+
+  .filter-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-full, 9999px);
+    backdrop-filter: blur(12px);
+  }
+
+  .tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted, #94a3b8);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-full, 9999px);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .tab-btn.active {
+    color: #0b0d13;
+    background: var(--grad-primary, linear-gradient(135deg, #00f2fe 0%, #4facfe 100%));
+    box-shadow: 0 4px 14px rgba(0, 242, 254, 0.3);
+  }
+
+  .tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.15);
+    color: inherit;
+  }
+
+  .tab-btn.active .tab-count {
+    background: rgba(0, 0, 0, 0.2);
+    color: #0b0d13;
+  }
+
   .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
     perspective: 1200px;
   }
@@ -114,5 +261,21 @@ const courses = getAllCourses();
   .my-list-item {
     perspective: 1000px;
     height: 100%;
+  }
+
+  @media (max-width: 640px) {
+    .filter-tabs {
+      width: 100%;
+      display: flex;
+      overflow-x: auto;
+      border-radius: var(--radius-md, 8px);
+    }
+    .tab-btn {
+      flex: 1;
+      justify-content: center;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
   }
 </style>

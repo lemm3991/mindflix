@@ -381,6 +381,12 @@ export async function toggleFavorite(courseId: string): Promise<boolean> {
     }
   }
 
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('mindflix:favorites-changed', {
+      detail: { id: courseId, isFav: !isFav }
+    }));
+  }
+
   return !isFav;
 }
 
@@ -388,6 +394,10 @@ export function isCourseFavorite(courseId: string): boolean {
   if (typeof window === 'undefined') return false;
   return getFavoriteCourseIds().includes(courseId);
 }
+
+export const isFavorite = isCourseFavorite;
+export const isTrilhaFavorite = isCourseFavorite;
+export const toggleTrilhaFavorite = toggleFavorite;
 
 function getPrefStorageKey(): string {
   return getUserScopedKey(STORAGE_KEYS.PREFERENCES);
