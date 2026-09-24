@@ -222,15 +222,14 @@ const isVideo = !isPdf && !isDoc;
   import { showToast } from '../lib/toast';
 
   const wrapper = document.getElementById('player-wrapper');
-  const video = document.getElementById('main-video-player') as HTMLVideoElement | null;
   const overlay = document.getElementById('next-lesson-overlay');
   const countdownSecs = document.getElementById('countdown-secs');
   const countdownText = document.getElementById('next-countdown-text');
   const btnCancelNext = document.getElementById('btn-cancel-next');
+  const btnPlayNextNow = document.getElementById('btn-play-next-now');
   const savePill = document.getElementById('save-status-pill');
   const btnComplete = document.getElementById('btn-toggle-complete');
   const completeText = document.getElementById('complete-btn-text');
-  const btnTheater = document.getElementById('btn-theater-mode');
   const btnFocus = document.getElementById('btn-focus-mode');
   const btnPip = document.getElementById('btn-pip-mode');
   const errorOverlay = document.getElementById('video-error-overlay');
@@ -292,6 +291,120 @@ const isVideo = !isPdf && !isDoc;
       }
     }
 
+    let countdownInterval: any = null;
+
+    // Attach complete playback and progression hooks to local server HTML5 video
+    function setupHtml5Video(vid: HTMLVideoElement) {
+      if ((vid as any).__mindflix_setup_done) return;
+      (vid as any).__mindflix_setup_done = true;
+
+      // 1. Resume saved position if available
+      const saved = getLessonProgress(lessonId);
+      if (prefs.auto_resume !== false && saved && saved.position_seconds > 5 && !saved.completed) {
+        const setResumeTime = () => {
+          if (!isNaN(vid.duration) && saved.position_seconds < vid.duration - 2) {
+            vid.currentTime = saved.position_seconds;
+          }
+        };
+        vid.addEventListener('loadedmetadata', setResumeTime, { once: true });
+        if (vid.readyState >= 1) setResumeTime();
+
+        const mins = Math.floor(saved.position_seconds / 60);
+        const secs = Math.floor(saved.position_seconds % 60);
+        showToast(`Continuando de ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 2500);
+      }
+
+      // 2. Throttled progress save
+      let lastSave = 0;
+      const saveCurrentProgress = (completed = false) => {
+        if (!vid.duration || isNaN(vid.duration)) return;
+        saveLessonProgress(courseId, lessonId, vid.currentTime, vid.duration, completed);
+        lastSave = Date.now();
+        window.dispatchEvent(new CustomEvent('mindflix:progress-updated', {
+          detail: { courseId, lessonId, completed }
+        }));
+        if (savePill) {
+          savePill.style.display = 'flex';
+          setTimeout(() => { if (savePill) savePill.style.display = 'none'; }, 1500);
+        }
+      };
+
+      vid.addEventListener('seeked', () => saveCurrentProgress(false));
+      vid.addEventListener('pause', () => {
+        if (!hasCompleted) saveCurrentProgress(false);
+      });
+
+      // Unload safety: save exact position on page exit/navigate
+      const handleUnload = () => {
+        if (vid && !isNaN(vid.currentTime) && vid.duration) {
+          saveLessonProgress(courseId, lessonId, vid.currentTime, vid.duration, hasCompleted || vid.currentTime / vid.duration >= 0.85);
+        }
+      };
+      window.addEventListener('beforeunload', handleUnload);
+      window.addEventListener('pagehide', handleUnload);
+
+      // 3. Automatically mark as completed and advance to the next video when video reaches the end
+      let hasCompleted = false;
+
+      const triggerCompletionAndNext = async () => {
+        if (hasCompleted) return;
+        hasCompleted = true;
+
+        const dur = (vid.duration && !isNaN(vid.duration) && vid.duration > 0) ? vid.duration : 600;
+        await saveLessonProgress(courseId, lessonId, dur, dur, true);
+        updateCompleteUI(true);
+        window.dispatchEvent(new CustomEvent('mindflix:progress-updated', {
+          detail: { courseId, lessonId, completed: true }
+        }));
+
+        if (nextHref) {
+          showToast('Aula concluída! Passando para a próxima...', 'success', 3000);
+
+          if (overlay) {
+            overlay.style.display = 'flex';
+            let count = 3;
+            if (countdownSecs) countdownSecs.textContent = count.toString();
+            if (countdownText) countdownText.innerHTML = `Iniciando em <span id="countdown-secs">${count}</span>s...`;
+
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+              count--;
+              const curSecs = document.getElementById('countdown-secs');
+              if (curSecs) curSecs.textContent = count.toString();
+              if (count <= 0) {
+                clearInterval(countdownInterval);
+                window.location.href = nextHref;
+              }
+            }, 1000);
+          } else {
+            setTimeout(() => {
+              window.location.href = nextHref;
+            }, 1000);
+          }
+        } else {
+          showToast('Parabéns! Você concluiu a última aula!', 'success', 4000);
+        }
+      };
+
+      // Native ended event
+      vid.addEventListener('ended', () => {
+        triggerCompletionAndNext();
+      });
+
+      // Timeupdate: periodic save and near-end fallback safeguard
+      vid.addEventListener('timeupdate', () => {
+        const now = Date.now();
+        if (now - lastSave > 8000) {
+          saveCurrentProgress(false);
+        }
+
+        // Auto trigger completion when video is within 0.3s of the end
+        if (vid.duration && vid.duration > 2 && vid.currentTime >= vid.duration - 0.3) {
+          triggerCompletionAndNext();
+        }
+      });
+    }
+
     async function initPlayerSource() {
       const activeProvider = await getActiveMediaProvider();
       const viewport = document.getElementById('video-viewport');
@@ -303,12 +416,13 @@ const isVideo = !isPdf && !isDoc;
       if (activeProvider === 'server' && relPath) {
         const serverStreamUrl = buildServerStreamUrl(relPath);
         const curVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
-        if (!curVid || curVid.src !== serverStreamUrl) {
+        if (!curVid || curVid.getAttribute('data-src') !== serverStreamUrl) {
           wrapperDiv.innerHTML = `
             <video
               id="main-video-player"
               class="html5-video"
               src="${serverStreamUrl}"
+              data-src="${serverStreamUrl}"
               controls
               autoplay
               playsinline
@@ -316,12 +430,17 @@ const isVideo = !isPdf && !isDoc;
             ></video>
           `;
           const newVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
-          newVid?.addEventListener('error', () => {
-            if (dId) {
-              showToast('Servidor indisponível. Alternando para o Google Drive...', 'warning', 3000);
-              loadDrive(wrapperDiv, dId);
-            }
-          });
+          if (newVid) {
+            setupHtml5Video(newVid);
+            newVid.addEventListener('error', () => {
+              if (dId && getMediaMode() === 'auto') {
+                showToast('Servidor offline. Alternando para o Google Drive...', 'warning', 3000);
+                loadDrive(wrapperDiv, dId);
+              }
+            });
+          }
+        } else {
+          setupHtml5Video(curVid);
         }
       } else if (dId) {
         loadDrive(wrapperDiv, dId);
@@ -332,12 +451,17 @@ const isVideo = !isPdf && !isDoc;
             id="main-video-player"
             class="html5-video"
             src="${serverStreamUrl}"
+            data-src="${serverStreamUrl}"
             controls
             autoplay
             playsinline
             title="${lessonId}"
           ></video>
         `;
+        const newVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
+        if (newVid) {
+          setupHtml5Video(newVid);
+        }
       }
     }
 
@@ -360,9 +484,10 @@ const isVideo = !isPdf && !isDoc;
     if (saved?.completed) updateCompleteUI(true);
 
     btnComplete?.addEventListener('click', async () => {
+      const curVid = document.getElementById('main-video-player') as HTMLVideoElement | null;
       const isComplete = !btnComplete.classList.contains('btn-completed');
-      const currentPos = video ? video.currentTime : (isComplete ? 600 : 0);
-      const totalDur = video && video.duration ? video.duration : 600;
+      const currentPos = curVid ? curVid.currentTime : (isComplete ? 600 : 0);
+      const totalDur = curVid && curVid.duration ? curVid.duration : 600;
       await saveLessonProgress(courseId, lessonId, currentPos, totalDur, isComplete);
       updateCompleteUI(isComplete);
       window.dispatchEvent(new CustomEvent('mindflix:progress-updated', { detail: { courseId, lessonId, completed: isComplete } }));
@@ -373,20 +498,28 @@ const isVideo = !isPdf && !isDoc;
     const manualNextBtn = document.getElementById('manual-next-link');
     manualNextBtn?.addEventListener('click', async (e) => {
       e.preventDefault();
-      const currentPos = video && !isNaN(video.currentTime) ? video.currentTime : 600;
-      const totalDur = video && !isNaN(video.duration) ? video.duration : 600;
+      const curVid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      const currentPos = curVid && !isNaN(curVid.currentTime) ? curVid.currentTime : 600;
+      const totalDur = curVid && !isNaN(curVid.duration) ? curVid.duration : 600;
       await saveLessonProgress(courseId, lessonId, currentPos, totalDur, true);
+      updateCompleteUI(true);
       window.dispatchEvent(new CustomEvent('mindflix:progress-updated', { detail: { courseId, lessonId, completed: true } }));
       const href = manualNextBtn.getAttribute('href');
       if (href) window.location.href = href;
     });
 
-    // Next lesson countdown cancel
+    // Next lesson countdown overlay actions
     btnCancelNext?.addEventListener('click', () => {
+      clearInterval(countdownInterval);
       if (overlay) overlay.style.display = 'none';
+      showToast('Avanço automático cancelado', 'info', 2000);
     });
 
-    // Fullscreen Toggle (Shared for ALL video types)
+    btnPlayNextNow?.addEventListener('click', () => {
+      clearInterval(countdownInterval);
+    });
+
+    // Fullscreen Toggle
     const btnFullscreen = document.getElementById('btn-fullscreen-toggle');
     btnFullscreen?.addEventListener('click', () => {
       if (document.fullscreenElement) {
@@ -400,9 +533,10 @@ const isVideo = !isPdf && !isDoc;
       }
     });
 
-    // Picture-in-Picture Mode (Native + Floating Mini Player Fallback)
+    // Picture-in-Picture Mode
     const togglePiP = async () => {
-      if (video && document.pictureInPictureEnabled && typeof video.requestPictureInPicture === 'function') {
+      const vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      if (vid && document.pictureInPictureEnabled && typeof vid.requestPictureInPicture === 'function') {
         try {
           if (document.pictureInPictureElement) {
             await document.exitPictureInPicture();
@@ -410,7 +544,7 @@ const isVideo = !isPdf && !isDoc;
             showToast('Saindo do Picture-in-Picture', 'info', 1500);
             return;
           } else {
-            await video.requestPictureInPicture();
+            await vid.requestPictureInPicture();
             if (btnPip) btnPip.classList.add('active');
             showToast('Picture-in-Picture ativado', 'success', 1500);
             return;
@@ -434,238 +568,44 @@ const isVideo = !isPdf && !isDoc;
 
     btnPip?.addEventListener('click', togglePiP);
 
-    // Native HTML5 Video Specific Controls
-    if (video) {
-      // Remove native controls so MindFlix custom UI is used
-      video.removeAttribute('controls');
-
-      const mainPlayBtn = document.getElementById('btn-main-play');
-      const iconPlay = mainPlayBtn?.querySelector<HTMLElement>('.icon-play');
-      const iconPause = mainPlayBtn?.querySelector<HTMLElement>('.icon-pause');
-      const rewindBtn = document.getElementById('btn-rewind-10');
-      const forwardBtn = document.getElementById('btn-forward-10');
-      const timeCurrent = document.getElementById('time-current');
-      const timeDuration = document.getElementById('time-duration');
-      const timelineTrack = document.getElementById('timeline-track');
-      const timelineFill = document.getElementById('timeline-fill');
-      const timelineThumb = document.getElementById('timeline-thumb');
-
-      const formatTime = (secs: number) => {
-        if (isNaN(secs) || secs < 0) return '0:00';
-        const m = Math.floor(secs / 60);
-        const s = Math.floor(secs % 60);
-        return `${m}:${String(s).padStart(2, '0')}`;
-      };
-
-      const updatePlayStateUI = () => {
-        if (video.paused) {
-          if (iconPlay) iconPlay.style.display = 'block';
-          if (iconPause) iconPause.style.display = 'none';
-        } else {
-          if (iconPlay) iconPlay.style.display = 'none';
-          if (iconPause) iconPause.style.display = 'block';
-        }
-      };
-
-      video.addEventListener('play', updatePlayStateUI);
-      video.addEventListener('pause', updatePlayStateUI);
-
-      mainPlayBtn?.addEventListener('click', () => {
-        if (video.paused) {
-          video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      });
-
-      rewindBtn?.addEventListener('click', () => {
-        video.currentTime = Math.max(0, video.currentTime - 10);
-      });
-
-      forwardBtn?.addEventListener('click', () => {
-        video.currentTime = Math.min(video.duration, video.currentTime + 10);
-      });
-
-      // Time & Scrubber updates
-      video.addEventListener('timeupdate', () => {
-        if (timeCurrent) timeCurrent.textContent = formatTime(video.currentTime);
-        if (video.duration && !isNaN(video.duration)) {
-          if (timeDuration) timeDuration.textContent = formatTime(video.duration);
-          const pct = Math.min(100, (video.currentTime / video.duration) * 100);
-          if (timelineFill) timelineFill.style.width = `${pct}%`;
-          if (timelineThumb) timelineThumb.style.left = `${pct}%`;
-        }
-      });
-
-      video.addEventListener('loadedmetadata', () => {
-        if (video.duration && !isNaN(video.duration) && timeDuration) {
-          timeDuration.textContent = formatTime(video.duration);
-        }
-      });
-
-      if (timelineTrack) {
-        let isSeeking = false;
-        const seek = (e: MouseEvent) => {
-          if (!video.duration || isNaN(video.duration)) return;
-          const rect = timelineTrack.getBoundingClientRect();
-          const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-          video.currentTime = pos * video.duration;
-        };
-
-        timelineTrack.addEventListener('mousedown', (e) => {
-          isSeeking = true;
-          seek(e);
-        });
-
-        window.addEventListener('mousemove', (e) => {
-          if (isSeeking) seek(e);
-        });
-
-        window.addEventListener('mouseup', () => {
-          isSeeking = false;
-        });
-      }
-
-      // Handle video load error gracefully
-      video.addEventListener('error', () => {
-        if (errorOverlay) errorOverlay.style.display = 'flex';
-      });
-
-      retryBtn?.addEventListener('click', () => {
-        if (errorOverlay) errorOverlay.style.display = 'none';
-        video.load();
-        video.play().catch(() => {});
-      });
-
-      // Resume position check (respects prefs.auto_resume)
-      if (prefs.auto_resume !== false && saved && saved.position_seconds > 5 && !saved.completed) {
-        const setResumeTime = () => {
-          if (!isNaN(video.duration) && saved.position_seconds < video.duration - 2) {
-            video.currentTime = saved.position_seconds;
-          }
-        };
-        video.addEventListener('loadedmetadata', setResumeTime, { once: true });
-        if (video.readyState >= 1) setResumeTime();
-
-        const mins = Math.floor(saved.position_seconds / 60);
-        const secs = Math.floor(saved.position_seconds % 60);
-        showToast(`Continuando de ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 3000);
-      }
-
-      // Throttled progress saving with discreet save pill
-      let lastSave = 0;
-      const triggerSave = (manual = false) => {
-        if (!video.duration || isNaN(video.duration)) return;
-        saveLessonProgress(courseId, lessonId, video.currentTime, video.duration, manual);
-        lastSave = Date.now();
-        window.dispatchEvent(new CustomEvent('mindflix:progress-updated', { detail: { courseId, lessonId } }));
-
-        // Show save pill
-        if (savePill) {
-          savePill.style.display = 'flex';
-          setTimeout(() => { savePill.style.display = 'none'; }, 1500);
-        }
-      };
-
-      video.addEventListener('seeked', () => triggerSave());
-
-      // Unload safety: save exact position on page exit/navigate
-      const handleUnload = () => {
-        if (video && !isNaN(video.currentTime) && video.duration) {
-          saveLessonProgress(courseId, lessonId, video.currentTime, video.duration, video.currentTime / video.duration >= 0.85);
-        }
-      };
-      window.addEventListener('beforeunload', handleUnload);
-      window.addEventListener('pagehide', handleUnload);
-
-      video.addEventListener('timeupdate', () => {
-        const now = Date.now();
-        if (now - lastSave > 8000) triggerSave();
-
-        if (video.duration && video.currentTime / video.duration >= 0.85) {
-          if (!btnComplete?.classList.contains('btn-completed')) {
-            triggerSave(true);
-            updateCompleteUI(true);
-          }
-        }
-      });
-
-      video.addEventListener('pause', () => triggerSave());
-
-      // Next lesson countdown logic (respects prefs.autoplay_next)
-      let countdownInterval: any;
-      video.addEventListener('ended', () => {
-        triggerSave(true);
-        updateCompleteUI(true);
-
-        const currentPrefs = getUserPreferences();
-        if (currentPrefs.autoplay_next !== false && nextHref && overlay) {
-          overlay.style.display = 'flex';
-          let count = 6;
-          if (countdownSecs) countdownSecs.textContent = count.toString();
-
-          clearInterval(countdownInterval);
-          countdownInterval = setInterval(() => {
-            count--;
-            if (countdownSecs) countdownSecs.textContent = count.toString();
-            if (count <= 0) {
-              clearInterval(countdownInterval);
-              window.location.href = nextHref;
-            }
-          }, 1000);
-        }
-      });
-
-      video.addEventListener('leavepictureinpicture', () => {
-        if (btnPip) btnPip.classList.remove('active');
-      });
-
-      // Keyboard Shortcuts for video
-      window.addEventListener('keydown', (e) => {
-        const target = e.target as HTMLElement;
-        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable) return;
-        if (document.getElementById('cmd-palette-backdrop')?.style.display === 'flex') return;
-
-        if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
-          e.preventDefault();
-          video.paused ? video.play() : video.pause();
-        } else if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - 5);
-        } else if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + 5);
-        } else if (e.key === 'j' || e.key === 'J') {
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - 10);
-        } else if (e.key === 'l' || e.key === 'L') {
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + 10);
-        } else if (e.key === 'm' || e.key === 'M') {
-          e.preventDefault();
-          video.muted = !video.muted;
-          showToast(video.muted ? 'Áudio mutado' : 'Áudio ativado', 'info', 1500);
-        } else if (e.key === 'f' || e.key === 'F') {
-          e.preventDefault();
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          } else {
-            video.requestFullscreen().catch(() => {});
-          }
-        }
-      });
-    }
-
-    // Common shortcuts (Theater & Focus)
+    // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       const target = e.target as HTMLElement;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable) return;
       if (document.getElementById('cmd-palette-backdrop')?.style.display === 'flex') return;
 
-      if (e.key === 't' || e.key === 'T') {
-        e.preventDefault();
-        btnTheater?.click();
-      } else if (e.key === 'c' || e.key === 'C') {
+      const vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      if (vid) {
+        if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
+          e.preventDefault();
+          vid.paused ? vid.play().catch(() => {}) : vid.pause();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          vid.currentTime = Math.max(0, vid.currentTime - 5);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 5);
+        } else if (e.key === 'j' || e.key === 'J') {
+          e.preventDefault();
+          vid.currentTime = Math.max(0, vid.currentTime - 10);
+        } else if (e.key === 'l' || e.key === 'L') {
+          e.preventDefault();
+          vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 10);
+        } else if (e.key === 'm' || e.key === 'M') {
+          e.preventDefault();
+          vid.muted = !vid.muted;
+          showToast(vid.muted ? 'Áudio mutado' : 'Áudio ativado', 'info', 1500);
+        } else if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+          } else {
+            vid.requestFullscreen().catch(() => {});
+          }
+        }
+      }
+
+      if (e.key === 'c' || e.key === 'C') {
         e.preventDefault();
         btnFocus?.click();
       } else if (e.key === 'Escape' && document.body.classList.contains('focus-mode-active')) {
@@ -839,7 +779,7 @@ const isVideo = !isPdf && !isDoc;
   .next-lesson-overlay {
     position: absolute;
     inset: 0;
-    z-index: 15;
+    z-index: 60;
     background: rgba(7, 9, 14, 0.88);
     backdrop-filter: blur(16px);
     display: flex;
