@@ -168,8 +168,8 @@ const isVideo = !isPdf && !isDoc;
       )}
     </div>
 
-    <div class="nav-right">
-      <!-- Media Source Provider Selector -->
+    <!-- Media Source Provider Selector (Row 2 on mobile, inline on desktop) -->
+    <div class="nav-middle">
       <div class="media-source-select-wrap" title="Fonte dos vídeos (Servidor ou Google Drive)">
         <select id="player-media-source-select" class="player-media-source-select">
           <option value="auto">⚡ Auto (Servidor + Fallback)</option>
@@ -183,7 +183,9 @@ const isVideo = !isPdf && !isDoc;
           </svg>
         </button>
       </div>
+    </div>
 
+    <div class="nav-right">
       <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
@@ -426,6 +428,8 @@ const isVideo = !isPdf && !isDoc;
               controls
               autoplay
               playsinline
+              webkit-playsinline
+              controlsList="nodownload"
               title="${lessonId}"
             ></video>
           `;
@@ -455,6 +459,8 @@ const isVideo = !isPdf && !isDoc;
             controls
             autoplay
             playsinline
+            webkit-playsinline
+            controlsList="nodownload"
             title="${lessonId}"
           ></video>
         `;
@@ -856,12 +862,17 @@ const isVideo = !isPdf && !isDoc;
     padding: 0.5rem 0.85rem;
     background: var(--bg-card);
     border-top: 1px solid var(--border-subtle);
+    gap: 0.75rem;
   }
 
-  .nav-left, .nav-right {
+  .nav-left, .nav-middle, .nav-right {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+
+  .nav-right {
+    margin-left: auto;
   }
 
   /* Lesson Materials Download Pills */
@@ -1238,19 +1249,89 @@ const isVideo = !isPdf && !isDoc;
   }
 
   @media (max-width: 768px) {
+    .classroom-nav-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.65rem;
+      gap: 0.5rem;
+    }
+
+    /* Top row: Left has navigation, Right has complete button */
+    .classroom-nav-bar .nav-left {
+      order: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex: 1 1 auto;
+    }
+
+    .btn-nav-lesson {
+      padding: 0.35rem 0.55rem;
+      font-size: 0.78rem;
+    }
+
     .btn-label-desktop {
-      display: none;
+      display: inline !important;
+    }
+
+    .classroom-nav-bar .nav-right {
+      order: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-left: auto;
     }
 
     #btn-focus-mode {
       display: none !important;
     }
 
+    .btn-complete-toggle {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    /* Bottom row: Full width media source selector */
+    .classroom-nav-bar .nav-middle {
+      order: 3;
+      width: 100%;
+      padding-top: 0.35rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .media-source-select-wrap {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .player-media-source-select {
+      flex: 1;
+      height: 28px;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+    }
+
+    .btn-server-cfg {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Video frame mobile fixes - keep controls fully visible at bottom */
     .drive-player-frame {
-      top: -45px !important;
+      top: 0 !important;
       left: 0 !important;
       width: 100% !important;
-      height: calc(100% + 45px) !important;
+      height: 100% !important;
       border: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
@@ -1266,10 +1347,6 @@ const isVideo = !isPdf && !isDoc;
       height: auto !important;
       max-height: none !important;
       overflow: hidden !important;
-    }
-
-    .classroom-nav-bar {
-      padding: 0.4rem 0.5rem;
     }
   }
 </style>
