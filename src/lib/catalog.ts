@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import catalogData from '../data/catalog.json';
 import type { Course, Category, CatalogData, Lesson } from '../types/catalog';
 
 let cachedCatalog: CatalogData | null = null;
 let lastCatalogLoadTime = 0;
-const CATALOG_CACHE_TTL_MS = 5000;
+const CATALOG_CACHE_TTL_MS = 250;
 
 export function invalidateCatalogCache(): void {
   cachedCatalog = null;
@@ -26,48 +27,47 @@ function loadMergedCatalog(): CatalogData {
   }
 
   try {
-
     const primaryCatalog = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
     const tmpDir = path.resolve(process.cwd(), '.tmp');
     const tmpCatalog = path.join(tmpDir, 'catalog.json');
+    const osTmpCatalog = path.join(os.tmpdir(), 'catalog.json');
 
     const primaryOverrides = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
     const tmpOverrides = path.join(tmpDir, 'manual_overrides.json');
+    const osTmpOverrides = path.join(os.tmpdir(), 'manual_overrides.json');
+
+    const primaryCatOverrides = path.resolve(process.cwd(), 'src', 'data', 'categories_overrides.json');
+    const tmpCatOverrides = path.join(tmpDir, 'categories_overrides.json');
+    const osTmpCatOverrides = path.join(os.tmpdir(), 'categories_overrides.json');
 
     let catalogToUse = baseCatalog;
 
     // Read updated catalog.json from disk if available
-    if (fs.existsSync(tmpCatalog)) {
-      try {
-        const tmpCatData = JSON.parse(fs.readFileSync(tmpCatalog, 'utf-8'));
-        if (tmpCatData && Array.isArray(tmpCatData.courses)) {
-          catalogToUse = tmpCatData;
-        }
-      } catch {}
-    } else if (fs.existsSync(primaryCatalog)) {
-      try {
-        const diskCatData = JSON.parse(fs.readFileSync(primaryCatalog, 'utf-8'));
-        if (diskCatData && Array.isArray(diskCatData.courses)) {
-          catalogToUse = diskCatData;
-        }
-      } catch {}
+    for (const catPath of [tmpCatalog, osTmpCatalog, primaryCatalog]) {
+      if (fs.existsSync(catPath)) {
+        try {
+          const catData = JSON.parse(fs.readFileSync(catPath, 'utf-8'));
+          if (catData && Array.isArray(catData.courses)) {
+            catalogToUse = catData;
+            break;
+          }
+        } catch {}
+      }
     }
-
-    const primaryCatOverrides = path.resolve(process.cwd(), 'src', 'data', 'categories_overrides.json');
-    const tmpCatOverrides = path.join(tmpDir, 'categories_overrides.json');
 
     // Read categories overrides from disk if available
     let customCategories: any[] | null = null;
-    if (fs.existsSync(tmpCatOverrides)) {
-      try {
-        const catOv = JSON.parse(fs.readFileSync(tmpCatOverrides, 'utf-8'));
-        customCategories = Array.isArray(catOv) ? catOv : (catOv && Array.isArray(catOv.categories)) ? catOv.categories : null;
-      } catch {}
-    } else if (fs.existsSync(primaryCatOverrides)) {
-      try {
-        const catOv = JSON.parse(fs.readFileSync(primaryCatOverrides, 'utf-8'));
-        customCategories = Array.isArray(catOv) ? catOv : (catOv && Array.isArray(catOv.categories)) ? catOv.categories : null;
-      } catch {}
+    for (const catOvPath of [tmpCatOverrides, osTmpCatOverrides, primaryCatOverrides]) {
+      if (fs.existsSync(catOvPath)) {
+        try {
+          const catOv = JSON.parse(fs.readFileSync(catOvPath, 'utf-8'));
+          const parsed = Array.isArray(catOv) ? catOv : (catOv && Array.isArray(catOv.categories)) ? catOv.categories : null;
+          if (parsed) {
+            customCategories = parsed;
+            break;
+          }
+        } catch {}
+      }
     }
 
     if (customCategories) {
@@ -77,18 +77,15 @@ function loadMergedCatalog(): CatalogData {
       };
     }
 
-    // Read manual overrides from disk
+    // Read manual overrides from disk (merge all sources)
     let overrides: Record<string, any> = {};
-    if (fs.existsSync(primaryOverrides)) {
-      try {
-        overrides = JSON.parse(fs.readFileSync(primaryOverrides, 'utf-8')) || {};
-      } catch {}
-    }
-    if (fs.existsSync(tmpOverrides)) {
-      try {
-        const tmpOv = JSON.parse(fs.readFileSync(tmpOverrides, 'utf-8')) || {};
-        overrides = { ...overrides, ...tmpOv };
-      } catch {}
+    for (const ovPath of [primaryOverrides, tmpOverrides, osTmpOverrides]) {
+      if (fs.existsSync(ovPath)) {
+        try {
+          const ovData = JSON.parse(fs.readFileSync(ovPath, 'utf-8')) || {};
+          overrides = { ...overrides, ...ovData };
+        } catch {}
+      }
     }
 
     if (Object.keys(overrides).length === 0) {

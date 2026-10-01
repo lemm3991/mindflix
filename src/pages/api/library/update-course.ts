@@ -5,44 +5,47 @@ import os from 'node:os';
 import { invalidateCatalogCache } from '../../../lib/catalog';
 
 const PRIMARY_OVERRIDES_PATH = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
+const LOCAL_TMP_OVERRIDES_PATH = path.resolve(process.cwd(), '.tmp', 'manual_overrides.json');
 const TMP_OVERRIDES_PATH = path.join(os.tmpdir(), 'manual_overrides.json');
 
 const PRIMARY_CATALOG_PATH = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
+const LOCAL_TMP_CATALOG_PATH = path.resolve(process.cwd(), '.tmp', 'catalog.json');
 const TMP_CATALOG_PATH = path.join(os.tmpdir(), 'catalog.json');
 
-function loadJsonSafe(primaryPath: string, tmpPath: string): any {
+function loadJsonSafe(primaryPath: string, localTmpPath: string, osTmpPath: string): any {
   let result: any = {};
-  if (fs.existsSync(primaryPath)) {
-    try {
-      result = JSON.parse(fs.readFileSync(primaryPath, 'utf-8'));
-    } catch {}
-  }
-  if (fs.existsSync(tmpPath)) {
-    try {
-      const tmpData = JSON.parse(fs.readFileSync(tmpPath, 'utf-8'));
-      result = { ...result, ...tmpData };
-    } catch {}
+  for (const filePath of [primaryPath, localTmpPath, osTmpPath]) {
+    if (fs.existsSync(filePath)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        result = { ...result, ...data };
+      } catch {}
+    }
   }
   return result;
 }
 
-function saveJsonSafe(primaryPath: string, tmpPath: string, content: any): { success: boolean; isReadOnly: boolean } {
+function saveJsonSafe(primaryPath: string, localTmpPath: string, osTmpPath: string, content: any): { success: boolean; isReadOnly: boolean } {
   const dataStr = JSON.stringify(content, null, 2);
+  let isReadOnly = false;
+
   try {
+    const primaryDir = path.dirname(primaryPath);
+    if (!fs.existsSync(primaryDir)) fs.mkdirSync(primaryDir, { recursive: true });
     fs.writeFileSync(primaryPath, dataStr, 'utf-8');
-    return { success: true, isReadOnly: false };
   } catch (err: any) {
-    if (err?.code === 'EROFS' || err?.code === 'EACCES' || err?.code === 'EPERM' || err?.message?.includes('read-only') || err?.message?.includes('EROFS')) {
-      try {
-        fs.writeFileSync(tmpPath, dataStr, 'utf-8');
-        return { success: true, isReadOnly: true };
-      } catch (tmpErr) {
-        console.error('Erro ao escrever no diretório temporário:', tmpErr);
-        return { success: false, isReadOnly: true };
-      }
-    }
-    throw err;
+    isReadOnly = true;
   }
+
+  for (const tmpPath of [localTmpPath, osTmpPath]) {
+    try {
+      const dir = path.dirname(tmpPath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(tmpPath, dataStr, 'utf-8');
+    } catch {}
+  }
+
+  return { success: true, isReadOnly };
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -59,7 +62,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Load existing overrides
-    let overrides = loadJsonSafe(PRIMARY_OVERRIDES_PATH, TMP_OVERRIDES_PATH);
+    let overrides = loadJsonSafe(PRIMARY_OVERRIDES_PATH, LOCAL_TMP_OVERRIDES_PATH, TMP_OVERRIDES_PATH);
 
     // Save override
     overrides[courseId] = {
@@ -75,10 +78,10 @@ export const POST: APIRoute = async ({ request }) => {
       updated_at: new Date().toISOString()
     };
 
-    const writeRes = saveJsonSafe(PRIMARY_OVERRIDES_PATH, TMP_OVERRIDES_PATH, overrides);
+    const writeRes = saveJsonSafe(PRIMARY_OVERRIDES_PATH, LOCAL_TMP_OVERRIDES_PATH, TMP_OVERRIDES_PATH, overrides);
 
     // Also hot-patch catalog.json if possible
-    const catalog = loadJsonSafe(PRIMARY_CATALOG_PATH, TMP_CATALOG_PATH);
+    const catalog = loadJsonSafe(PRIMARY_CATALOG_PATH, LOCAL_TMP_CATALOG_PATH, TMP_CATALOG_PATH);
     if (catalog && catalog.courses) {
       const course = catalog.courses.find((c: any) => c.id === courseId);
       if (course) {
@@ -91,7 +94,7 @@ export const POST: APIRoute = async ({ request }) => {
         if (is_featured !== undefined) course.is_featured = Boolean(is_featured);
         if (cover_image !== undefined) course.cover_image = cover_image;
         course.classification_source = 'manual';
-        saveJsonSafe(PRIMARY_CATALOG_PATH, TMP_CATALOG_PATH, catalog);
+        saveJsonSafe(PRIMARY_CATALOG_PATH, LOCAL_TMP_CATALOG_PATH, TMP_CATALOG_PATH, catalog);
       }
     }
 
