@@ -59,7 +59,7 @@ const navItems = [
       <div class="user-menu-container">
         <a href="/profile" class="user-avatar-btn" aria-label="Perfil do Usuário">
           <div class="avatar-circle">
-            <span id="user-initials">ED</span>
+            <span id="user-initials">TA</span>
           </div>
         </a>
       </div>
@@ -95,6 +95,12 @@ const navItems = [
     const user = localStorage.getItem('mindflix_user');
     if (user) {
       const data = JSON.parse(user);
+      if ((data.email && data.email.toLowerCase().includes('tamydoagro')) || data.id === 'user-tamydoagro') {
+        if (data.full_name !== 'Tamires') {
+          data.full_name = 'Tamires';
+          localStorage.setItem('mindflix_user', JSON.stringify(data));
+        }
+      }
       const name = data.full_name || data.email || '';
       const isLemmg = name.toLowerCase().includes('lemmg0800');
 

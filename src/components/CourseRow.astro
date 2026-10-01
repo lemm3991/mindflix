@@ -8,14 +8,15 @@ interface Props {
   courses: Course[];
   viewAllHref?: string;
   icon?: string;
+  categoryId?: string;
 }
 
-const { title, courses, viewAllHref, icon } = Astro.props;
+const { title, courses, viewAllHref, icon, categoryId } = Astro.props;
 const rowId = `row-${title.toLowerCase().replace(/[^\w]/g, '-')}`;
 ---
 
 {courses.length > 0 && (
-  <section class="course-row-section" data-row-id={rowId}>
+  <section class="course-row-section" data-row-id={rowId} data-category-id={categoryId}>
     <div class="row-header">
       <div class="title-group">
         <h2 class="row-title">{title}</h2>

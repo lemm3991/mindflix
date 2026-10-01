@@ -20,7 +20,9 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   interactive_bg_enabled: true,
   reduce_motion: false,
   theme_id: 'cyan-indigo',
-  gemini_api_key: ''
+  gemini_api_key: '',
+  selected_categories: [],
+  first_login_notice_seen: false
 };
 
 // HELPER: GET NEXT LESSON OR RESUME LESSON FOR COURSE

@@ -135,6 +135,8 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
     parallax_enabled BOOLEAN DEFAULT TRUE,
     interactive_bg_enabled BOOLEAN DEFAULT TRUE,
     reduce_motion BOOLEAN DEFAULT FALSE,
+    selected_categories TEXT[] DEFAULT '{}',
+    first_login_notice_seen BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );

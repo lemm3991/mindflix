@@ -19,7 +19,7 @@ export const AUTHORIZED_USERS = [
     username: 'tamydoagro',
     email: 'tamydoagro@mindflix.local',
     defaultPassword: 'mndflx2026',
-    name: 'Tamydoagro'
+    name: 'Tamires'
   }
 ];
 

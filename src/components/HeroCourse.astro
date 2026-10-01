@@ -67,6 +67,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
           class={`hero-slide ${idx === 0 ? 'active' : ''}`}
           data-slide-index={idx}
           data-course-id={course.id}
+          data-categories={(course.categories || []).join(',')}
         >
           <div class="hero-meta">
             <div class="badges-row">

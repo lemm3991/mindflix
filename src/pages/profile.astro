@@ -8,11 +8,11 @@ import Layout from '../layouts/Layout.astro';
     <div class="profile-header-card">
       <div class="profile-identity">
         <div class="profile-avatar-large">
-          <span id="profile-avatar-initials">ED</span>
+          <span id="profile-avatar-initials">TA</span>
         </div>
         <div class="profile-info">
-          <h1 class="profile-name" id="profile-name">Eduardo</h1>
-          <p class="profile-email" id="profile-email">usuario@mindflix.local</p>
+          <h1 class="profile-name" id="profile-name">Tamires</h1>
+          <p class="profile-email" id="profile-email">tamydoagro@mindflix.local</p>
           <span class="badge badge-cyan">Membro Mindflix</span>
         </div>
       </div>
@@ -116,10 +116,17 @@ import Layout from '../layouts/Layout.astro';
   import { getLocalUser, setLocalUser } from '../lib/supabase';
 
   // Load user
-  const user = getLocalUser();
+  let user = getLocalUser();
   if (!user) {
     window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
   } else {
+    if ((user.email && user.email.toLowerCase().includes('tamydoagro')) || user.id === 'user-tamydoagro') {
+      if (user.full_name !== 'Tamires') {
+        user.full_name = 'Tamires';
+        setLocalUser(user);
+      }
+    }
+
     const nameEl = document.getElementById('profile-name');
     const emailEl = document.getElementById('profile-email');
     const avatarInitials = document.getElementById('profile-avatar-initials');

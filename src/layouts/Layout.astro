@@ -6,6 +6,7 @@ import InteractiveBackground from '../components/InteractiveBackground.astro';
 import CommandPalette from '../components/CommandPalette.astro';
 import CourseDetailModal from '../components/CourseDetailModal.astro';
 import Toast from '../components/Toast.astro';
+import WelcomeNoticeModal from '../components/WelcomeNoticeModal.astro';
 
 interface Props {
   title?: string;
@@ -117,6 +118,9 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
 
     <!-- Global Toast Container -->
     <Toast />
+
+    <!-- Welcome First Login Notice Modal -->
+    <WelcomeNoticeModal />
 
     {!hideNavbar && (
       <footer class="app-footer">

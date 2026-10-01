@@ -36,7 +36,7 @@ const coverGradient = hues[Math.abs(hash) % hues.length];
 const sampleVideoPath = isPlayableVideoLesson(firstLesson) ? (firstLesson?.relative_path || '') : '';
 ---
 
-<div class="course-card-wrapper" data-course-id={course.id} data-video-path={sampleVideoPath}>
+<div class="course-card-wrapper" data-course-id={course.id} data-video-path={sampleVideoPath} data-categories={(course.categories || []).join(',')}>
   <div class="course-card" id={`card-${course.id}`} tabindex="0" role="button" aria-label={`Ver detalhes do curso ${course.display_title}`}>
     
     <!-- Specular Highlight Overlay -->

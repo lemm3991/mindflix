@@ -1,12 +1,13 @@
 ---
-// index.astro - Mindflix Streaming Home with Continue Watching, Next in Path & Rotating Hero
+// index.astro - Mindflix Streaming Home with Continue Watching, Next in Path, Category Filtering & Hero Showcase
 import Layout from '../layouts/Layout.astro';
 import HeroCourse from '../components/HeroCourse.astro';
 import CourseRow from '../components/CourseRow.astro';
 import CourseCard from '../components/CourseCard.astro';
-import { getAllCourses, getCoursesByCategory, getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
+import { getAllCourses, getCategories, getCoursesByCategory, getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
 
 const allCourses = getAllCourses();
+const categories = getCategories();
 
 // Eligible courses for hero showcase (must not be hidden/missing and must have real playable lesson videos)
 const eligibleHeroCourses = allCourses.filter(c => {
@@ -15,31 +16,43 @@ const eligibleHeroCourses = allCourses.filter(c => {
   return Boolean(firstVideo && isPlayableVideoLesson(firstVideo));
 });
 
-// Fisher-Yates shuffle algorithm for uniform randomness
-function getRandomHeroCourses(list: typeof allCourses, count = 5) {
-  const pool = [...list];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+// Build a rich hero list with representation from categories so filtering always finds hero slides
+const heroCourseList: any[] = [];
+const heroAddedIds = new Set<string>();
+
+categories.forEach(cat => {
+  const catCourses = getCoursesByCategory(cat.id).filter(c => !c.is_hidden && !(c as any).missing);
+  if (catCourses.length > 0) {
+    const pick = catCourses.find(c => c.is_featured) || catCourses[0];
+    if (pick && !heroAddedIds.has(pick.id)) {
+      heroCourseList.push(pick);
+      heroAddedIds.add(pick.id);
+    }
   }
-  return pool.slice(0, count);
-}
+});
 
-// Randomly select 5 diverse courses on each page load/request
-const poolToSample = eligibleHeroCourses.length >= 5 
-  ? eligibleHeroCourses 
-  : (eligibleHeroCourses.length > 0 ? eligibleHeroCourses : allCourses);
-const featuredCourses = getRandomHeroCourses(poolToSample, Math.min(5, poolToSample.length));
+eligibleHeroCourses.forEach(c => {
+  if (heroCourseList.length < 12 && !heroAddedIds.has(c.id)) {
+    heroCourseList.push(c);
+    heroAddedIds.add(c.id);
+  }
+});
 
-// Course slices by main categories
+const featuredCourses = heroCourseList.length > 0 ? heroCourseList : allCourses.slice(0, 5);
+
+// Course slices for all categories
 const iaCourses = getCoursesByCategory('ia');
 const automacaoCourses = getCoursesByCategory('automacao-agentes');
 const devCourses = getCoursesByCategory('programacao-dev');
 const webCourses = getCoursesByCategory('web-vibe-coding');
 const backendCourses = getCoursesByCategory('backend-infra');
 const dataCourses = getCoursesByCategory('dados-datascience');
+const pythonCourses = getCoursesByCategory('python');
 const tradingCourses = getCoursesByCategory('trading');
 const personalCourses = getCoursesByCategory('desenvolvimento-pessoal');
+const saudeCourses = getCoursesByCategory('saude-lifestyle');
+const musicaCourses = getCoursesByCategory('musica');
+const negociosCourses = getCoursesByCategory('negocios');
 
 // Recommended path courses (Section 65: "Próximo da sua Trilha")
 const nextInPathCourses = allCourses.filter(c => 
@@ -74,65 +87,103 @@ const nextInPathCourses = allCourses.filter(c =>
     </div>
 
     <!-- Próximo da sua Trilha (Section 65) -->
-    <CourseRow
-      title="Próximo da sua Trilha — Especialização em IA & NoCode"
-      courses={nextInPathCourses}
-      viewAllHref="/category/ia"
-    />
+    <div id="next-in-path-row-wrapper" data-section="next-in-path">
+      <CourseRow
+        title="Próximo da sua Trilha — Especialização em IA & NoCode"
+        courses={nextInPathCourses}
+        viewAllHref="/category/ia"
+      />
+    </div>
 
-    <!-- Categorized Streaming Carousels -->
+    <!-- Categorized Streaming Carousels (Tagged with data-category-id for filtering) -->
     <CourseRow
+      categoryId="ia"
       title="Inteligência Artificial & LLMs"
       courses={iaCourses}
       viewAllHref="/category/ia"
     />
 
     <CourseRow
+      categoryId="automacao-agentes"
       title="Automação & Agentes Autônomos"
       courses={automacaoCourses}
       viewAllHref="/category/automacao-agentes"
     />
 
     <CourseRow
+      categoryId="web-vibe-coding"
       title="Web, Apps & Vibe Coding"
       courses={webCourses}
       viewAllHref="/category/web-vibe-coding"
     />
 
     <CourseRow
+      categoryId="programacao-dev"
       title="Programação & Desenvolvimento"
       courses={devCourses}
       viewAllHref="/category/programacao-dev"
     />
 
     <CourseRow
+      categoryId="backend-infra"
       title="Backend, Bancos de Dados & Infraestrutura"
       courses={backendCourses}
       viewAllHref="/category/backend-infra"
     />
 
     <CourseRow
+      categoryId="dados-datascience"
       title="Dados & Data Science"
       courses={dataCourses}
       viewAllHref="/category/dados-datascience"
     />
 
     <CourseRow
+      categoryId="python"
+      title="Ecossistema Python"
+      courses={pythonCourses}
+      viewAllHref="/category/python"
+    />
+
+    <CourseRow
+      categoryId="trading"
       title="Trading & Mercado Financeiro"
       courses={tradingCourses}
       viewAllHref="/category/trading"
     />
 
     <CourseRow
-      title="Desenvolvimento Pessoal & Soft Skills"
+      categoryId="desenvolvimento-pessoal"
+      title="Desenvolvimento Pessoal & PNL"
       courses={personalCourses}
       viewAllHref="/category/desenvolvimento-pessoal"
+    />
+
+    <CourseRow
+      categoryId="saude-lifestyle"
+      title="Saúde, Fitness & Culinária"
+      courses={saudeCourses}
+      viewAllHref="/category/saude-lifestyle"
+    />
+
+    <CourseRow
+      categoryId="musica"
+      title="Música & Artes"
+      courses={musicaCourses}
+      viewAllHref="/category/musica"
+    />
+
+    <CourseRow
+      categoryId="negocios"
+      title="Negócios & Oportunidades"
+      courses={negociosCourses}
+      viewAllHref="/category/negocios"
     />
   </div>
 </Layout>
 
 <script>
-  import { getRecentCourseIds, getFavoriteCourseIds } from '../lib/progress';
+  import { getRecentCourseIds, getFavoriteCourseIds, getUserPreferences } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
   const params = new URLSearchParams(window.location.search);
@@ -184,6 +235,106 @@ const nextInPathCourses = allCourses.filter(c =>
       cardsToClone.forEach(card => myListGrid.appendChild(card));
     }
   }
+
+  // APPLY USER CATEGORY FILTERING ON HOME
+  function applyHomeCategoryFilters() {
+    const prefs = getUserPreferences();
+    const selected = prefs.selected_categories || [];
+    const isFiltering = selected.length > 0;
+
+    // 1. Filter Category Rows
+    const catRows = document.querySelectorAll<HTMLElement>('[data-category-id]');
+    catRows.forEach(row => {
+      const catId = row.getAttribute('data-category-id');
+      if (!isFiltering || (catId && selected.includes(catId))) {
+        row.style.display = 'block';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // 2. Filter Hero Slides
+    const slides = document.querySelectorAll<HTMLElement>('.hero-slide');
+    const videoItems = document.querySelectorAll<HTMLElement>('.hero-video-item');
+    const dots = document.querySelectorAll<HTMLElement>('.indicator-dot');
+
+    if (slides.length > 0 && isFiltering) {
+      let firstVisibleIdx = -1;
+      slides.forEach((slide, idx) => {
+        const slideCats = (slide.getAttribute('data-categories') || '').split(',');
+        const matches = slideCats.some(c => selected.includes(c));
+        const dot = dots[idx];
+        if (matches) {
+          if (firstVisibleIdx === -1) firstVisibleIdx = idx;
+          if (dot) dot.style.display = 'inline-block';
+        } else {
+          slide.classList.remove('active');
+          if (videoItems[idx]) videoItems[idx].classList.remove('active');
+          if (dot) {
+            dot.classList.remove('active');
+            dot.style.display = 'none';
+          }
+        }
+      });
+
+      if (firstVisibleIdx !== -1) {
+        slides.forEach(s => s.classList.remove('active'));
+        dots.forEach(d => d.classList.remove('active'));
+        videoItems.forEach(v => v.classList.remove('active'));
+
+        slides[firstVisibleIdx]?.classList.add('active');
+        if (dots[firstVisibleIdx]) dots[firstVisibleIdx].classList.add('active');
+        if (videoItems[firstVisibleIdx]) videoItems[firstVisibleIdx].classList.add('active');
+      }
+    } else if (slides.length > 0) {
+      dots.forEach(d => d.style.display = 'inline-block');
+    }
+
+    // 3. Filter "Próximo da sua Trilha"
+    const nextPathWrapper = document.getElementById('next-in-path-row-wrapper');
+    if (nextPathWrapper) {
+      const cards = nextPathWrapper.querySelectorAll<HTMLElement>('.course-card-wrapper');
+      let visibleCount = 0;
+      cards.forEach(card => {
+        const cardCats = (card.getAttribute('data-categories') || '').split(',');
+        if (!isFiltering || cardCats.some(c => selected.includes(c))) {
+          card.style.display = 'block';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      nextPathWrapper.style.display = (!isFiltering || visibleCount > 0) ? 'block' : 'none';
+    }
+
+    // 4. Filter Continue Studying & My List Grids
+    filterGridByCategories(continueGrid, selected);
+    filterGridByCategories(myListGrid, selected);
+  }
+
+  function filterGridByCategories(gridEl: HTMLElement | null, selected: string[]) {
+    if (!gridEl) return;
+    const cards = gridEl.querySelectorAll<HTMLElement>('.course-card-wrapper');
+    let visibleCount = 0;
+    cards.forEach(card => {
+      const cardCats = (card.getAttribute('data-categories') || '').split(',');
+      if (selected.length === 0 || cardCats.some(c => selected.includes(c))) {
+        card.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    const parentRow = gridEl.closest<HTMLElement>('.dynamic-row');
+    if (parentRow) {
+      parentRow.style.display = visibleCount > 0 ? 'block' : 'none';
+    }
+  }
+
+  // Apply immediately and listen for changes
+  applyHomeCategoryFilters();
+  window.addEventListener('mindflix:preferences-updated', applyHomeCategoryFilters);
 </script>
 
 <style>

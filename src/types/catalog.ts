@@ -87,4 +87,6 @@ export interface UserPreferences {
   reduce_motion: boolean;
   theme_id?: string;
   gemini_api_key?: string;
+  selected_categories?: string[];
+  first_login_notice_seen?: boolean;
 }

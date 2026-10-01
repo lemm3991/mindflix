@@ -1,17 +1,61 @@
 ---
-// settings.astro - Painel de Preferências, Temas de Cores e Segurança
+// settings.astro - Painel de Preferências, Temas de Cores, Filtro de Categorias e Segurança
 import Layout from '../layouts/Layout.astro';
 import { THEME_PRESETS } from '../lib/theme';
+import { getCategories, getAllCourses } from '../lib/catalog';
+
+const categories = getCategories();
+const allCourses = getAllCourses();
+
+// Calculate course count per category
+const categoryCounts: Record<string, number> = {};
+categories.forEach(cat => {
+  categoryCounts[cat.id] = allCourses.filter(c => c.categories?.includes(cat.id)).length;
+});
 ---
 
 <Layout title="Preferências — Mindflix">
   <div class="container settings-page">
     <header class="page-header">
       <h1 class="page-title">Configurações & Preferências</h1>
-      <p class="page-subtitle">Personalize a sua experiência de estudo, tema de cores, reprodução de vídeo, interface visual e segurança da conta.</p>
+      <p class="page-subtitle">Personalize a sua experiência de estudo, tema de cores, categorias visíveis, reprodução de vídeo e segurança da conta.</p>
     </header>
 
     <div class="settings-sections-wrapper">
+      <!-- Category Personalization Card (Highlight Card) -->
+      <section class="settings-card highlight-card">
+        <div class="card-section-header">
+          <h2 class="card-section-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="22 3 2 10 11 13 14 22 22 3"></polygon>
+            </svg>
+            <span>Personalizar Categorias do Perfil & Início</span>
+          </h2>
+          <span class="badge badge-cyan" id="category-summary-badge">Exibindo Todas</span>
+        </div>
+        <p class="section-description">
+          Filtre os temas e conteúdos que você deseja ver na plataforma. Ao selecionar suas categorias favoritas, cursos e recomendações de outras áreas serão automaticamente ocultados da página inicial e do perfil.
+        </p>
+
+        <div class="category-filter-cta-row">
+          <button type="button" class="btn btn-primary btn-lg btn-category-highlight" id="btn-open-category-modal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="21" x2="4" y2="14"></line>
+              <line x1="4" y1="10" x2="4" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12" y2="3"></line>
+              <line x1="20" y1="21" x2="20" y2="16"></line>
+              <line x1="20" y1="12" x2="20" y2="3"></line>
+              <line x1="1" y1="14" x2="7" y2="14"></line>
+              <line x1="9" y1="8" x2="15" y2="8"></line>
+              <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            <span>Filtrar Categorias Visíveis</span>
+          </button>
+          <span class="category-status-sub" id="category-status-detail">Exibindo todas as {categories.length} categorias ativas no catálogo</span>
+        </div>
+      </section>
+
       <!-- Theme Palette Selection -->
       <section class="settings-card">
         <h2 class="card-section-title">
@@ -103,19 +147,21 @@ import { THEME_PRESETS } from '../lib/theme';
         </div>
       </section>
 
-      <!-- Visual Preferences -->
+      <!-- Visual Experience & Motion -->
       <section class="settings-card">
         <h2 class="card-section-title">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
           </svg>
-          <span>Preferências Visuais & Efeitos</span>
+          <span>Interface & Animações</span>
         </h2>
 
         <div class="setting-row">
           <div class="setting-text">
-            <span class="setting-name">Efeito Parallax</span>
-            <span class="setting-hint">Camadas de profundidade discretas ao movimentar o mouse e rolar a página.</span>
+            <span class="setting-name">Efeito Parallax com Mouse</span>
+            <span class="setting-hint">Habilita suave deslocamento 3D de elementos ao mover o cursor sobre cards e destaques.</span>
           </div>
           <div class="setting-control">
             <label class="switch">
@@ -127,8 +173,8 @@ import { THEME_PRESETS } from '../lib/theme';
 
         <div class="setting-row">
           <div class="setting-text">
-            <span class="setting-name">Background Interativo</span>
-            <span class="setting-hint">Orbes de iluminação dinâmica e malha tecnológica no fundo da página.</span>
+            <span class="setting-name">Fundo Interativo Dinâmico</span>
+            <span class="setting-hint">Exibe canvas em segundo plano com orbes e linhas fluidas animadas.</span>
           </div>
           <div class="setting-control">
             <label class="switch">
@@ -140,8 +186,8 @@ import { THEME_PRESETS } from '../lib/theme';
 
         <div class="setting-row">
           <div class="setting-text">
-            <span class="setting-name">Reduzir Animações</span>
-            <span class="setting-hint">Desativa transições e movimentos para maior sobriedade ou acessibilidade.</span>
+            <span class="setting-name">Reduzir Animações (Acessibilidade)</span>
+            <span class="setting-hint">Desativa transições complexas e otimiza o desempenho em dispositivos mais fracos.</span>
           </div>
           <div class="setting-control">
             <label class="switch">
@@ -152,89 +198,104 @@ import { THEME_PRESETS } from '../lib/theme';
         </div>
       </section>
 
-      <!-- Account Security & Change Password -->
+      <!-- Security / Account Password -->
       <section class="settings-card">
         <h2 class="card-section-title">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
-          <span>Segurança & Alteração de Senha</span>
+          <span>Segurança da Conta</span>
         </h2>
+        <p class="section-description">
+          Altere a senha de acesso da sua conta autorizada. A nova senha será salva no seu perfil local.
+        </p>
 
         <form id="change-password-form" class="change-pass-form">
-          <div class="setting-row">
-            <div class="setting-text">
-              <span class="setting-name">Nova Senha</span>
-              <span class="setting-hint">Digite a sua nova senha de acesso à plataforma (mínimo 6 caracteres).</span>
-            </div>
-            <div class="setting-control" style="width: 280px;">
-              <input
-                type="password"
-                id="new-password"
-                class="form-input"
-                placeholder="••••••••"
-                minlength="6"
-                required
-              />
-            </div>
+          <div class="setting-row" style="flex-direction: column; align-items: stretch; gap: 0.5rem;">
+            <label for="new-password" class="setting-name">Nova Senha</label>
+            <input type="password" id="new-password" class="form-input" placeholder="Mínimo 6 caracteres" required />
           </div>
 
-          <div class="setting-row">
-            <div class="setting-text">
-              <span class="setting-name">Confirmar Nova Senha</span>
-              <span class="setting-hint">Digite novamente a nova senha para confirmação.</span>
-            </div>
-            <div class="setting-control" style="width: 280px;">
-              <input
-                type="password"
-                id="confirm-password"
-                class="form-input"
-                placeholder="••••••••"
-                minlength="6"
-                required
-              />
-            </div>
+          <div class="setting-row" style="flex-direction: column; align-items: stretch; gap: 0.5rem;">
+            <label for="confirm-password" class="setting-name">Confirmar Nova Senha</label>
+            <input type="password" id="confirm-password" class="form-input" placeholder="Digite a nova senha novamente" required />
           </div>
 
           <div class="pass-btn-row">
-            <button type="submit" class="btn btn-primary" id="btn-save-pass">
+            <button type="submit" class="btn btn-primary">
               <span>Atualizar Senha</span>
             </button>
           </div>
         </form>
       </section>
+    </div>
+  </div>
 
-      <!-- AI & RAG Preferences -->
-      <section class="settings-card">
-        <h2 class="card-section-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-2h2zm0-4h-2V7h2z"></path>
-          </svg>
-          <span>Inteligência Artificial & Busca no Acervo</span>
-        </h2>
-
-        <div class="setting-row">
-          <div class="setting-text">
-            <span class="setting-name">Chave da API Google Gemini (Opcional)</span>
-            <span class="setting-hint">Habilita síntese contextual em linguagem natural das transcrições do acervo.</span>
-          </div>
-          <div class="setting-control" style="width: 280px;">
-            <input
-              type="password"
-              id="pref-gemini-key"
-              class="form-input"
-              placeholder="AIzaSy... (Opcional)"
-              autocomplete="off"
-            />
-          </div>
+  <!-- Category Selection Modal -->
+  <div class="modal-overlay" id="category-selection-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="cat-modal-title">
+    <div class="category-modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="modal-badge">Filtros de Conteúdo</span>
+          <h2 class="modal-title" id="cat-modal-title">Selecione suas Categorias Preferidas</h2>
+          <p class="modal-subtitle">Marque as categorias que deseja visualizar no seu perfil e feed de cursos. Deixe todas marcadas para ver o catálogo completo.</p>
         </div>
-      </section>
+        <button type="button" class="modal-close-btn" id="btn-close-category-modal" aria-label="Fechar modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
 
-      <div class="save-status-box" id="save-status-box" style="display: none;">
-        <span>Preferências salvas e sincronizadas com sucesso!</span>
+      <div class="category-modal-actions-bar">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-cat-select-all">
+          <span>Marcar Todas</span>
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-cat-deselect-all">
+          <span>Desmarcar Todas</span>
+        </button>
+      </div>
+
+      <div class="category-modal-grid">
+        {categories.map((cat) => (
+          <label class="category-option-card" data-cat-id={cat.id}>
+            <input type="checkbox" class="cat-checkbox" value={cat.id} />
+            <div class="cat-card-content">
+              <div class="cat-card-header">
+                <span class="cat-name">{cat.name}</span>
+                <span class="cat-course-count">{categoryCounts[cat.id] || 0} cursos</span>
+              </div>
+              <p class="cat-desc">{cat.description}</p>
+            </div>
+            <div class="cat-check-indicator">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-category-modal">
+          <span>Cancelar</span>
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-save-categories">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          <span>Salvar Categorias</span>
+        </button>
       </div>
     </div>
+  </div>
+
+  <div class="save-status-box" id="save-status-box" style="display: none;">
+    ✓ Preferências salvas
   </div>
 </Layout>
 
@@ -258,7 +319,6 @@ import { THEME_PRESETS } from '../lib/theme';
   const parallax = document.getElementById('pref-parallax') as HTMLInputElement | null;
   const interactiveBg = document.getElementById('pref-interactive-bg') as HTMLInputElement | null;
   const reduceMotion = document.getElementById('pref-reduce-motion') as HTMLInputElement | null;
-  const geminiKey = document.getElementById('pref-gemini-key') as HTMLInputElement | null;
   const statusBox = document.getElementById('save-status-box');
 
   function updateThemeCardsUI() {
@@ -297,7 +357,119 @@ import { THEME_PRESETS } from '../lib/theme';
     if (parallax) parallax.checked = prefs.parallax_enabled;
     if (interactiveBg) interactiveBg.checked = prefs.interactive_bg_enabled;
     if (reduceMotion) reduceMotion.checked = prefs.reduce_motion;
-    if (geminiKey) geminiKey.value = prefs.gemini_api_key || '';
+
+    updateCategorySummaryUI();
+  }
+
+  // Category Filtering Modal Logic
+  const catModal = document.getElementById('category-selection-modal');
+  const btnOpenCatModal = document.getElementById('btn-open-category-modal');
+  const btnCloseCatModal = document.getElementById('btn-close-category-modal');
+  const btnCancelCatModal = document.getElementById('btn-cancel-category-modal');
+  const btnSaveCategories = document.getElementById('btn-save-categories');
+  const btnSelectAll = document.getElementById('btn-cat-select-all');
+  const btnDeselectAll = document.getElementById('btn-cat-deselect-all');
+  const summaryBadge = document.getElementById('category-summary-badge');
+  const statusDetail = document.getElementById('category-status-detail');
+
+  function updateCatCardState(cb: HTMLInputElement) {
+    const card = cb.closest<HTMLElement>('.category-option-card');
+    if (card) {
+      if (cb.checked) {
+        card.classList.add('selected');
+      } else {
+        card.classList.remove('selected');
+      }
+    }
+  }
+
+  function openCategoryModal() {
+    if (!catModal) return;
+    const prefs = getUserPreferences();
+    const selected = prefs.selected_categories || [];
+
+    const checkboxes = catModal.querySelectorAll<HTMLInputElement>('.cat-checkbox');
+    checkboxes.forEach(cb => {
+      if (selected.length === 0) {
+        cb.checked = true;
+      } else {
+        cb.checked = selected.includes(cb.value);
+      }
+      updateCatCardState(cb);
+    });
+
+    catModal.style.display = 'flex';
+    setTimeout(() => catModal.classList.add('visible'), 20);
+  }
+
+  function closeCategoryModal() {
+    if (!catModal) return;
+    catModal.classList.remove('visible');
+    setTimeout(() => catModal.style.display = 'none', 300);
+  }
+
+  function updateCategorySummaryUI() {
+    const prefs = getUserPreferences();
+    const selected = prefs.selected_categories || [];
+    const totalCategories = document.querySelectorAll('.category-option-card').length || 12;
+
+    if (summaryBadge && statusDetail) {
+      if (selected.length === 0 || selected.length === totalCategories) {
+        summaryBadge.textContent = 'Exibindo Todas';
+        summaryBadge.className = 'badge badge-cyan';
+        statusDetail.textContent = `Exibindo todas as ${totalCategories} categorias ativas no catálogo.`;
+      } else {
+        summaryBadge.textContent = `${selected.length} de ${totalCategories} Selecionadas`;
+        summaryBadge.className = 'badge badge-purple';
+        statusDetail.textContent = `${selected.length} categoria(s) selecionada(s) para exibição no perfil e início.`;
+      }
+    }
+  }
+
+  catModal?.querySelectorAll<HTMLInputElement>('.cat-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => updateCatCardState(cb));
+  });
+
+  btnSelectAll?.addEventListener('click', () => {
+    catModal?.querySelectorAll<HTMLInputElement>('.cat-checkbox').forEach(cb => {
+      cb.checked = true;
+      updateCatCardState(cb);
+    });
+  });
+
+  btnDeselectAll?.addEventListener('click', () => {
+    catModal?.querySelectorAll<HTMLInputElement>('.cat-checkbox').forEach(cb => {
+      cb.checked = false;
+      updateCatCardState(cb);
+    });
+  });
+
+  btnOpenCatModal?.addEventListener('click', openCategoryModal);
+  btnCloseCatModal?.addEventListener('click', closeCategoryModal);
+  btnCancelCatModal?.addEventListener('click', closeCategoryModal);
+
+  btnSaveCategories?.addEventListener('click', async () => {
+    const checkboxes = catModal?.querySelectorAll<HTMLInputElement>('.cat-checkbox:checked');
+    const selectedIds: string[] = [];
+    checkboxes?.forEach(cb => selectedIds.push(cb.value));
+
+    const totalCategories = document.querySelectorAll('.category-option-card').length || 12;
+    const finalSelected = (selectedIds.length === totalCategories) ? [] : selectedIds;
+
+    await saveUserPreferences({ selected_categories: finalSelected });
+    showToast('Preferências de categorias salvas com sucesso!', 'success');
+    updateCategorySummaryUI();
+    closeCategoryModal();
+
+    window.dispatchEvent(new CustomEvent('mindflix:preferences-updated'));
+  });
+
+  // Auto open modal if URL query has ?openCategories=1
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('openCategories') === '1') {
+    openCategoryModal();
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
   }
 
   // Sync latest preferences from Supabase if configured
@@ -322,8 +494,7 @@ import { THEME_PRESETS } from '../lib/theme';
       parallax_enabled: parallax?.checked ?? true,
       interactive_bg_enabled: interactiveBg?.checked ?? true,
       reduce_motion: reduceMotion?.checked ?? false,
-      theme_id: activeThemeId,
-      gemini_api_key: geminiKey?.value.trim() || ''
+      theme_id: activeThemeId
     });
     showSaved();
   };
@@ -334,7 +505,6 @@ import { THEME_PRESETS } from '../lib/theme';
   parallax?.addEventListener('change', handleUpdate);
   interactiveBg?.addEventListener('change', handleUpdate);
   reduceMotion?.addEventListener('change', handleUpdate);
-  geminiKey?.addEventListener('change', handleUpdate);
 
   // Password change form
   const passForm = document.getElementById('change-password-form');
@@ -405,6 +575,42 @@ import { THEME_PRESETS } from '../lib/theme';
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: 2rem;
+  }
+
+  /* Highlight Card */
+  .highlight-card {
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.35);
+    background: linear-gradient(135deg, rgba(var(--accent-primary-rgb), 0.08) 0%, rgba(11, 14, 21, 0.95) 100%);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3), 0 0 24px rgba(var(--accent-primary-rgb), 0.1);
+  }
+
+  .card-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+
+  .category-filter-cta-row {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+  }
+
+  .btn-category-highlight {
+    padding: 0.85rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(var(--accent-primary-rgb), 0.3);
+  }
+
+  .category-status-sub {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
   }
 
   .card-section-title {
@@ -555,6 +761,205 @@ import { THEME_PRESETS } from '../lib/theme';
   .theme-card.active .theme-check-badge {
     opacity: 1;
     transform: scale(1);
+  }
+
+  /* Modal Styling */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-modal);
+    background: rgba(4, 6, 12, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .modal-overlay.visible {
+    opacity: 1;
+  }
+
+  .category-modal-card {
+    width: 100%;
+    max-width: 780px;
+    max-height: 88vh;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+    transform: scale(0.95);
+    transition: transform 0.3s var(--ease-spring);
+  }
+
+  .modal-overlay.visible .category-modal-card {
+    transform: scale(1);
+  }
+
+  .modal-header {
+    padding: 1.75rem 2rem 1.25rem 2rem;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .modal-badge {
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-cyan);
+    margin-bottom: 0.35rem;
+    display: inline-block;
+  }
+
+  .modal-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+  }
+
+  .modal-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .modal-close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 50%;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .modal-close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .category-modal-actions-bar {
+    padding: 0.75rem 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .category-modal-grid {
+    padding: 1.5rem 2rem;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+    max-height: 50vh;
+  }
+
+  .category-option-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.15rem;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    position: relative;
+    transition: all var(--motion-fast) var(--ease-out);
+    user-select: none;
+  }
+
+  .category-option-card:hover {
+    border-color: rgba(var(--accent-primary-rgb), 0.4);
+    background: #171d2b;
+  }
+
+  .category-option-card.selected {
+    border-color: var(--accent-cyan);
+    background: rgba(var(--accent-primary-rgb), 0.08);
+    box-shadow: 0 0 0 1px var(--accent-cyan), 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .cat-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .cat-card-content {
+    flex: 1;
+  }
+
+  .cat-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .cat-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .cat-course-count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    background: rgba(var(--accent-primary-rgb), 0.12);
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-full);
+  }
+
+  .cat-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .cat-check-indicator {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #07090e;
+    background: transparent;
+    transition: all var(--motion-fast) ease;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .category-option-card.selected .cat-check-indicator {
+    background: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+  }
+
+  .modal-footer {
+    padding: 1.25rem 2rem;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    background: var(--bg-card);
   }
 
   .setting-row {
