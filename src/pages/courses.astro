@@ -39,7 +39,7 @@ const providers = getAllProviders();
 
     <!-- Course & Trilha Grid -->
     <div class="courses-grid" id="catalog-grid">
-      {courses.map((course, idx) => {
+      {courses.slice(0, 36).map((course, idx) => {
         const corpus = [
           course.display_title,
           course.provider,

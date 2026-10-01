@@ -6,7 +6,7 @@ import type { Course, Category, CatalogData, Lesson } from '../types/catalog';
 
 let cachedCatalog: CatalogData | null = null;
 let lastCatalogLoadTime = 0;
-const CATALOG_CACHE_TTL_MS = 250;
+const CATALOG_CACHE_TTL_MS = 60000; // 60s memory cache
 
 export function invalidateCatalogCache(): void {
   cachedCatalog = null;
@@ -27,7 +27,6 @@ function loadMergedCatalog(): CatalogData {
   }
 
   try {
-    const primaryCatalog = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
     const tmpDir = path.resolve(process.cwd(), '.tmp');
     const tmpCatalog = path.join(tmpDir, 'catalog.json');
     const osTmpCatalog = path.join(os.tmpdir(), 'catalog.json');
@@ -42,8 +41,8 @@ function loadMergedCatalog(): CatalogData {
 
     let catalogToUse = baseCatalog;
 
-    // Read updated catalog.json from disk if available
-    for (const catPath of [tmpCatalog, osTmpCatalog, primaryCatalog]) {
+    // Read updated catalog.json from runtime tmp overrides if available
+    for (const catPath of [tmpCatalog, osTmpCatalog]) {
       if (fs.existsSync(catPath)) {
         try {
           const catData = JSON.parse(fs.readFileSync(catPath, 'utf-8'));
