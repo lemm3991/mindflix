@@ -11,9 +11,11 @@ interface Props {
   icon?: string;
   categoryId?: string;
   eagerCount?: number;
+  limit?: number;
 }
 
-const { title, courses, viewAllHref, icon, categoryId, eagerCount = 0 } = Astro.props;
+const { title, courses, viewAllHref, icon, categoryId, eagerCount = 0, limit = 16 } = Astro.props;
+const displayCourses = limit > 0 ? courses.slice(0, limit) : courses;
 const rowId = `row-${title.toLowerCase().replace(/[^\w]/g, '-')}`;
 ---
 
@@ -52,7 +54,7 @@ const rowId = `row-${title.toLowerCase().replace(/[^\w]/g, '-')}`;
 
     <div class="row-carousel-container">
       <div class="row-track" id={rowId}>
-        {courses.map((course, idx) => (
+        {displayCourses.map((course, idx) => (
           <div class="card-item-wrapper" data-source={getCourseSourceId(course)}>
             <CourseCard 
               course={course} 

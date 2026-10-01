@@ -1,14 +1,7 @@
 ---
 // my-list.astro - Minha Lista / Favoritos (Cursos & Trilhas de Formação)
 import Layout from '../layouts/Layout.astro';
-import CourseCard from '../components/CourseCard.astro';
-import TrilhaCard from '../components/TrilhaCard.astro';
 import EmptyState from '../components/EmptyState.astro';
-import { getAllCourses, getCourseSourceId } from '../lib/catalog';
-import { getAllTrilhas } from '../lib/trilhas';
-
-const courses = getAllCourses();
-const trilhas = getAllTrilhas();
 ---
 
 <Layout title="Minha Lista — Mindflix">
@@ -36,32 +29,12 @@ const trilhas = getAllTrilhas();
       </div>
     </div>
 
-    <!-- Items Grid (Trilhas & Cursos) -->
+    <!-- Items Grid (Populated dynamically) -->
     <div class="courses-grid" id="my-list-container">
-      {trilhas.map(trilha => (
-        <div 
-          class="my-list-item my-list-item-trilha" 
-          data-id={trilha.id}
-          data-course-id={trilha.id}
-          data-type="trilha"
-          data-source={trilha.source}
-          style="display: none;"
-        >
-          <TrilhaCard trilha={trilha} />
-        </div>
-      ))}
-      {courses.map(course => (
-        <div 
-          class="my-list-item my-list-item-course" 
-          data-id={course.id}
-          data-course-id={course.id}
-          data-type="course"
-          data-source={getCourseSourceId(course)}
-          style="display: none;"
-        >
-          <CourseCard course={course} />
-        </div>
-      ))}
+      <div class="my-list-loading" id="my-list-loading">
+        <div class="loading-spinner"></div>
+        <p>Carregando seus favoritos...</p>
+      </div>
     </div>
 
     <div id="empty-list-state" style="display: none;">
@@ -76,71 +49,172 @@ const trilhas = getAllTrilhas();
 </Layout>
 
 <script>
-  import { getFavoriteCourseIds } from '../lib/progress';
-  import { getLocalUser } from '../lib/supabase';
-  import { getActiveSource } from '../lib/catalog';
+  import { getFavoriteCourseIds, toggleFavorite } from '../lib/progress';
+  import { getActiveSource } from '../lib/sources';
+  import { showToast } from '../lib/toast';
 
   let currentTab = 'all';
+  let catalogData: { courses: any[]; trilhas: any[] } | null = null;
 
-  function initMyList() {
-    const user = getLocalUser();
-    if (!user) {
-      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-      return;
+  async function loadCatalogData() {
+    if (catalogData) return catalogData;
+    try {
+      const res = await fetch('/api/catalog.json');
+      if (res.ok) {
+        catalogData = await res.json();
+      }
+    } catch (e) {
+      console.error('Failed to load catalog data:', e);
     }
+    return catalogData;
+  }
 
-    const favIds = getFavoriteCourseIds();
-    const activeSource = getActiveSource();
-    const items = document.querySelectorAll<HTMLElement>('.my-list-item');
+  function renderCourseCardHtml(c: any): string {
+    const watchUrl = c.firstLessonId ? `/watch/${c.id}/${c.firstLessonId}` : `/courses`;
+    const coverArt = c.cover_image 
+      ? `<img src="${c.cover_image}" alt="${c.display_title}" class="card-cover-img" loading="lazy" />`
+      : `<div class="cover-center-art"><div class="course-glyph"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div><div class="cover-title-preview">${c.display_title}</div></div>`;
+
+    return `
+      <div class="course-card-wrapper" data-course-id="${c.id}">
+        <div class="course-card" id="card-${c.id}">
+          <div class="card-cover" style="background: linear-gradient(135deg, #16222f, #1a365d);">
+            ${coverArt}
+            <div class="cover-overlay"></div>
+            <div class="cover-badge-top">
+              <span class="provider-pill">${c.provider || 'Mindflix'}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="module-count">${c.modules_count || 1} módulos • ${c.lessons_count || 1} aulas</span>
+              <button type="button" class="card-fav-btn active" data-fav-id="${c.id}" aria-label="Remover favorito" data-action="favorite">
+                <svg class="heart-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
+            </div>
+            <h3 class="card-title"><span class="card-title-text">${c.display_title}</span></h3>
+            <p class="card-desc-text">${c.description || ''}</p>
+            <div class="card-hover-actions">
+              <a href="${watchUrl}" class="btn btn-primary btn-play-fast" data-action="watch">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span>Assistir</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTrilhaCardHtml(t: any): string {
+    return `
+      <div class="trilha-card" data-trilha-id="${t.id}" data-source="${t.source || 'asimov'}">
+        <div class="trilha-card-inner">
+          <div class="trilha-card-header">
+            <span class="trilha-badge-source">${t.provider || 'Formação'}</span>
+            <button type="button" class="card-fav-btn active" data-fav-id="${t.id}" aria-label="Remover favorito" data-action="favorite">
+              <svg class="heart-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
+          </div>
+          <h3 class="trilha-title">${t.title}</h3>
+          <p class="trilha-desc">${t.description || ''}</p>
+          <div class="trilha-meta">
+            <span>${t.total_cursos || t.courses?.length || 0} cursos</span>
+            <span>•</span>
+            <span>${t.total_lessons_count || 0} aulas</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function renderMyList() {
+    const container = document.getElementById('my-list-container');
     const emptyState = document.getElementById('empty-list-state');
     const filterBar = document.getElementById('my-list-filter-bar');
     const countAllEl = document.getElementById('count-all');
     const countTrilhaEl = document.getElementById('count-trilha');
     const countCourseEl = document.getElementById('count-course');
 
-    let totalMatching = 0;
-    let trilhaMatching = 0;
-    let courseMatching = 0;
-    let visibleCount = 0;
+    const favIds = getFavoriteCourseIds();
+    const activeSource = getActiveSource();
 
-    // 1. Calculate counts
-    items.forEach(item => {
-      const id = item.getAttribute('data-id') || item.getAttribute('data-course-id');
-      const itemSource = item.getAttribute('data-source');
-      const itemType = item.getAttribute('data-type') || 'course';
-      const matchesFav = Boolean(id && favIds.includes(id));
-      const matchesSource = !activeSource || activeSource === 'all' || itemSource === activeSource;
+    if (favIds.length === 0) {
+      if (container) container.innerHTML = '';
+      if (filterBar) filterBar.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'block';
+      return;
+    }
 
-      if (matchesFav && matchesSource) {
-        totalMatching++;
-        if (itemType === 'trilha') trilhaMatching++;
-        else courseMatching++;
+    const data = await loadCatalogData();
+    if (!data || !container) return;
 
-        const matchesTab = currentTab === 'all' || itemType === currentTab;
-        if (matchesTab) {
-          item.style.display = 'block';
-          visibleCount++;
-        } else {
-          item.style.display = 'none';
+    const matchedCourses = data.courses.filter(c => favIds.includes(c.id));
+    const matchedTrilhas = (data.trilhas || []).filter(t => favIds.includes(t.id));
+
+    const totalMatching = matchedCourses.length + matchedTrilhas.length;
+    if (countAllEl) countAllEl.textContent = String(totalMatching);
+    if (countTrilhaEl) countTrilhaEl.textContent = String(matchedTrilhas.length);
+    if (countCourseEl) countCourseEl.textContent = String(matchedCourses.length);
+
+    if (totalMatching === 0) {
+      container.innerHTML = '';
+      if (filterBar) filterBar.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'block';
+      return;
+    }
+
+    if (filterBar) filterBar.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+
+    let html = '';
+    if (currentTab === 'all' || currentTab === 'trilha') {
+      matchedTrilhas.forEach(t => {
+        html += `<div class="my-list-item my-list-item-trilha" data-id="${t.id}" data-type="trilha">${renderTrilhaCardHtml(t)}</div>`;
+      });
+    }
+
+    if (currentTab === 'all' || currentTab === 'course') {
+      matchedCourses.forEach(c => {
+        html += `<div class="my-list-item my-list-item-course" data-id="${c.id}" data-type="course">${renderCourseCardHtml(c)}</div>`;
+      });
+    }
+
+    container.innerHTML = html;
+
+    // Attach card interactions
+    container.querySelectorAll('[data-action="favorite"]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = btn.getAttribute('data-fav-id');
+        if (id) {
+          const isFav = await toggleFavorite(id);
+          showToast(isFav ? 'Adicionado aos Favoritos' : 'Removido da Minha Lista', isFav ? 'success' : 'info');
+          renderMyList();
         }
-      } else {
-        item.style.display = 'none';
-      }
+      });
     });
 
-    // 2. Update count badges
-    if (countAllEl) countAllEl.textContent = String(totalMatching);
-    if (countTrilhaEl) countTrilhaEl.textContent = String(trilhaMatching);
-    if (countCourseEl) countCourseEl.textContent = String(courseMatching);
-
-    // 3. Show/hide filter bar & empty state
-    if (filterBar) {
-      filterBar.style.display = totalMatching > 0 ? 'block' : 'none';
-    }
-
-    if (emptyState) {
-      emptyState.style.display = totalMatching === 0 ? 'block' : 'none';
-    }
+    container.querySelectorAll('.course-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('[data-action="watch"]') || target.closest('[data-action="favorite"]')) return;
+        const courseId = card.closest('.course-card-wrapper')?.getAttribute('data-course-id');
+        if (courseId) {
+          e.preventDefault();
+          if ((window as any).openCourseModal) {
+            (window as any).openCourseModal(courseId);
+          } else {
+            document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId } }));
+          }
+        }
+      });
+    });
   }
 
   function setupTabs() {
@@ -152,21 +226,21 @@ const trilhas = getAllTrilhas();
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         currentTab = tab.getAttribute('data-tab') || 'all';
-        initMyList();
+        renderMyList();
       });
     });
   }
 
   document.addEventListener('astro:page-load', () => {
     setupTabs();
-    initMyList();
+    renderMyList();
   });
 
-  window.addEventListener('mindflix:source-changed', initMyList);
-  window.addEventListener('mindflix:favorites-changed', initMyList);
+  window.addEventListener('mindflix:source-changed', renderMyList);
+  window.addEventListener('mindflix:favorites-changed', renderMyList);
 
   setupTabs();
-  initMyList();
+  renderMyList();
 </script>
 
 <style>
@@ -253,29 +327,203 @@ const trilhas = getAllTrilhas();
 
   .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
-    perspective: 1200px;
+  }
+
+  .my-list-loading {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    color: var(--text-muted);
+    gap: 1rem;
+  }
+
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(0, 242, 254, 0.2);
+    border-top-color: var(--accent-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .my-list-item {
-    perspective: 1000px;
     height: 100%;
   }
 
-  @media (max-width: 640px) {
-    .filter-tabs {
-      width: 100%;
-      display: flex;
-      overflow-x: auto;
-      border-radius: var(--radius-md, 8px);
-    }
-    .tab-btn {
-      flex: 1;
-      justify-content: center;
-      padding: 0.45rem 0.6rem;
-      font-size: 0.75rem;
-      white-space: nowrap;
-    }
+  /* Card specific styles */
+  :global(.card-cover) {
+    position: relative;
+    height: 155px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0.85rem;
+    overflow: hidden;
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+  }
+  :global(.card-cover-img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  :global(.cover-overlay) {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(11, 13, 19, 0.15) 0%, rgba(11, 13, 19, 0.85) 100%);
+    pointer-events: none;
+  }
+  :global(.cover-badge-top) {
+    position: relative;
+    z-index: 4;
+  }
+  :global(.provider-pill) {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-full);
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    color: #f1f5f9;
+  }
+  :global(.course-card) {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  :global(.course-card:hover) {
+    border-color: rgba(var(--accent-primary-rgb), 0.45);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+  }
+  :global(.card-body) {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.45rem;
+  }
+  :global(.card-meta) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  :global(.card-fav-btn) {
+    background: transparent;
+    border: none;
+    color: var(--accent-rose);
+    cursor: pointer;
+    padding: 0.2rem;
+  }
+  :global(.card-title) {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0;
+  }
+  :global(.card-title-text) {
+    color: var(--text-primary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  :global(.card-desc-text) {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  :global(.card-hover-actions) {
+    margin-top: auto;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+  :global(.btn-play-fast) {
+    width: 100%;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+  }
+  :global(.trilha-card) {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    height: 100%;
+    transition: all 0.2s ease;
+  }
+  :global(.trilha-card:hover) {
+    border-color: rgba(99, 102, 241, 0.45);
+    transform: translateY(-4px);
+  }
+  :global(.trilha-card-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  :global(.trilha-badge-source) {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent-indigo, #818cf8);
+    background: rgba(99, 102, 241, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-pill);
+  }
+  :global(.trilha-title) {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+  }
+  :global(.trilha-desc) {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  :global(.trilha-meta) {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: auto;
   }
 </style>

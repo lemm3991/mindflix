@@ -192,7 +192,7 @@ const categoryLabels: Record<string, string> = {
     />
   )}
 
-  <div class="container source-page-content">
+  <div class="container source-page-content" data-source-id={source.id}>
     
     <!-- Dynamic Priority Row: Continue Estudando nesta Fonte -->
     <div id="continue-studying-section" class="dynamic-row" style="display: none;">
@@ -303,13 +303,18 @@ const categoryLabels: Record<string, string> = {
 
 </Layout>
 
-<script define:vars={{ currentSourceId: source.id }}>
+<script>
   // Client-side interactions for Source Page
   import { getAllLocalProgress, getRecentCourseIds, isCourseFavorite, getCourseCompletionStats } from '../../lib/progress';
   import { setActiveSource } from '../../lib/sources';
 
+  const sourceContainer = document.querySelector('[data-source-id]');
+  const currentSourceId = sourceContainer?.getAttribute('data-source-id') || window.location.pathname.split('/').filter(Boolean).pop() || '';
+
   // Ensure active source is synchronized in navbar and local storage
-  setActiveSource(currentSourceId);
+  if (currentSourceId) {
+    setActiveSource(currentSourceId);
+  }
 
   // 1. Render "Continuar Estudando nesta Fonte"
   function renderContinueStudying() {

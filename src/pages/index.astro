@@ -279,19 +279,12 @@ const nextInPathCourses = allCourses.filter(c =>
       viewAllHref="/courses?category=dados-datascience"
     />
 
-    {pythonCourses.length > 0 && (
-      <CourseRow
-        title="Ecossistema Python Aplicado"
-        courses={pythonCourses}
-        viewAllHref="/courses?category=python"
-      />
-    )}
-
     <CourseRow
       categoryId="python"
       title="Ecossistema Python"
       courses={pythonCourses}
-      viewAllHref="/category/python"
+      viewAllHref="/courses?category=python"
+      limit={14}
     />
 
     <CourseRow
