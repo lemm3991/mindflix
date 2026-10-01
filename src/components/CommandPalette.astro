@@ -1,62 +1,5 @@
 ---
 // CommandPalette.astro - Global Raycast / Linear style Command Palette with Type Filters & AI Transcript RAG Search
-import { getAllCourses } from '../lib/catalog';
-
-const allCourses = getAllCourses();
-
-// Build flat search index of courses, modules, lessons, providers, and tags
-const normStr = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-const searchIndex: any[] = [];
-
-allCourses.forEach(c => {
-  const firstLessonId = c.modules[0]?.lessons[0]?.id;
-  const courseSub = `${c.provider} • ${c.lessons_count} aulas`;
-  // Course entry
-  searchIndex.push({
-    type: 'course',
-    title: c.display_title,
-    subtitle: courseSub,
-    normTitle: normStr(c.display_title),
-    normSubtitle: normStr(courseSub),
-    url: '#',
-    courseId: c.id,
-    category: 'Cursos',
-    icon: 'book'
-  });
-
-  // Modules entry
-  c.modules.forEach(m => {
-    const modFirstLessonId = m.lessons[0]?.id || firstLessonId;
-    const modSub = `Módulo em: ${c.display_title}`;
-    searchIndex.push({
-      type: 'module',
-      title: m.display_title,
-      subtitle: modSub,
-      normTitle: normStr(m.display_title),
-      normSubtitle: normStr(modSub),
-      url: modFirstLessonId ? `/watch/${c.id}/${modFirstLessonId}` : `/courses`,
-      courseId: c.id,
-      category: 'Módulos',
-      icon: 'folder'
-    });
-
-    // All lessons in module
-    m.lessons.forEach(l => {
-      const lesSub = `Aula em: ${c.display_title} • ${m.display_title}`;
-      searchIndex.push({
-        type: 'lesson',
-        title: l.display_title,
-        subtitle: lesSub,
-        normTitle: normStr(l.display_title),
-        normSubtitle: normStr(lesSub),
-        url: `/watch/${c.id}/${l.id}`,
-        courseId: c.id,
-        category: 'Aulas',
-        icon: 'play'
-      });
-    });
-  });
-});
 ---
 
 <div id="cmd-palette-backdrop" class="cmd-palette-backdrop" style="display: none;" aria-hidden="true">
@@ -110,25 +53,64 @@ allCourses.forEach(c => {
   </div>
 </div>
 
-<script define:vars={{ searchIndex }}>
+<script>
   const backdrop = document.getElementById('cmd-palette-backdrop');
-  const input = document.getElementById('cmd-palette-input');
+  const input = document.getElementById('cmd-palette-input') as HTMLInputElement | null;
   const resultsContainer = document.getElementById('cmd-results-list');
   const aiSearchBtn = document.getElementById('cmd-ai-search-btn');
   const filterTabs = document.querySelectorAll('.cmd-filter-tab');
   const hintActionText = document.getElementById('cmd-hint-action-text');
 
+  let searchIndex: any[] = [];
+  let isIndexLoaded = false;
+  let isLoadingIndex = false;
+
+  async function ensureSearchIndex(): Promise<any[]> {
+    if (isIndexLoaded) return searchIndex;
+    if (isLoadingIndex) return searchIndex;
+    isLoadingIndex = true;
+    try {
+      const res = await fetch('/api/search/index.json');
+      if (res.ok) {
+        searchIndex = await res.json();
+        isIndexLoaded = true;
+      }
+    } catch (e) {
+      console.error('Failed to load search index:', e);
+    } finally {
+      isLoadingIndex = false;
+    }
+    return searchIndex;
+  }
+
+  // Pre-fetch on idle/first interaction
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pointerdown', () => ensureSearchIndex(), { once: true, passive: true });
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) ensureSearchIndex();
+    }, { once: true, passive: true });
+  }
+
   let activeIndex = -1;
-  let currentResults = [];
+  let currentResults: any[] = [];
   let currentFilter = 'all'; // 'all' | 'course' | 'module' | 'lesson' | 'ai'
   let isAiSearching = false;
   let lastAiQuery = '';
 
-  const norm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const norm = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
-  function openPalette(initialFilter = 'all', initialQuery = '') {
+  function renderLoadingIndex() {
+    if (!resultsContainer) return;
+    resultsContainer.innerHTML = `
+      <div class="cmd-empty" style="padding: 1.5rem 1rem;">
+        <p style="color: var(--text-muted);">Carregando índice de busca...</p>
+      </div>
+    `;
+  }
+
+  async function openPalette(initialFilter = 'all', initialQuery = '') {
     const bd = document.getElementById('cmd-palette-backdrop');
-    const inp = document.getElementById('cmd-palette-input');
+    const inp = document.getElementById('cmd-palette-input') as HTMLInputElement | null;
     if (!bd || !inp) return;
 
     bd.style.display = 'flex';
@@ -146,6 +128,10 @@ allCourses.forEach(c => {
     if (initialFilter === 'ai' && initialQuery.trim()) {
       runAiSearch(initialQuery.trim());
     } else {
+      if (!isIndexLoaded) {
+        renderLoadingIndex();
+        await ensureSearchIndex();
+      }
       renderResults(inp.value);
     }
 
@@ -415,8 +401,15 @@ allCourses.forEach(c => {
   }
 
   // Standard Metadata Search Rendering
-  function renderResults(query) {
+  function renderResults(query: string) {
     if (!resultsContainer) return;
+    if (!isIndexLoaded) {
+      renderLoadingIndex();
+      ensureSearchIndex().then(() => {
+        renderResults(input?.value || '');
+      });
+      return;
+    }
     const q = norm(query);
 
     let filtered = searchIndex;

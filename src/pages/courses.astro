@@ -44,8 +44,7 @@ const providers = getAllProviders();
           course.display_title,
           course.provider,
           ...course.tags,
-          ...course.modules.map(m => m.display_title),
-          ...course.modules.flatMap(m => m.lessons.map(l => l.display_title))
+          ...course.modules.map(m => m.display_title)
         ].join(' ');
         const sourceId = getCourseSourceId(course);
         return (
