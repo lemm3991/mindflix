@@ -53,7 +53,10 @@ export function saveLocalCategoryOverrides(categories: any[]): void {
 
 export async function syncOverridesFromServer(): Promise<{ courses: Record<string, any>; categories: any[] }> {
   try {
-    const res = await fetch('/api/library/overrides', { cache: 'no-store' });
+    let res = await fetch('/api/library/overrides.json', { cache: 'no-store' });
+    if (!res.ok) {
+      res = await fetch('/api/library/overrides', { cache: 'no-store' });
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     
