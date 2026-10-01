@@ -4,6 +4,8 @@ import os from 'node:os';
 import catalogData from '../data/catalog.json';
 import type { Course, Category, CatalogData, Lesson } from '../types/catalog';
 
+import { getCourseOverridesSync, getCategoryOverridesSync } from './overridesStore';
+
 let cachedCatalog: CatalogData | null = null;
 let lastCatalogLoadTime = 0;
 const CATALOG_CACHE_TTL_MS = 60000; // 60s memory cache
@@ -31,14 +33,6 @@ function loadMergedCatalog(): CatalogData {
     const tmpCatalog = path.join(tmpDir, 'catalog.json');
     const osTmpCatalog = path.join(os.tmpdir(), 'catalog.json');
 
-    const primaryOverrides = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
-    const tmpOverrides = path.join(tmpDir, 'manual_overrides.json');
-    const osTmpOverrides = path.join(os.tmpdir(), 'manual_overrides.json');
-
-    const primaryCatOverrides = path.resolve(process.cwd(), 'src', 'data', 'categories_overrides.json');
-    const tmpCatOverrides = path.join(tmpDir, 'categories_overrides.json');
-    const osTmpCatOverrides = path.join(os.tmpdir(), 'categories_overrides.json');
-
     let catalogToUse = baseCatalog;
 
     // Read updated catalog.json from runtime tmp overrides if available
@@ -54,38 +48,17 @@ function loadMergedCatalog(): CatalogData {
       }
     }
 
-    // Read categories overrides from disk if available
-    let customCategories: any[] | null = null;
-    for (const catOvPath of [tmpCatOverrides, osTmpCatOverrides, primaryCatOverrides]) {
-      if (fs.existsSync(catOvPath)) {
-        try {
-          const catOv = JSON.parse(fs.readFileSync(catOvPath, 'utf-8'));
-          const parsed = Array.isArray(catOv) ? catOv : (catOv && Array.isArray(catOv.categories)) ? catOv.categories : null;
-          if (parsed) {
-            customCategories = parsed;
-            break;
-          }
-        } catch {}
-      }
-    }
-
-    if (customCategories) {
+    // Read categories overrides
+    const customCategories = getCategoryOverridesSync(catalogToUse.categories || []);
+    if (customCategories && customCategories.length > 0) {
       catalogToUse = {
         ...catalogToUse,
         categories: customCategories
       };
     }
 
-    // Read manual overrides from disk (merge all sources)
-    let overrides: Record<string, any> = {};
-    for (const ovPath of [primaryOverrides, tmpOverrides, osTmpOverrides]) {
-      if (fs.existsSync(ovPath)) {
-        try {
-          const ovData = JSON.parse(fs.readFileSync(ovPath, 'utf-8')) || {};
-          overrides = { ...overrides, ...ovData };
-        } catch {}
-      }
-    }
+    // Read manual overrides
+    const overrides = getCourseOverridesSync();
 
     if (Object.keys(overrides).length === 0) {
       cachedCatalog = catalogToUse;

@@ -1,82 +1,6 @@
 import type { APIRoute } from 'astro';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-
-const PRIMARY_CAT_OVERRIDES = path.resolve(process.cwd(), 'src', 'data', 'categories_overrides.json');
-const LOCAL_CAT_OVERRIDES = path.resolve(process.cwd(), '.tmp', 'categories_overrides.json');
-const TMP_CAT_OVERRIDES = path.join(os.tmpdir(), 'categories_overrides.json');
-
-const PRIMARY_CATALOG = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
-const LOCAL_TMP_CATALOG = path.resolve(process.cwd(), '.tmp', 'catalog.json');
-const TMP_CATALOG = path.join(os.tmpdir(), 'catalog.json');
-
-function loadCatalogData() {
-  let catalog: any = { categories: [], courses: [] };
-  for (const filePath of [LOCAL_TMP_CATALOG, TMP_CATALOG, PRIMARY_CATALOG]) {
-    if (fs.existsSync(filePath)) {
-      try {
-        catalog = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        if (catalog && Array.isArray(catalog.courses)) break;
-      } catch {}
-    }
-  }
-  return catalog;
-}
-
-function loadCategoriesOverride(fallbackCategories: any[]) {
-  for (const filePath of [LOCAL_CAT_OVERRIDES, TMP_CAT_OVERRIDES, PRIMARY_CAT_OVERRIDES]) {
-    if (fs.existsSync(filePath)) {
-      try {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        if (Array.isArray(data)) return data;
-        if (data && Array.isArray(data.categories)) return data.categories;
-      } catch {}
-    }
-  }
-  return fallbackCategories;
-}
-
-function saveCategoriesSafe(categories: any[]): { success: boolean; isReadOnly: boolean } {
-  const content = JSON.stringify({ categories, updated_at: new Date().toISOString() }, null, 2);
-  let isReadOnly = false;
-
-  // Save to categories_overrides.json across all paths
-  try {
-    const primaryDir = path.dirname(PRIMARY_CAT_OVERRIDES);
-    if (!fs.existsSync(primaryDir)) fs.mkdirSync(primaryDir, { recursive: true });
-    fs.writeFileSync(PRIMARY_CAT_OVERRIDES, content, 'utf-8');
-  } catch (err: any) {
-    isReadOnly = true;
-  }
-
-  for (const tmpPath of [LOCAL_CAT_OVERRIDES, TMP_CAT_OVERRIDES]) {
-    try {
-      const dir = path.dirname(tmpPath);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(tmpPath, content, 'utf-8');
-    } catch {}
-  }
-
-  // Also update catalog.json if possible
-  const catalog = loadCatalogData();
-  catalog.categories = categories;
-  const catalogStr = JSON.stringify(catalog, null, 2);
-
-  try {
-    fs.writeFileSync(PRIMARY_CATALOG, catalogStr, 'utf-8');
-  } catch {}
-
-  for (const tmpPath of [LOCAL_TMP_CATALOG, TMP_CATALOG]) {
-    try {
-      const dir = path.dirname(tmpPath);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(tmpPath, catalogStr, 'utf-8');
-    } catch {}
-  }
-
-  return { success: true, isReadOnly };
-}
+import { getCategoryOverridesAsync, saveCategoryOverrides } from '../../../lib/overridesStore';
+import { getCategories, invalidateCatalogCache } from '../../../lib/catalog';
 
 function slugify(text: string): string {
   return text
@@ -95,8 +19,8 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     const { action, id, name, description, icon } = body;
 
-    const catalog = loadCatalogData();
-    let currentCategories = loadCategoriesOverride(catalog.categories || []);
+    const baseCategories = getCategories();
+    let currentCategories = await getCategoryOverridesAsync(baseCategories);
 
     if (action === 'create') {
       if (!name || !name.trim()) {
@@ -121,8 +45,9 @@ export const POST: APIRoute = async ({ request }) => {
         icon: (icon || 'folder').trim()
       };
 
-      currentCategories.push(newCat);
-      saveCategoriesSafe(currentCategories);
+      currentCategories = [...currentCategories, newCat];
+      await saveCategoryOverrides(currentCategories);
+      invalidateCatalogCache();
 
       return new Response(JSON.stringify({ success: true, category: newCat, action: 'create' }), {
         status: 200,
@@ -153,7 +78,8 @@ export const POST: APIRoute = async ({ request }) => {
         ...(icon !== undefined ? { icon: icon.trim() } : {})
       };
 
-      saveCategoriesSafe(currentCategories);
+      await saveCategoryOverrides(currentCategories);
+      invalidateCatalogCache();
 
       return new Response(JSON.stringify({ success: true, category: currentCategories[index], action: 'update' }), {
         status: 200,
@@ -170,7 +96,8 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       currentCategories = currentCategories.filter((c: any) => c.id !== id);
-      saveCategoriesSafe(currentCategories);
+      await saveCategoryOverrides(currentCategories);
+      invalidateCatalogCache();
 
       return new Response(JSON.stringify({ success: true, deletedId: id, action: 'delete' }), {
         status: 200,

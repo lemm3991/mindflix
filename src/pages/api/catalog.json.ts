@@ -5,9 +5,14 @@ import { getAllTrilhas } from '../../lib/trilhas';
 let cachedData: any = null;
 let lastTime = 0;
 
+export function invalidateCatalogJsonCache(): void {
+  cachedData = null;
+  lastTime = 0;
+}
+
 export const GET: APIRoute = async () => {
   const now = Date.now();
-  if (!cachedData || (now - lastTime) > 60000) {
+  if (!cachedData || (now - lastTime) > 30000) {
     const courses = getAllCourses();
     const trilhas = getAllTrilhas();
     cachedData = {
@@ -33,7 +38,7 @@ export const GET: APIRoute = async () => {
     status: 200,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'public, max-age=120, stale-while-revalidate=600'
+      'Cache-Control': 'public, max-age=30, stale-while-revalidate=120'
     }
   });
 };
