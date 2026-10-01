@@ -5,6 +5,9 @@ export interface LessonMaterial {
   title: string;
   type: string;
   relative_path: string;
+  url?: string;
+  target_url?: string;
+  is_link?: boolean;
 }
 
 export interface Lesson {
@@ -46,6 +49,10 @@ export interface Course {
   lessons_count: number;
   modules: Module[];
   is_featured?: boolean;
+  is_project?: boolean;
+  is_comece_por_aqui?: boolean;
+  is_hidden?: boolean;
+  source?: string;
   drive_folder_id?: string;
   drive_folder_url?: string;
 }
@@ -86,6 +93,7 @@ export interface UserPreferences {
   interactive_bg_enabled: boolean;
   reduce_motion: boolean;
   theme_id?: string;
+  background_style?: string;
   gemini_api_key?: string;
   selected_categories?: string[];
   first_login_notice_seen?: boolean;

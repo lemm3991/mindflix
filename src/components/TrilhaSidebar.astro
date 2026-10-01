@@ -1,0 +1,21 @@
+---
+// TrilhaSidebar.astro - Playlist Lateral da Sala de Aula por Trilha
+import type { Trilha, TrilhaCourseWithModules } from '../lib/trilhas';
+import PlaylistSidebar from './PlaylistSidebar.astro';
+
+interface Props {
+  trilha: Trilha;
+  coursesWithModules: TrilhaCourseWithModules[];
+  currentLessonId: string;
+  currentCourseId?: string;
+}
+
+const { trilha, coursesWithModules, currentLessonId } = Astro.props;
+---
+
+<PlaylistSidebar
+  type="trilha"
+  trilha={trilha}
+  coursesWithModules={coursesWithModules}
+  currentLessonId={currentLessonId}
+/>

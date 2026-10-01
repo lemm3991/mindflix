@@ -71,6 +71,12 @@
       "name": "Negócios & Oportunidades",
       "icon": "briefcase",
       "description": "Estratégias de negócios, leilões, oportunidades de mercado e gestão de carreira."
+    },
+    {
+      "id": "projetos",
+      "name": "Projetos Práticos",
+      "icon": "folder-git-2",
+      "description": "Projetos práticos guiados, soluções completas de ponta a ponta e implementações reais."
     }
   ],
   "updated_at": "2026-09-05T12:44:00Z"

@@ -3,6 +3,7 @@
 import Layout from '../layouts/Layout.astro';
 import { THEME_PRESETS } from '../lib/theme';
 import { getCategories, getAllCourses } from '../lib/catalog';
+import { BACKGROUND_PRESETS } from '../lib/backgrounds';
 
 const categories = getCategories();
 const allCourses = getAllCourses();
@@ -53,6 +54,48 @@ categories.forEach(cat => {
             <span>Filtrar Categorias Visíveis</span>
           </button>
           <span class="category-status-sub" id="category-status-detail">Exibindo todas as {categories.length} categorias ativas no catálogo</span>
+        </div>
+      </section>
+
+      <!-- Ambient Background Selection -->
+      <section class="settings-card">
+        <h2 class="card-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span>Ambiente Visual de Estudo (Background)</span>
+        </h2>
+        <p class="section-description">
+          Escolha o estilo visual interativo do fundo da plataforma para otimizar sua imersão, foco e conforto visual durante as horas de estudo.
+        </p>
+
+        <div class="bg-style-grid" id="bg-style-grid">
+          {BACKGROUND_PRESETS.map((b) => (
+            <button
+              type="button"
+              class="bg-style-card"
+              data-bg-id={b.id}
+              aria-label={`Selecionar ambiente de fundo ${b.name}`}
+            >
+              <div class="theme-check-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div class="bg-style-preview" style={`background: ${b.previewGradient}; border-color: rgba(255,255,255,0.12);`}>
+                <div class="bg-style-badge">{b.category}</div>
+                <div class="bg-style-glow-dot" style={`background: ${b.accentColor}; box-shadow: 0 0 16px ${b.accentColor};`}></div>
+              </div>
+              <div class="bg-style-info">
+                <div class="bg-style-name-row">
+                  <span class="bg-style-name">{b.name}</span>
+                  <span class="bg-style-tagline">{b.tagline}</span>
+                </div>
+                <p class="bg-style-desc">{b.description}</p>
+              </div>
+            </button>
+          ))}
+>>>>>>> 79b1ed72a016dbb2cafbc04f5f43516bab5e1fa8
         </div>
       </section>
 
@@ -165,7 +208,7 @@ categories.forEach(cat => {
           </div>
           <div class="setting-control">
             <label class="switch">
-              <input type="checkbox" id="pref-parallax" checked />
+              <input type="checkbox" id="pref-parallax" />
               <span class="slider"></span>
             </label>
           </div>
@@ -228,6 +271,34 @@ categories.forEach(cat => {
             </button>
           </div>
         </form>
+      </section>
+
+      <!-- Advanced Cyber Security / IPS Center -->
+      <section class="settings-card admin-only-section" id="sec-monitor-card" style="display: none;">
+        <h2 class="card-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Monitor de Ataques & Prevenção de Intrusão (IPS)</span>
+        </h2>
+        <p class="section-description">
+          Acesse o Centro de Operações de Segurança (SOC) para visualizar telemetria de ataques em tempo real, gerenciar regras de auto-bloqueio de IPs maliciosos e auditar incidentes.
+        </p>
+
+        <div class="setting-row" style="margin-top: 1rem;">
+          <div class="setting-text">
+            <span class="setting-name">Centro de Operações de Segurança (SOC)</span>
+            <span class="setting-hint">Painel em tempo real com DEFCON, simulador de ataques e gerenciador de bans.</span>
+          </div>
+          <div class="setting-control">
+            <a href="/security-monitor" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>Abrir Monitor de Segurança</span>
+            </a>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -302,6 +373,7 @@ categories.forEach(cat => {
 <script>
   import { getUserPreferences, saveUserPreferences, syncPreferencesFromSupabase } from '../lib/progress';
   import { applyTheme } from '../lib/theme';
+  import { applyBackgroundStyle } from '../lib/backgrounds';
   import { getLocalUser } from '../lib/supabase';
   import { updateUserPassword } from '../lib/auth';
   import { showToast } from '../lib/toast';
@@ -309,9 +381,17 @@ categories.forEach(cat => {
   const user = getLocalUser();
   if (!user) {
     window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+  } else {
+    const name = user.full_name || user.email || '';
+    const isLemmg = name.toLowerCase().includes('lemmg0800');
+    const secCard = document.getElementById('sec-monitor-card');
+    if (secCard && isLemmg) {
+      secCard.style.display = 'block';
+    }
   }
 
   let activeThemeId = getUserPreferences().theme_id || 'cyan-indigo';
+  let activeBgId = getUserPreferences().background_style || 'waves';
 
   const autoplay = document.getElementById('pref-autoplay') as HTMLInputElement | null;
   const autoResume = document.getElementById('pref-auto-resume') as HTMLInputElement | null;
@@ -333,6 +413,30 @@ categories.forEach(cat => {
     });
   }
 
+  function updateBgCardsUI() {
+    const cards = document.querySelectorAll<HTMLElement>('.bg-style-card');
+    cards.forEach(card => {
+      const bgId = card.getAttribute('data-bg-id');
+      if (bgId === activeBgId) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('.bg-style-card').forEach(card => {
+    card.addEventListener('click', async () => {
+      const bgId = card.getAttribute('data-bg-id');
+      if (!bgId) return;
+
+      activeBgId = bgId;
+      applyBackgroundStyle(bgId);
+      updateBgCardsUI();
+      await handleUpdate();
+    });
+  });
+
   document.querySelectorAll<HTMLElement>('.theme-card').forEach(card => {
     card.addEventListener('click', async () => {
       const themeId = card.getAttribute('data-theme-id');
@@ -348,8 +452,11 @@ categories.forEach(cat => {
   function loadFormValues() {
     const prefs = getUserPreferences();
     activeThemeId = prefs.theme_id || 'cyan-indigo';
+    activeBgId = prefs.background_style || 'waves';
     applyTheme(activeThemeId);
+    applyBackgroundStyle(activeBgId);
     updateThemeCardsUI();
+    updateBgCardsUI();
 
     if (autoplay) autoplay.checked = prefs.autoplay_next;
     if (autoResume) autoResume.checked = prefs.auto_resume;
@@ -491,10 +598,12 @@ categories.forEach(cat => {
       autoplay_next: autoplay?.checked ?? true,
       auto_resume: autoResume?.checked ?? true,
       auto_preview: autoPreview?.checked ?? false,
-      parallax_enabled: parallax?.checked ?? true,
+      parallax_enabled: parallax?.checked ?? false,
       interactive_bg_enabled: interactiveBg?.checked ?? true,
       reduce_motion: reduceMotion?.checked ?? false,
-      theme_id: activeThemeId
+      theme_id: activeThemeId,
+      background_style: activeBgId,
+      gemini_api_key: geminiKey?.value.trim() || ''
     });
     showSaved();
   };
@@ -510,8 +619,9 @@ categories.forEach(cat => {
   const passForm = document.getElementById('change-password-form');
   const newPassInput = document.getElementById('new-password') as HTMLInputElement | null;
   const confirmPassInput = document.getElementById('confirm-password') as HTMLInputElement | null;
+  const savePassBtn = document.getElementById('btn-save-pass') as HTMLButtonElement | null;
 
-  passForm?.addEventListener('submit', (e) => {
+  passForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const newPass = newPassInput?.value.trim() || '';
     const confirmPass = confirmPassInput?.value.trim() || '';
@@ -526,18 +636,25 @@ categories.forEach(cat => {
       return;
     }
 
-    const currentLoggedUser = getLocalUser();
-    if (!currentLoggedUser) return;
+    if (savePassBtn) {
+      savePassBtn.disabled = true;
+      savePassBtn.innerHTML = '<span>Salvando no servidor...</span>';
+    }
 
-    const username = currentLoggedUser.full_name || currentLoggedUser.email.split('@')[0];
-    const success = updateUserPassword(username, newPass);
+    const { changeUserPassword } = await import('../lib/auth');
+    const result = await changeUserPassword(newPass);
 
-    if (success) {
-      showToast('Senha alterada com sucesso! Utilize a nova senha no próximo acesso.', 'success');
+    if (savePassBtn) {
+      savePassBtn.disabled = false;
+      savePassBtn.innerHTML = '<span>Atualizar Senha</span>';
+    }
+
+    if (result.success) {
+      showToast('Senha alterada com sucesso no servidor!', 'success');
       if (newPassInput) newPassInput.value = '';
       if (confirmPassInput) confirmPassInput.value = '';
     } else {
-      showToast('Falha ao atualizar a senha.', 'error');
+      showToast(result.error || 'Falha ao atualizar a senha.', 'error');
     }
   });
 </script>
@@ -628,6 +745,121 @@ categories.forEach(cat => {
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
     line-height: 1.5;
+  }
+
+  /* Ambient Background Selection Grid */
+  .bg-style-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .bg-style-card {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    background: #121620 !important;
+    background-color: #121620 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 0.85rem !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    position: relative !important;
+    color: #ffffff !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    transition: transform var(--motion-fast) var(--ease-out),
+                border-color var(--motion-normal) var(--ease-out),
+                box-shadow var(--motion-normal) var(--ease-out),
+                background-color var(--motion-normal) var(--ease-out) !important;
+  }
+
+  .bg-style-card:hover {
+    border-color: rgba(var(--accent-primary-rgb), 0.45) !important;
+    transform: translateY(-3px) !important;
+    background: #181e2b !important;
+    background-color: #181e2b !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 14px rgba(var(--accent-primary-rgb), 0.15) !important;
+  }
+
+  .bg-style-card.active {
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 0 1px var(--accent-cyan), 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 18px rgba(var(--accent-primary-rgb), 0.2) !important;
+    background: #182030 !important;
+    background-color: #182030 !important;
+  }
+
+  .bg-style-preview {
+    width: 100%;
+    height: 72px;
+    border-radius: var(--radius-sm);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.75rem;
+  }
+
+  .bg-style-badge {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+  }
+
+  .bg-style-glow-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+  }
+
+  .bg-style-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .bg-style-name-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .bg-style-name {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .bg-style-tagline {
+    font-size: 0.75rem;
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+
+  .bg-style-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .bg-style-card.active .theme-check-badge {
+    opacity: 1;
+    transform: scale(1);
   }
 
   /* Premium Theme Swatch Grid */

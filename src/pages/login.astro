@@ -56,15 +56,15 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { setLocalUser } from '../lib/supabase';
-  import { authenticateUser } from '../lib/auth';
+  import { loginWithCredentials } from '../lib/auth';
 
   const form = document.getElementById('login-form');
   const userInput = document.getElementById('username') as HTMLInputElement | null;
   const passInput = document.getElementById('password') as HTMLInputElement | null;
   const errorBox = document.getElementById('login-error-box');
+  const submitBtn = document.getElementById('login-submit-btn') as HTMLButtonElement | null;
 
-  form?.addEventListener('submit', (e) => {
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const loginVal = userInput?.value.trim() || '';
     const passVal = passInput?.value.trim() || '';
@@ -77,21 +77,29 @@ import Layout from '../layouts/Layout.astro';
       return;
     }
 
-    const authUser = authenticateUser(loginVal, passVal);
+    if (errorBox) {
+      errorBox.style.display = 'none';
+      errorBox.textContent = '';
+    }
 
-    if (authUser) {
-      setLocalUser({
-        id: authUser.id,
-        email: authUser.email,
-        full_name: authUser.name
-      });
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Verificando credenciais...</span>';
+    }
 
+    const result = await loginWithCredentials(loginVal, passVal);
+
+    if (result.success && result.user) {
       const params = new URLSearchParams(window.location.search);
       const redirectTarget = params.get('redirect') || '/';
       window.location.href = redirectTarget;
     } else {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Entrar na Plataforma</span>';
+      }
       if (errorBox) {
-        errorBox.textContent = 'Nome de usuário ou senha incorretos. Verifique suas credenciais de acesso.';
+        errorBox.textContent = result.error || 'Nome de usuário ou senha incorretos.';
         errorBox.style.display = 'block';
       }
     }

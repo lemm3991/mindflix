@@ -1,0 +1,453 @@
+---
+// LessonNotes.astro - Área discreta de anotações com formatação básica, checklist e salvamento automático
+interface Props {
+  lessonId: string;
+  courseId: string;
+  watchUrl: string;
+  courseTitle: string;
+  lessonTitle: string;
+  moduleTitle?: string;
+}
+
+const { lessonId, courseId, watchUrl, courseTitle, lessonTitle, moduleTitle } = Astro.props;
+---
+
+<div
+  class="lesson-notes-wrapper"
+  id={`notes-container-${lessonId}`}
+  data-lesson-id={lessonId}
+  data-course-id={courseId}
+  data-watch-url={watchUrl}
+  data-course-title={courseTitle}
+  data-lesson-title={lessonTitle}
+  data-module-title={moduleTitle || ''}
+>
+  <!-- Main Header Bar -->
+  <div class="notes-header">
+    <div class="notes-title-wrap">
+      <svg class="notes-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9"></path>
+        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+      </svg>
+      <span class="notes-label">Anotações da Aula</span>
+    </div>
+
+    <div class="notes-status-wrap">
+      <span class="notes-save-indicator" id={`notes-save-status-${lessonId}`}></span>
+      <button type="button" class="notes-btn-delete" id={`btn-delete-note-${lessonId}`} title="Excluir anotação desta aula" style="display: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        <span>Excluir</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Formatting Toolbar (Hidden until field is clicked/focused) -->
+  <div class="notes-toolbar" id={`notes-toolbar-${lessonId}`} style="display: none;">
+    <button type="button" class="toolbar-btn" data-cmd="bold" title="Negrito (Ctrl+B)">
+      <strong>B</strong>
+    </button>
+    <button type="button" class="toolbar-btn" data-cmd="italic" title="Itálico (Ctrl+I)">
+      <em>I</em>
+    </button>
+    <button type="button" class="toolbar-btn" data-cmd="underline" title="Sublinhado (Ctrl+U)">
+      <u>U</u>
+    </button>
+    <span class="toolbar-divider"></span>
+    <button type="button" class="toolbar-btn" data-cmd="formatBlock" data-val="h3" title="Título de Seção">
+      <span>H3</span>
+    </button>
+    <button type="button" class="toolbar-btn" data-cmd="insertUnorderedList" title="Lista com marcadores">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+    </button>
+    <button type="button" class="toolbar-btn toolbar-btn-checklist" id={`btn-add-checklist-${lessonId}`} title="Inserir Checklist de Tarefas">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 11 12 14 22 4"></polyline>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+      </svg>
+      <span>+ Checklist</span>
+    </button>
+  </div>
+
+  <!-- Content editable body -->
+  <div
+    class="notes-editor-body"
+    id={`notes-editor-${lessonId}`}
+    contenteditable="true"
+    data-placeholder="Escreva suas anotações sobre esta aula... (Clique para formatar ou adicionar checklists)"
+  ></div>
+</div>
+
+<style>
+  .lesson-notes-wrapper {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    margin-top: 1.25rem;
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .lesson-notes-wrapper:hover {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .lesson-notes-wrapper.active {
+    background: var(--bg-card);
+    border-color: rgba(0, 242, 254, 0.35);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 15px rgba(0, 242, 254, 0.08);
+  }
+
+  .notes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .notes-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .notes-icon {
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+  }
+
+  .lesson-notes-wrapper.active .notes-icon {
+    color: var(--accent-cyan);
+  }
+
+  .notes-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+  }
+
+  .lesson-notes-wrapper.active .notes-label {
+    color: var(--text-primary);
+  }
+
+  .notes-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .notes-save-indicator {
+    font-size: 0.72rem;
+    color: var(--accent-emerald, #10b981);
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .notes-save-indicator.visible {
+    opacity: 1;
+  }
+
+  .notes-btn-delete {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius-xs);
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .notes-btn-delete:hover {
+    color: var(--accent-rose, #f43f5e);
+    background: rgba(244, 63, 94, 0.1);
+  }
+
+  /* Toolbar */
+  .notes-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .toolbar-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  .toolbar-btn-checklist {
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .toolbar-btn-checklist:hover {
+    background: rgba(0, 242, 254, 0.2);
+    color: #ffffff;
+  }
+
+  .toolbar-divider {
+    width: 1px;
+    height: 16px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 0.2rem;
+  }
+
+  /* Editor Body */
+  .notes-editor-body {
+    min-height: 48px;
+    outline: none;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    word-break: break-word;
+    border-radius: var(--radius-xs);
+    padding: 0.2rem 0;
+  }
+
+  .notes-editor-body:empty:before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    font-style: italic;
+    opacity: 0.65;
+    pointer-events: none;
+  }
+
+  .notes-editor-body h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    margin: 0.6rem 0 0.3rem 0;
+  }
+
+  .notes-editor-body ul {
+    padding-left: 1.25rem;
+    margin: 0.4rem 0;
+  }
+
+  /* Checklist item styling inside notes editor */
+  .notes-editor-body :global(.note-checklist-item) {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 0.35rem 0;
+  }
+
+  .notes-editor-body :global(.note-checklist-item input[type="checkbox"]) {
+    margin-top: 0.25rem;
+    accent-color: var(--accent-cyan);
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+  }
+
+  .notes-editor-body :global(.note-checklist-item.checked span) {
+    text-decoration: line-through;
+    opacity: 0.55;
+  }
+</style>
+
+<script>
+  import { getNoteForLesson, saveNoteForLesson, deleteNoteForLesson } from '../lib/notes';
+
+  function initNotesComponent(wrapper: HTMLElement) {
+    if (wrapper.dataset.notesInitialized === 'true') return;
+    wrapper.dataset.notesInitialized = 'true';
+
+    const lessonId = wrapper.getAttribute('data-lesson-id') || '';
+    const courseId = wrapper.getAttribute('data-course-id') || '';
+    const watchUrl = wrapper.getAttribute('data-watch-url') || '';
+    const courseTitle = wrapper.getAttribute('data-course-title') || '';
+    const lessonTitle = wrapper.getAttribute('data-lesson-title') || '';
+    const moduleTitle = wrapper.getAttribute('data-module-title') || '';
+
+    const editor = wrapper.querySelector<HTMLElement>(`#notes-editor-${lessonId}`);
+    const toolbar = wrapper.querySelector<HTMLElement>(`#notes-toolbar-${lessonId}`);
+    const saveStatus = wrapper.querySelector<HTMLElement>(`#notes-save-status-${lessonId}`);
+    const deleteBtn = wrapper.querySelector<HTMLElement>(`#btn-delete-note-${lessonId}`);
+    const addChecklistBtn = wrapper.querySelector<HTMLElement>(`#btn-add-checklist-${lessonId}`);
+
+    if (!editor || !lessonId) return;
+
+    // Load existing note from localStorage
+    const existing = getNoteForLesson(lessonId);
+    if (existing && existing.content && existing.content.trim()) {
+      editor.innerHTML = existing.content;
+      if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+    }
+
+    let saveTimer: any;
+
+    function triggerAutoSave() {
+      if (!editor) return;
+      const htmlContent = editor.innerHTML.trim();
+
+      if (saveStatus) {
+        saveStatus.textContent = 'Salvando...';
+        saveStatus.classList.add('visible');
+      }
+
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        // If content is empty, delete note or don't save empty
+        if (!htmlContent || htmlContent === '<br>' || htmlContent === '<div><br></div>') {
+          deleteNoteForLesson(lessonId);
+          if (deleteBtn) deleteBtn.style.display = 'none';
+          if (saveStatus) saveStatus.classList.remove('visible');
+        } else {
+          saveNoteForLesson({
+            lessonId,
+            courseId,
+            watchUrl,
+            courseTitle,
+            lessonTitle,
+            moduleTitle,
+            content: htmlContent
+          });
+          if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+          if (saveStatus) {
+            saveStatus.textContent = '✓ Salvo';
+            setTimeout(() => {
+              saveStatus.classList.remove('visible');
+            }, 2000);
+          }
+        }
+      }, 500);
+    }
+
+    // Toggle active state & toolbar on click/focus
+    wrapper.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.notes-btn-delete')) return;
+
+      wrapper.classList.add('active');
+      if (toolbar) toolbar.style.display = 'flex';
+    });
+
+    // Blur outside wrapper
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target as Node)) {
+        wrapper.classList.remove('active');
+        if (toolbar) toolbar.style.display = 'none';
+      }
+    });
+
+    // Editor inputs
+    editor.addEventListener('input', triggerAutoSave);
+
+    // Checkbox toggles inside notes
+    editor.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target && target.type === 'checkbox') {
+        const parentItem = target.closest('.note-checklist-item');
+        if (parentItem) {
+          if (target.checked) {
+            target.setAttribute('checked', 'checked');
+            parentItem.classList.add('checked');
+          } else {
+            target.removeAttribute('checked');
+            parentItem.classList.remove('checked');
+          }
+        }
+        triggerAutoSave();
+      }
+    });
+
+    // Formatting Toolbar Command Handlers
+    if (toolbar) {
+      toolbar.querySelectorAll<HTMLButtonElement>('.toolbar-btn[data-cmd]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const cmd = btn.getAttribute('data-cmd');
+          const val = btn.getAttribute('data-val') || undefined;
+          if (cmd) {
+            document.execCommand(cmd, false, val);
+            editor.focus();
+            triggerAutoSave();
+          }
+        });
+      });
+    }
+
+    // Add Checklist Item Handler
+    if (addChecklistBtn) {
+      addChecklistBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        editor.focus();
+
+        const checklistHtml = `<div class="note-checklist-item"><input type="checkbox" /> <span>Item da lista</span></div>`;
+        document.execCommand('insertHTML', false, checklistHtml);
+        triggerAutoSave();
+      });
+    }
+
+    // Delete Note Handler
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (confirm('Tem certeza que deseja excluir as anotações desta aula?')) {
+          deleteNoteForLesson(lessonId);
+          editor.innerHTML = '';
+          deleteBtn.style.display = 'none';
+          if (saveStatus) {
+            saveStatus.textContent = 'Anotação excluída';
+            saveStatus.classList.add('visible');
+            setTimeout(() => {
+              saveStatus.classList.remove('visible');
+            }, 2000);
+          }
+        }
+      });
+    }
+  }
+
+  // Init all notes components on page
+  document.querySelectorAll<HTMLElement>('.lesson-notes-wrapper').forEach(initNotesComponent);
+</script>

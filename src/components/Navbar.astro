@@ -1,5 +1,7 @@
 ---
-// Navbar.astro - Premium progressive glass navbar with Command Palette trigger
+// Navbar.astro - Premium progressive glass navbar with Command Palette trigger & Study Sources Switcher
+import { STUDY_SOURCES } from '../lib/sources';
+
 interface Props {
   currentPath?: string;
 }
@@ -7,15 +9,15 @@ interface Props {
 const { currentPath = '/' } = Astro.props;
 
 const navItems = [
-  { label: 'Início', href: '/' },
   { label: 'Cursos', href: '/courses' },
-  { label: 'Categorias', href: '/categories' },
   { label: 'Minha Lista', href: '/my-list' },
+  { label: 'Minhas Anotações', href: '/anotacoes' },
   { label: 'Biblioteca', href: '/library', adminOnly: true },
+  { label: 'Segurança & IPS', href: '/security-monitor', adminOnly: true },
 ];
 ---
 
-<header class="navbar" id="main-navbar">
+<header class="navbar" id="main-navbar" transition:persist="main-navbar">
   <div class="container nav-content">
     <div class="nav-left">
       <a href="/" class="brand-logo" aria-label="Mindflix Home">
@@ -41,6 +43,134 @@ const navItems = [
       </nav>
     </div>
 
+    <!-- Center: Collapsed Study Source Selector -->
+    <div class="source-switcher-wrapper">
+      <div class="source-dropdown-group" id="header-source-dropdown-group">
+        <button
+          type="button"
+          class="single-source-btn"
+          id="single-source-btn"
+          role="button"
+          aria-haspopup="true"
+          aria-expanded="false"
+          title="Clique para selecionar a Fonte de Estudo"
+        >
+          <span class="source-pill-dot dot-all" id="single-source-dot"></span>
+          <span class="source-pill-label" id="single-source-label">Todas</span>
+          <svg class="source-dropdown-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <!-- Collapsed Dropdown Menu -->
+        <div class="source-dropdown-menu single-source-menu" id="header-source-dropdown-menu" role="menu">
+          <button type="button" class="dropdown-item active" data-subsource="all" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot dot-all"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Todas</span>
+                <span class="dropdown-item-desc">Todas as fontes de estudo</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item" data-subsource="ailab" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #00f2fe; box-shadow: 0 0 8px #00f2fe80;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">AI LAB</span>
+                <span class="dropdown-item-desc">Inteligência Artificial & Agentes</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item" data-subsource="asimov" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #6366f1; box-shadow: 0 0 8px #6366f180;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Asimov</span>
+                <span class="dropdown-item-desc">Cursos, Projetos & Trilhas</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item sub-dropdown-item" data-subsource="asimov-skills" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #818cf8; box-shadow: 0 0 8px #818cf880;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Asimov Skills</span>
+                <span class="dropdown-item-desc">Soft Skills & Produtividade</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item" data-subsource="hashtag" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #ec4899; box-shadow: 0 0 8px #ec489980;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Hashtag</span>
+                <span class="dropdown-item-desc">Impressionador: IA, Claude, Lovable</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item sub-dropdown-item" data-subsource="hashtag-soft-skills" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #f43f5e; box-shadow: 0 0 8px #f43f5e80;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Hashtag Soft Skills</span>
+                <span class="dropdown-item-desc">Liderança & Alta Performance</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item" data-subsource="sctec" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #10b981; box-shadow: 0 0 8px #10b98180;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">SCTEC</span>
+                <span class="dropdown-item-desc">Carreira Tech & Formações</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="dropdown-item" data-subsource="outros" role="menuitem">
+            <div class="dropdown-item-left">
+              <span class="dropdown-dot" style="background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b80;"></span>
+              <div class="dropdown-texts">
+                <span class="dropdown-item-title">Diversos</span>
+                <span class="dropdown-item-desc">Cursos complementares</span>
+              </div>
+            </div>
+            <svg class="dropdown-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="nav-right">
       <!-- Command Palette Trigger Button -->
       <button type="button" class="cmd-trigger-btn" id="open-search-modal-btn" aria-label="Abrir busca (Ctrl+K)">
@@ -64,15 +194,234 @@ const navItems = [
         </a>
       </div>
     </div>
+
+    <!-- Mobile Hamburger Toggle Button (Mobile only) -->
+    <button
+      type="button"
+      class="mobile-menu-toggle"
+      id="mobile-menu-toggle-btn"
+      aria-label="Abrir Menu de Navegação"
+      aria-expanded="false"
+    >
+      <svg class="icon-hamburger" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
   </div>
+
+  <!-- Mobile Drawer Overlay & Content -->
+  <div class="mobile-drawer-overlay" id="mobile-drawer-overlay"></div>
+  <aside class="mobile-drawer" id="mobile-drawer" aria-label="Menu Mobile">
+    <div class="drawer-header">
+      <a href="/profile" class="drawer-user-info">
+        <div class="avatar-circle">
+          <span id="mobile-user-initials">ED</span>
+        </div>
+        <div class="drawer-user-meta">
+          <span class="drawer-user-name" id="mobile-user-name">Minha Conta</span>
+          <span class="drawer-user-sub">Ver Perfil →</span>
+        </div>
+      </a>
+      <button type="button" class="drawer-close-btn" id="mobile-drawer-close-btn" aria-label="Fechar Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Search Action -->
+      <button type="button" class="drawer-search-btn" id="mobile-drawer-search-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span>Buscar cursos...</span>
+      </button>
+
+      <!-- Source Switcher Section -->
+      <div class="drawer-section">
+        <span class="drawer-section-title">Fonte de Estudo</span>
+        <div class="drawer-source-grid">
+          <button type="button" class="drawer-source-item active" data-subsource="all">
+            <span class="dropdown-dot dot-all"></span>
+            <span>Todas</span>
+          </button>
+          <button type="button" class="drawer-source-item" data-subsource="ailab">
+            <span class="dropdown-dot" style="background-color: #00f2fe;"></span>
+            <span>AI LAB</span>
+          </button>
+          <button type="button" class="drawer-source-item" data-subsource="asimov">
+            <span class="dropdown-dot" style="background-color: #6366f1;"></span>
+            <span>Asimov</span>
+          </button>
+          <button type="button" class="drawer-source-item" data-subsource="asimov-skills">
+            <span class="dropdown-dot" style="background-color: #818cf8;"></span>
+            <span>Asimov Skills</span>
+          </button>
+          <button type="button" class="drawer-source-item" data-subsource="hashtag">
+            <span class="dropdown-dot" style="background-color: #ec4899;"></span>
+            <span>Hashtag</span>
+          </button>
+          <button type="button" class="drawer-source-item" data-subsource="hashtag-soft-skills">
+            <span class="dropdown-dot" style="background-color: #f43f5e;"></span>
+            <span>Hashtag Soft</span>
+          </button>
+          <button type="button" class="drawer-source-item" data-subsource="sctec">
+            <span class="dropdown-dot" style="background-color: #10b981;"></span>
+            <span>SCTEC</span>
+          </button>
+          <button type="button" class="drawer-source-item" data-subsource="outros">
+            <span class="dropdown-dot" style="background-color: #f59e0b;"></span>
+            <span>Diversos</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Links Section -->
+      <div class="drawer-section">
+        <span class="drawer-section-title">Navegação</span>
+        <nav class="drawer-nav-links">
+          {navItems.map(item => (
+            <a
+              href={item.href}
+              class={`drawer-nav-link ${currentPath === item.href ? 'active' : ''}`}
+              data-admin-only={item.adminOnly ? 'true' : 'false'}
+              style={item.adminOnly ? 'display: none;' : ''}
+            >
+              <span>{item.label}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </a>
+          ))}
+        </nav>
+      </div>
+    </div>
+  </aside>
 </header>
 
 <script>
-  // Progressive glass & height adjustment on scroll (72px -> 64px)
-  const navbar = document.getElementById('main-navbar');
-  const triggerSearchBtn = document.getElementById('open-search-modal-btn');
+  import { getActiveSource, setActiveSource } from '../lib/sources';
+
+  const SOURCES_META: Record<string, { label: string; color: string; isAll?: boolean }> = {
+    'all': { label: 'Todas', color: 'var(--grad-primary)', isAll: true },
+    'ailab': { label: 'AI LAB', color: '#00f2fe' },
+    'asimov': { label: 'Asimov', color: '#6366f1' },
+    'asimov-skills': { label: 'Asimov Skills', color: '#818cf8' },
+    'hashtag': { label: 'Hashtag', color: '#ec4899' },
+    'hashtag-soft-skills': { label: 'Hashtag Soft Skills', color: '#f43f5e' },
+    'sctec': { label: 'SCTEC', color: '#10b981' },
+    'outros': { label: 'Diversos', color: '#f59e0b' }
+  };
+
+  function updateActiveSourceUI(forcedSource?: string) {
+    const isWatch = window.location.pathname.startsWith('/watch');
+    const videoSrc = (window as any).__CURRENT_VIDEO_SOURCE__;
+    const currentSource = forcedSource || (isWatch && videoSrc ? videoSrc : getActiveSource());
+
+    const meta = SOURCES_META[currentSource] || SOURCES_META['all'];
+    const labelEl = document.getElementById('single-source-label');
+    const dotEl = document.getElementById('single-source-dot');
+    const btnEl = document.getElementById('single-source-btn');
+
+    if (labelEl) {
+      labelEl.textContent = meta.label;
+    }
+
+    if (dotEl) {
+      if (meta.isAll) {
+        dotEl.classList.add('dot-all');
+        dotEl.style.backgroundColor = '';
+        dotEl.style.boxShadow = '';
+      } else {
+        dotEl.classList.remove('dot-all');
+        dotEl.style.backgroundColor = meta.color;
+        dotEl.style.boxShadow = `0 0 8px ${meta.color}80`;
+      }
+    }
+
+    if (btnEl) {
+      btnEl.setAttribute('data-active-source', currentSource);
+    }
+
+    // Update active checkmarks in dropdown items (desktop & mobile)
+    const dropdownItems = document.querySelectorAll<HTMLButtonElement>('.dropdown-item, .drawer-source-item');
+    dropdownItems.forEach(item => {
+      const sub = item.getAttribute('data-subsource');
+      if (sub === currentSource) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  function closeMobileDrawer() {
+    const drawer = document.getElementById('mobile-drawer');
+    const overlay = document.getElementById('mobile-drawer-overlay');
+    const toggle = document.getElementById('mobile-menu-toggle-btn');
+    drawer?.classList.remove('open');
+    overlay?.classList.remove('open');
+    toggle?.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  function openMobileDrawer() {
+    const drawer = document.getElementById('mobile-drawer');
+    const overlay = document.getElementById('mobile-drawer-overlay');
+    const toggle = document.getElementById('mobile-menu-toggle-btn');
+    drawer?.classList.add('open');
+    overlay?.classList.add('open');
+    toggle?.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function initNavbar() {
+    const currentPath = window.location.pathname;
+
+    const links = document.querySelectorAll<HTMLAnchorElement>('.nav-link, .drawer-nav-link');
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === currentPath || (href && href !== '/' && currentPath.startsWith(href))) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+
+    updateActiveSourceUI();
+
+    try {
+      const user = localStorage.getItem('mindflix_user');
+      if (user) {
+        const data = JSON.parse(user);
+        const name = data.full_name || data.email || '';
+        const isLemmg = name.toLowerCase().includes('lemmg0800');
+
+        const adminLinks = document.querySelectorAll('[data-admin-only="true"]');
+        adminLinks.forEach(link => {
+          (link as HTMLElement).style.display = isLemmg ? (link.classList.contains('drawer-nav-link') ? 'flex' : 'inline-block') : 'none';
+        });
+
+        const initials = name.substring(0, 2).toUpperCase();
+        const el = document.getElementById('user-initials');
+        if (el) el.textContent = initials;
+
+        const mobileInitials = document.getElementById('mobile-user-initials');
+        if (mobileInitials) mobileInitials.textContent = initials;
+
+        const mobileName = document.getElementById('mobile-user-name');
+        if (mobileName) mobileName.textContent = data.full_name || 'Minha Conta';
+      }
+    } catch (err) {}
+  }
 
   window.addEventListener('scroll', () => {
+    const navbar = document.getElementById('main-navbar');
     if (window.scrollY > 25) {
       navbar?.classList.add('scrolled');
     } else {
@@ -80,13 +429,94 @@ const navItems = [
     }
   }, { passive: true });
 
-  // Open Command Palette event
-  triggerSearchBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (typeof (window as any).openSearchModal === 'function') {
-      (window as any).openSearchModal('all', '');
-    } else {
-      window.dispatchEvent(new CustomEvent('mindflix:open-search', { detail: { type: 'all' } }));
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const group = document.getElementById('header-source-dropdown-group');
+    const singleBtn = target.closest<HTMLButtonElement>('#single-source-btn');
+
+    // Mobile menu toggle button
+    if (target.closest('#mobile-menu-toggle-btn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const drawer = document.getElementById('mobile-drawer');
+      if (drawer?.classList.contains('open')) {
+        closeMobileDrawer();
+      } else {
+        openMobileDrawer();
+      }
+      return;
+    }
+
+    // Close mobile drawer buttons
+    if (target.closest('#mobile-drawer-close-btn') || target.closest('#mobile-drawer-overlay')) {
+      closeMobileDrawer();
+      return;
+    }
+
+    // Mobile drawer search button
+    if (target.closest('#mobile-drawer-search-btn')) {
+      e.preventDefault();
+      closeMobileDrawer();
+      if (typeof (window as any).openSearchModal === 'function') {
+        (window as any).openSearchModal('all', '');
+      } else {
+        window.dispatchEvent(new CustomEvent('mindflix:open-search', { detail: { type: 'all' } }));
+      }
+      return;
+    }
+
+    // 1. Click on single collapsed button toggle
+    if (singleBtn && group) {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = group.classList.contains('open');
+      if (isOpen) {
+        group.classList.remove('open');
+        singleBtn.setAttribute('aria-expanded', 'false');
+      } else {
+        group.classList.add('open');
+        singleBtn.setAttribute('aria-expanded', 'true');
+      }
+      return;
+    }
+
+    // 2. Click on dropdown item or mobile drawer source item
+    const dropdownItem = target.closest<HTMLButtonElement>('.dropdown-item, .drawer-source-item');
+    if (dropdownItem) {
+      e.preventDefault();
+      e.stopPropagation();
+      const subsource = dropdownItem.getAttribute('data-subsource') || 'all';
+
+      group?.classList.remove('open');
+      document.getElementById('single-source-btn')?.setAttribute('aria-expanded', 'false');
+      closeMobileDrawer();
+
+      setActiveSource(subsource);
+      updateActiveSourceUI(subsource);
+
+      if (window.location.pathname.startsWith('/source/') || window.location.pathname === '/' || window.location.pathname === '/courses') {
+        if (subsource === 'all') {
+          window.location.href = '/courses';
+        } else {
+          window.location.href = `/source/${subsource}`;
+        }
+      }
+      return;
+    }
+
+    // Close dropdown when clicking outside
+    if (group?.classList.contains('open')) {
+      group.classList.remove('open');
+      document.getElementById('single-source-btn')?.setAttribute('aria-expanded', 'false');
+    }
+
+    if (target && target.closest('#open-search-modal-btn')) {
+      e.preventDefault();
+      if (typeof (window as any).openSearchModal === 'function') {
+        (window as any).openSearchModal('all', '');
+      } else {
+        window.dispatchEvent(new CustomEvent('mindflix:open-search', { detail: { type: 'all' } }));
+      }
     }
   });
 
@@ -113,6 +543,15 @@ const navItems = [
       if (el) el.textContent = name.substring(0, 2).toUpperCase();
     }
   } catch (err) {}
+
+  window.addEventListener('mindflix:source-changed', (e: any) => {
+    if (e?.detail?.sourceId) {
+      updateActiveSourceUI(e.detail.sourceId);
+    }
+  });
+
+  document.addEventListener('astro:page-load', initNavbar);
+  initNavbar();
 </script>
 
 <style>
@@ -146,12 +585,13 @@ const navItems = [
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
   }
 
   .nav-left {
     display: flex;
     align-items: center;
-    gap: 2.5rem;
+    gap: 2rem;
   }
 
   .brand-logo {
@@ -159,6 +599,7 @@ const navItems = [
     align-items: center;
     gap: 0.6rem;
     text-decoration: none;
+    flex-shrink: 0;
   }
 
   .logo-icon {
@@ -195,7 +636,7 @@ const navItems = [
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 1.75rem;
+    gap: 1.5rem;
   }
 
   .nav-link {
@@ -205,6 +646,7 @@ const navItems = [
     position: relative;
     padding: 0.35rem 0;
     transition: color var(--motion-fast) var(--ease-out);
+    white-space: nowrap;
   }
 
   .nav-link:hover {
@@ -227,10 +669,336 @@ const navItems = [
     border-radius: var(--radius-full);
   }
 
+  /* --- 5 Study Sources Switcher --- */
+  .source-switcher-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .source-switcher {
+    display: flex;
+    align-items: center;
+    background: rgba(18, 22, 32, 0.85);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    padding: 3px;
+    gap: 3px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  }
+
+  .source-pill-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--radius-full);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.785rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--motion-fast) var(--ease-out);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .source-pill-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .source-pill-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+
+  .source-pill-btn[data-source-id="ailab"].active {
+    background: rgba(0, 242, 254, 0.16);
+    border-color: rgba(0, 242, 254, 0.45);
+    color: #38bdf8;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+  }
+
+  .source-pill-btn[data-source-id="asimov"].active {
+    background: rgba(99, 102, 241, 0.18);
+    border-color: rgba(99, 102, 241, 0.45);
+    color: #a5b4fc;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+  }
+
+  .source-pill-btn[data-source-id="hashtag"].active {
+    background: rgba(236, 72, 153, 0.18);
+    border-color: rgba(236, 72, 153, 0.45);
+    color: #f472b6;
+    box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
+  }
+
+  .source-pill-btn[data-source-id="sctec"].active {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #6ee7b7;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  }
+
+  .source-pill-btn[data-source-id="outros"].active {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.45);
+    color: #fcd34d;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+  }
+
+  .source-pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: transform var(--motion-fast) var(--ease-spring);
+  }
+
+  .source-pill-btn.active .source-pill-dot {
+    transform: scale(1.3);
+  }
+
+  .source-pill-dot.dot-all {
+    background: var(--grad-primary);
+    box-shadow: 0 0 8px rgba(var(--accent-primary-rgb), 0.6);
+  }
+
+  /* --- Asimov Dropdown Selector --- */
+  .source-dropdown-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .source-dropdown-arrow {
+    margin-left: 2px;
+    color: inherit;
+    opacity: 0.7;
+    transition: transform var(--motion-fast) ease;
+  }
+
+  .source-dropdown-group.open .source-dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  /* Collapsed Single Source Dropdown Selector */
+  .single-source-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.38rem 0.95rem;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(18, 22, 32, 0.85);
+    color: #ffffff;
+    font-size: 0.825rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    transition: all var(--motion-fast) var(--ease-out);
+    user-select: none;
+  }
+
+  .single-source-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+  }
+
+  .single-source-btn[data-active-source="ailab"] {
+    border-color: rgba(0, 242, 254, 0.45);
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.25);
+  }
+
+  .single-source-btn[data-active-source="asimov"] {
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 0 14px rgba(99, 102, 241, 0.25);
+  }
+
+  .single-source-btn[data-active-source="asimov-skills"] {
+    border-color: rgba(129, 140, 248, 0.45);
+    box-shadow: 0 0 14px rgba(129, 140, 248, 0.25);
+  }
+
+  .single-source-btn[data-active-source="hashtag"] {
+    border-color: rgba(236, 72, 153, 0.45);
+    box-shadow: 0 0 14px rgba(236, 72, 153, 0.25);
+  }
+
+  .single-source-btn[data-active-source="hashtag-soft-skills"] {
+    border-color: rgba(244, 63, 94, 0.45);
+    box-shadow: 0 0 14px rgba(244, 63, 94, 0.25);
+  }
+
+  .single-source-btn[data-active-source="sctec"] {
+    border-color: rgba(16, 185, 129, 0.45);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+  }
+
+  .single-source-btn[data-active-source="outros"] {
+    border-color: rgba(245, 158, 11, 0.45);
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
+  }
+
+  .sub-dropdown-item {
+    padding-left: 1.6rem;
+  }
+
+  .single-source-menu {
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 0, 0, 0.4);
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .source-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 20, 32, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    min-width: 270px;
+    padding: 0.4rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    z-index: 120;
+    animation: dropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes dropdownFade {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .source-dropdown-group.open .source-dropdown-menu {
+    display: flex;
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: all var(--motion-fast) ease;
+  }
+
+  .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  #hashtag-dropdown-menu {
+    border-color: rgba(236, 72, 153, 0.35);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(236, 72, 153, 0.18);
+  }
+
+  .dropdown-item.active {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.35);
+  }
+
+  #hashtag-dropdown-menu .dropdown-item.active {
+    background: rgba(236, 72, 153, 0.15);
+    border-color: rgba(236, 72, 153, 0.35);
+  }
+
+  .dropdown-item-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .dropdown-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .dropdown-dot.dot-asimov {
+    background: #6366f1;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+  }
+
+  .dropdown-dot.dot-skills {
+    background: #818cf8;
+    box-shadow: 0 0 8px rgba(129, 140, 248, 0.6);
+  }
+
+  .dropdown-dot.dot-hashtag {
+    background: #ec4899;
+    box-shadow: 0 0 8px rgba(236, 72, 153, 0.6);
+  }
+
+  .dropdown-dot.dot-hashtag-skills {
+    background: #f472b6;
+    box-shadow: 0 0 8px rgba(244, 114, 182, 0.6);
+  }
+
+  .dropdown-texts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .dropdown-item-title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .dropdown-item-desc {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+    white-space: normal;
+  }
+
+  .dropdown-check {
+    color: var(--accent-cyan);
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity var(--motion-fast) ease;
+  }
+
+  .dropdown-item.active .dropdown-check {
+    opacity: 1;
+  }
+
   .nav-right {
     display: flex;
     align-items: center;
     gap: 1.25rem;
+    flex-shrink: 0;
   }
 
   /* Command Palette Trigger */
@@ -292,19 +1060,258 @@ const navItems = [
     transform: scale(1.04);
   }
 
-  @media (max-width: 800px) {
-    .nav-links {
+  /* --- Mobile Hamburger Button & Drawer Menu --- */
+  .mobile-menu-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-right: -0.25rem;
+    border-radius: var(--radius-sm);
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .mobile-menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--accent-cyan);
+  }
+
+  .mobile-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 999;
+  }
+
+  .mobile-drawer-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 340px;
+    background: rgba(11, 14, 21, 0.97);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .mobile-drawer.open {
+    transform: translateX(0);
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .drawer-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+  }
+
+  .drawer-user-meta {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer-user-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .drawer-user-sub {
+    font-size: 0.75rem;
+    color: var(--accent-cyan);
+  }
+
+  .drawer-close-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .drawer-close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .drawer-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .drawer-search-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .drawer-search-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+  }
+
+  .drawer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .drawer-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-cyan);
+  }
+
+  .drawer-source-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.45rem;
+  }
+
+  .drawer-source-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.65rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .drawer-source-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #ffffff;
+  }
+
+  .drawer-source-item.active {
+    background: rgba(0, 242, 254, 0.12);
+    border-color: rgba(0, 242, 254, 0.35);
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .drawer-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .drawer-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .drawer-nav-link:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #ffffff;
+  }
+
+  .drawer-nav-link.active {
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+
+  @media (max-width: 1200px) {
+    .source-switcher {
+      overflow-x: auto;
+      max-width: 380px;
+      scrollbar-width: none;
+    }
+    .source-switcher::-webkit-scrollbar {
       display: none;
     }
-    .cmd-trigger-text, .cmd-badges {
-      display: none;
+    .source-pill-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.725rem;
     }
-    .cmd-trigger-btn {
-      padding: 0.45rem;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
+  }
+
+  @media (max-width: 768px) {
+    .nav-links,
+    .source-switcher-wrapper,
+    .nav-right {
+      display: none !important;
+    }
+
+    .mobile-menu-toggle {
+      display: flex;
+      align-items: center;
       justify-content: center;
+    }
+
+    .navbar {
+      height: 64px !important;
+      padding: 0;
+    }
+
+    .navbar.scrolled {
+      height: 64px !important;
+    }
+
+    .nav-content {
+      flex-wrap: nowrap !important;
     }
   }
 </style>

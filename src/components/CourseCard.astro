@@ -6,9 +6,11 @@ import ProgressBar from './ProgressBar.astro';
 
 interface Props {
   course: Course;
+  loading?: 'lazy' | 'eager';
+  fetchpriority?: 'high' | 'auto' | 'low';
 }
 
-const { course } = Astro.props;
+const { course, loading = 'lazy', fetchpriority = 'auto' } = Astro.props;
 
 // Default first playable lesson for SSR fallback
 const firstLesson = getFirstPlayableLesson(course);
@@ -43,14 +45,16 @@ const sampleVideoPath = isPlayableVideoLesson(firstLesson) ? (firstLesson?.relat
     <div class="card-specular-highlight"></div>
 
     <!-- Card Cover -->
-    <div class="card-cover" style={course.cover_image ? undefined : `background: ${coverGradient};`}>
+    <div class="card-cover" style={`background: ${coverGradient};`}>
       {course.cover_image && (
         <img 
           src={course.cover_image} 
           alt={course.display_title} 
           class="card-cover-img" 
-          loading="lazy" 
-          decoding="async" 
+          loading={loading} 
+          fetchpriority={fetchpriority}
+          decoding={loading === 'eager' ? 'sync' : 'async'} 
+          onerror="this.style.display='none'; const art = this.closest('.card-cover').querySelector('.cover-center-art'); if(art) art.style.display='flex';"
         />
       )}
       <div class="cover-overlay"></div>
@@ -65,16 +69,14 @@ const sampleVideoPath = isPlayableVideoLesson(firstLesson) ? (firstLesson?.relat
         <span class="status-indicator" data-status-for={course.id}></span>
       </div>
 
-      {!course.cover_image && (
-        <div class="cover-center-art">
-          <div class="course-glyph">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-          </div>
-          <div class="cover-title-preview">{course.display_title}</div>
+      <div class="cover-center-art" style={course.cover_image ? "display: none;" : undefined}>
+        <div class="course-glyph">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
         </div>
-      )}
+        <div class="cover-title-preview">{course.display_title}</div>
+      </div>
 
       <!-- Progress bar if started -->
       <div class="card-progress-bar" data-progress-bar-for={course.id}>
@@ -707,7 +709,7 @@ const sampleVideoPath = isPlayableVideoLesson(firstLesson) ? (firstLesson?.relat
       if (!item.isVisible) continue;
 
       const prefs = getUserPreferences();
-      if (globalMouse.active && isDesktop && prefs.parallax_enabled !== false) {
+      if (globalMouse.active && isDesktop && prefs.parallax_enabled === true) {
         if (item.isHovered) {
           // O card sob o cursor fica 100% estático (sem inclinação angular)
           item.targetX = 0;

@@ -1,7 +1,7 @@
 ---
 // VideoPlayer.astro - Advanced Video Player with Theater/Focus modes, Keyboard Shortcuts, Speed Popover, and Next Lesson Countdown
 import type { Lesson } from '../types/catalog';
-import { getLessonDriveId, isDriveLesson, getDrivePreviewUrl } from '../lib/drive';
+import { buildServerStreamUrl, getMediaServerUrl } from '../lib/mediaProvider';
 
 interface Props {
   courseId: string;
@@ -13,15 +13,13 @@ interface Props {
 
 const { courseId, lesson, nextLessonHref, nextLessonTitle = 'Próxima Aula', prevLessonHref } = Astro.props;
 
-const driveId = getLessonDriveId(lesson);
-const isDrive = Boolean(driveId) || isDriveLesson(lesson);
-const drivePreviewUrl = driveId ? getDrivePreviewUrl(driveId) : null;
-const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_path || '')}`;
+const serverBaseUrl = getMediaServerUrl();
+const videoStreamUrl = buildServerStreamUrl(lesson.relative_path || '', serverBaseUrl);
 
 const ext = (lesson.relative_path || '').split('.').pop()?.toLowerCase() || '';
 const isPdf = lesson.type === 'pdf' || ext === 'pdf';
 const isDoc = ['docx', 'pptx', 'xlsx', 'txt', 'md', 'html'].includes(ext);
-const isVideo = !isDrive && !isPdf && !isDoc;
+const isVideo = !isPdf && !isDoc;
 ---
 
 <div
@@ -31,7 +29,7 @@ const isVideo = !isDrive && !isPdf && !isDoc;
   data-lesson-id={lesson.id}
   data-next-href={nextLessonHref || ''}
   data-next-title={nextLessonTitle}
-  data-is-drive={isDrive ? 'true' : 'false'}
+  data-relative-path={lesson.relative_path || ''}
 >
   <!-- Next Lesson Countdown Overlay (Shown on Video End) -->
   <div class="next-lesson-overlay" id="next-lesson-overlay" style="display: none;">
@@ -62,20 +60,22 @@ const isVideo = !isDrive && !isPdf && !isDoc;
     <span>Progresso salvo</span>
   </div>
 
-  <!-- Main Video Viewport (Supports Google Drive & Local Video Stream & PDFs/Docs) -->
+  <!-- Main Video Viewport (Local Video Stream & PDFs/Docs) -->
   <div class="video-viewport" id="video-viewport">
-    {isDrive && drivePreviewUrl ? (
+    {isVideo ? (
       <div class="drive-video-wrapper">
-        <iframe
-          id="drive-video-iframe"
-          class="drive-player-frame"
-          src={drivePreviewUrl}
-          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-          allowfullscreen
+        <video
+          id="main-video-player"
+          class="html5-video"
+          src={videoStreamUrl}
+          data-src={videoStreamUrl}
+          controls
+          autoplay
+          playsinline
+          webkit-playsinline
+          controlsList="nodownload"
           title={lesson.display_title}
-        ></iframe>
-        <!-- Blocker to prevent clicking Google Drive's native pop-out button in the top right -->
-        <div class="drive-popout-blocker" title=""></div>
+        ></video>
       </div>
     ) : isPdf ? (
       <div class="doc-player-wrapper">
@@ -86,7 +86,7 @@ const isVideo = !isDrive && !isPdf && !isDoc;
           title={lesson.display_title}
         ></iframe>
       </div>
-    ) : isDoc ? (
+    ) : (
       <div class="doc-download-card">
         <div class="doc-icon-box">
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -110,17 +110,6 @@ const isVideo = !isDrive && !isPdf && !isDoc;
           <a href={videoStreamUrl} target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Abrir no Navegador</a>
         </div>
       </div>
-    ) : (
-      <video
-        id="main-video-player"
-        class="html5-video"
-        src={videoStreamUrl}
-        controls
-        playsinline
-        preload="metadata"
-      >
-        Seu navegador não suporta este vídeo.
-      </video>
     )}
 
     <!-- Graceful Media Error State -->
@@ -141,127 +130,74 @@ const isVideo = !isDrive && !isPdf && !isDoc;
     </div>
   </div>
 
-  <!-- Refined Bottom Control Bar -->
-  <div class="player-controls-bar">
-    {!isDrive && (
-      <div class="player-timeline-container" id="player-timeline-box">
-        <div class="timeline-track-bar" id="timeline-track">
-          <div class="timeline-fill-bar" id="timeline-fill" style="width: 0%;"></div>
-          <div class="timeline-thumb-knob" id="timeline-thumb" style="left: 0%;"></div>
-        </div>
-      </div>
-    )}
+  <!-- Classroom Action Bar (Lesson Navigation, Focus Mode & Mark Completed) -->
+  <div class="classroom-nav-bar">
+    <div class="nav-left">
+      {prevLessonHref ? (
+        <a href={prevLessonHref} class="btn-nav-lesson" title="Aula Anterior (Shift + P)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span class="btn-label-desktop">Anterior</span>
+        </a>
+      ) : (
+        <button class="btn-nav-lesson disabled" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span class="btn-label-desktop">Anterior</span>
+        </button>
+      )}
 
-    <div class="controls-main-row">
-      <div class="controls-left">
-        {!isDrive && (
-          <button type="button" class="btn-control-play-main" id="btn-main-play" title="Reproduzir / Pausar (Espaço)">
-            <svg class="icon-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            <svg class="icon-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
-              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
-            </svg>
-          </button>
-        )}
+      {nextLessonHref ? (
+        <a href={nextLessonHref} class="btn-nav-lesson" id="manual-next-link" title="Próxima Aula (Shift + N)">
+          <span class="btn-label-desktop">Próxima</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      ) : (
+        <button class="btn-nav-lesson disabled" disabled>
+          <span class="btn-label-desktop">Próxima</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      )}
+    </div>
 
-        {!isDrive && (
-          <button type="button" class="btn-control-icon" id="btn-rewind-10" title="Retroceder 10s (J / Seta Esquerda)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 19l-9-7 9-7v14z"></path>
-              <path d="M22 19l-9-7 9-7v14z"></path>
-            </svg>
-            <span class="step-label">-10s</span>
-          </button>
-        )}
-
-        {!isDrive && (
-          <button type="button" class="btn-control-icon" id="btn-forward-10" title="Avançar 10s (L / Seta Direita)">
-            <span class="step-label">+10s</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M13 5l9 7-9 7V5z"></path>
-              <path d="M2 5l9 7-9 7V5z"></path>
-            </svg>
-          </button>
-        )}
-
-        {!isDrive && (
-          <div class="video-time-counter" id="video-time-box">
-            <span id="time-current">0:00</span>
-            <span class="time-sep">/</span>
-            <span id="time-duration">0:00</span>
-          </div>
-        )}
-
-        {prevLessonHref ? (
-          <a href={prevLessonHref} class="btn-nav-lesson" title="Aula Anterior (Shift + P)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            <span class="btn-label-desktop">Anterior</span>
-          </a>
-        ) : (
-          <button class="btn-nav-lesson disabled" disabled>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            <span class="btn-label-desktop">Anterior</span>
-          </button>
-        )}
-
-        {nextLessonHref ? (
-          <a href={nextLessonHref} class="btn-nav-lesson" id="manual-next-link" title="Próxima Aula (Shift + N)">
-            <span class="btn-label-desktop">Próxima</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </a>
-        ) : (
-          <button class="btn-nav-lesson disabled" disabled>
-            <span class="btn-label-desktop">Próxima</span>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        )}
-      </div>
-
-      <div class="controls-center">
-        <!-- Mode Toggle: Focus -->
-        <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <!-- Local Media Server Badge & Config -->
+    <div class="nav-middle">
+      <div class="media-source-select-wrap" title="Servidor Local de Streaming (Cloudflare Tunnel)">
+        <span class="badge badge-cyan" style="gap: 0.4rem; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 8px #10b981;"></span>
+          <span>Servidor Local</span>
+        </span>
+        <button type="button" class="btn btn-ghost btn-sm btn-server-cfg" id="btn-config-server" title="Configurar URL do Servidor Cloudflare/Local">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"></circle>
-            <path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"></path>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
-          <span class="btn-label-desktop">Foco</span>
-        </button>
-
-        {!isDrive && (
-          <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-pip-mode" title="Picture-in-Picture (P)">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-              <rect x="13" y="11" width="7" height="6" rx="1"></rect>
-            </svg>
-          </button>
-        )}
-      </div>
-
-      <div class="controls-right">
-        <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-fullscreen-toggle" title="Tela Cheia (F)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-          </svg>
-        </button>
-
-        <!-- Mark as completed toggle button -->
-        <button type="button" class="btn btn-secondary btn-complete-toggle" id="btn-toggle-complete">
-          <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span id="complete-btn-text">Concluir</span>
         </button>
       </div>
+    </div>
+
+    <div class="nav-right">
+      <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"></path>
+        </svg>
+        <span class="btn-label-desktop">Foco</span>
+      </button>
+
+      <!-- Mark as completed toggle button -->
+      <button type="button" class="btn btn-secondary btn-complete-toggle" id="btn-toggle-complete">
+        <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="complete-btn-text">Concluir</span>
+      </button>
     </div>
   </div>
 </div>
@@ -273,18 +209,26 @@ const isVideo = !isDrive && !isPdf && !isDoc;
     getUserPreferences,
     saveUserPreferences
   } from '../lib/progress';
+  import {
+    getMediaMode,
+    setMediaMode,
+    getActiveMediaProvider,
+    buildServerStreamUrl,
+    getMediaServerUrl,
+    setMediaServerUrl,
+    checkServerHealth
+  } from '../lib/mediaProvider';
   import { showToast } from '../lib/toast';
 
   const wrapper = document.getElementById('player-wrapper');
-  const video = document.getElementById('main-video-player') as HTMLVideoElement | null;
   const overlay = document.getElementById('next-lesson-overlay');
   const countdownSecs = document.getElementById('countdown-secs');
   const countdownText = document.getElementById('next-countdown-text');
   const btnCancelNext = document.getElementById('btn-cancel-next');
+  const btnPlayNextNow = document.getElementById('btn-play-next-now');
   const savePill = document.getElementById('save-status-pill');
   const btnComplete = document.getElementById('btn-toggle-complete');
   const completeText = document.getElementById('complete-btn-text');
-  const btnTheater = document.getElementById('btn-theater-mode');
   const btnFocus = document.getElementById('btn-focus-mode');
   const btnPip = document.getElementById('btn-pip-mode');
   const errorOverlay = document.getElementById('video-error-overlay');
@@ -293,10 +237,213 @@ const isVideo = !isDrive && !isPdf && !isDoc;
   const courseId = wrapper?.getAttribute('data-course-id') || '';
   const lessonId = wrapper?.getAttribute('data-lesson-id') || '';
   const nextHref = wrapper?.getAttribute('data-next-href') || '';
+  const relPath = wrapper?.getAttribute('data-relative-path') || '';
+  const dId = wrapper?.getAttribute('data-drive-id') || '';
 
   if (courseId && lessonId) {
     const prefs = getUserPreferences();
-    const isDrive = wrapper?.getAttribute('data-is-drive') === 'true';
+
+    // Source Provider Selector
+    const sourceSelect = document.getElementById('player-media-source-select') as HTMLSelectElement | null;
+    if (sourceSelect) {
+      sourceSelect.value = getMediaMode();
+      sourceSelect.addEventListener('change', () => {
+        const mode = sourceSelect.value as any;
+        setMediaMode(mode);
+        initPlayerSource();
+        showToast(`Fonte alterada para: ${sourceSelect.options[sourceSelect.selectedIndex].text}`, 'info', 2000);
+      });
+    }
+
+    const btnConfigServer = document.getElementById('btn-config-server');
+    btnConfigServer?.addEventListener('click', async () => {
+      const currentUrl = getMediaServerUrl();
+      const newUrl = prompt('URL do Servidor de Streaming (Cloudflare Tunnel ou IP Local):', currentUrl);
+      if (newUrl !== null && newUrl.trim() !== '') {
+        setMediaServerUrl(newUrl.trim());
+        showToast('Testando conexão com o servidor...', 'info', 2000);
+        const isOnline = await checkServerHealth(newUrl.trim(), true);
+        if (isOnline) {
+          showToast('Servidor de streaming conectado com sucesso!', 'success', 3000);
+        } else {
+          showToast('Servidor offline ou inacessível nesta URL.', 'warning', 4000);
+        }
+        initPlayerSource();
+      }
+    });
+
+    function loadDrive(container: HTMLElement, fileId: string) {
+      const driveUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      const curIframe = container.querySelector('#drive-video-iframe') as HTMLIFrameElement | null;
+      if (!curIframe || curIframe.src !== driveUrl) {
+        container.innerHTML = `
+          <iframe
+            id="drive-video-iframe"
+            class="drive-player-frame"
+            src="${driveUrl}"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allowfullscreen
+            title="${lessonId}"
+          ></iframe>
+          <div class="drive-popout-blocker"></div>
+        `;
+      }
+    }
+
+    let countdownInterval: any = null;
+
+    // Attach complete playback and progression hooks to local server HTML5 video
+    function setupHtml5Video(vid: HTMLVideoElement) {
+      if ((vid as any).__mindflix_setup_done) return;
+      (vid as any).__mindflix_setup_done = true;
+
+      // 1. Resume saved position if available
+      const saved = getLessonProgress(lessonId);
+      if (prefs.auto_resume !== false && saved && saved.position_seconds > 5 && !saved.completed) {
+        const setResumeTime = () => {
+          if (!isNaN(vid.duration) && saved.position_seconds < vid.duration - 2) {
+            vid.currentTime = saved.position_seconds;
+          }
+        };
+        vid.addEventListener('loadedmetadata', setResumeTime, { once: true });
+        if (vid.readyState >= 1) setResumeTime();
+
+        const mins = Math.floor(saved.position_seconds / 60);
+        const secs = Math.floor(saved.position_seconds % 60);
+        showToast(`Continuando de ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 2500);
+      }
+
+      // 2. Throttled progress save
+      let lastSave = 0;
+      const saveCurrentProgress = (completed = false) => {
+        if (!vid.duration || isNaN(vid.duration)) return;
+        saveLessonProgress(courseId, lessonId, vid.currentTime, vid.duration, completed);
+        lastSave = Date.now();
+        window.dispatchEvent(new CustomEvent('mindflix:progress-updated', {
+          detail: { courseId, lessonId, completed }
+        }));
+        if (savePill) {
+          savePill.style.display = 'flex';
+          setTimeout(() => { if (savePill) savePill.style.display = 'none'; }, 1500);
+        }
+      };
+
+      vid.addEventListener('seeked', () => saveCurrentProgress(false));
+      vid.addEventListener('pause', () => {
+        if (!hasCompleted) saveCurrentProgress(false);
+      });
+
+      // Unload safety: save exact position on page exit/navigate
+      const handleUnload = () => {
+        if (vid && !isNaN(vid.currentTime) && vid.duration) {
+          saveLessonProgress(courseId, lessonId, vid.currentTime, vid.duration, hasCompleted || vid.currentTime / vid.duration >= 0.85);
+        }
+      };
+      window.addEventListener('beforeunload', handleUnload);
+      window.addEventListener('pagehide', handleUnload);
+
+      // 3. Automatically mark as completed and advance to the next video when video reaches the end
+      let hasCompleted = false;
+
+      const triggerCompletionAndNext = async () => {
+        if (hasCompleted) return;
+        hasCompleted = true;
+
+        const dur = (vid.duration && !isNaN(vid.duration) && vid.duration > 0) ? vid.duration : 600;
+        await saveLessonProgress(courseId, lessonId, dur, dur, true);
+        updateCompleteUI(true);
+        window.dispatchEvent(new CustomEvent('mindflix:progress-updated', {
+          detail: { courseId, lessonId, completed: true }
+        }));
+
+        if (nextHref) {
+          showToast('Aula concluída! Passando para a próxima...', 'success', 3000);
+
+          if (overlay) {
+            overlay.style.display = 'flex';
+            let count = 3;
+            if (countdownSecs) countdownSecs.textContent = count.toString();
+            if (countdownText) countdownText.innerHTML = `Iniciando em <span id="countdown-secs">${count}</span>s...`;
+
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+              count--;
+              const curSecs = document.getElementById('countdown-secs');
+              if (curSecs) curSecs.textContent = count.toString();
+              if (count <= 0) {
+                clearInterval(countdownInterval);
+                window.location.href = nextHref;
+              }
+            }, 1000);
+          } else {
+            setTimeout(() => {
+              window.location.href = nextHref;
+            }, 1000);
+          }
+        } else {
+          showToast('Parabéns! Você concluiu a última aula!', 'success', 4000);
+        }
+      };
+
+      // Native ended event
+      vid.addEventListener('ended', () => {
+        triggerCompletionAndNext();
+      });
+
+      // Timeupdate: periodic save and near-end fallback safeguard
+      vid.addEventListener('timeupdate', () => {
+        const now = Date.now();
+        if (now - lastSave > 8000) {
+          saveCurrentProgress(false);
+        }
+
+        // Auto trigger completion when video is within 0.3s of the end
+        if (vid.duration && vid.duration > 2 && vid.currentTime >= vid.duration - 0.3) {
+          triggerCompletionAndNext();
+        }
+      });
+    }
+
+    async function initPlayerSource() {
+      const viewport = document.getElementById('video-viewport');
+      if (!viewport) return;
+
+      const wrapperDiv = viewport.querySelector('.drive-video-wrapper') as HTMLElement | null;
+      if (!wrapperDiv) return;
+
+      if (relPath) {
+        const serverStreamUrl = buildServerStreamUrl(relPath);
+        const curVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
+        if (!curVid || curVid.getAttribute('data-src') !== serverStreamUrl) {
+          wrapperDiv.innerHTML = `
+            <video
+              id="main-video-player"
+              class="html5-video"
+              src="${serverStreamUrl}"
+              data-src="${serverStreamUrl}"
+              controls
+              autoplay
+              playsinline
+              webkit-playsinline
+              controlsList="nodownload"
+              title="${lessonId}"
+            ></video>
+          `;
+          const newVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
+          if (newVid) {
+            setupHtml5Video(newVid);
+            newVid.addEventListener('error', () => {
+              showToast('Erro ao carregar o vídeo do servidor de streaming.', 'error', 4000);
+            });
+          }
+        } else {
+          setupHtml5Video(curVid);
+        }
+      }
+    }
+
+    initPlayerSource();
+    window.addEventListener('mindflix:media-mode-changed', initPlayerSource);
 
     // Mark completed toggle (Shared across Video and Drive)
     const saved = getLessonProgress(lessonId);
@@ -314,29 +461,42 @@ const isVideo = !isDrive && !isPdf && !isDoc;
     if (saved?.completed) updateCompleteUI(true);
 
     btnComplete?.addEventListener('click', async () => {
+      const curVid = document.getElementById('main-video-player') as HTMLVideoElement | null;
       const isComplete = !btnComplete.classList.contains('btn-completed');
-      const currentPos = video ? video.currentTime : (isComplete ? 600 : 0);
-      const totalDur = video && video.duration ? video.duration : 600;
+      const currentPos = curVid ? curVid.currentTime : (isComplete ? 600 : 0);
+      const totalDur = curVid && curVid.duration ? curVid.duration : 600;
       await saveLessonProgress(courseId, lessonId, currentPos, totalDur, isComplete);
       updateCompleteUI(isComplete);
       window.dispatchEvent(new CustomEvent('mindflix:progress-updated', { detail: { courseId, lessonId, completed: isComplete } }));
       showToast(isComplete ? 'Aula marcada como concluída!' : 'Aula reaberta', 'success');
     });
-    btnFocus?.addEventListener('click', () => {
-      const isActive = document.body.classList.toggle('focus-mode-active');
-      if (!isActive) {
-        document.body.classList.remove('focus-sidebar-open');
-      }
-      btnFocus.classList.toggle('active', isActive);
-      showToast(isActive ? 'Modo Foco Zen ativado. Pressione C ou ESC para sair.' : 'Modo Foco desativado', 'info', 3000);
+
+    // Clicking "Próxima" marks the current lesson as completed before navigating to next video
+    const manualNextBtn = document.getElementById('manual-next-link');
+    manualNextBtn?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const curVid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      const currentPos = curVid && !isNaN(curVid.currentTime) ? curVid.currentTime : 600;
+      const totalDur = curVid && !isNaN(curVid.duration) ? curVid.duration : 600;
+      await saveLessonProgress(courseId, lessonId, currentPos, totalDur, true);
+      updateCompleteUI(true);
+      window.dispatchEvent(new CustomEvent('mindflix:progress-updated', { detail: { courseId, lessonId, completed: true } }));
+      const href = manualNextBtn.getAttribute('href');
+      if (href) window.location.href = href;
     });
 
-    // Next lesson countdown cancel
+    // Next lesson countdown overlay actions
     btnCancelNext?.addEventListener('click', () => {
+      clearInterval(countdownInterval);
       if (overlay) overlay.style.display = 'none';
+      showToast('Avanço automático cancelado', 'info', 2000);
     });
 
-    // Fullscreen Toggle (Shared for ALL video types)
+    btnPlayNextNow?.addEventListener('click', () => {
+      clearInterval(countdownInterval);
+    });
+
+    // Fullscreen Toggle
     const btnFullscreen = document.getElementById('btn-fullscreen-toggle');
     btnFullscreen?.addEventListener('click', () => {
       if (document.fullscreenElement) {
@@ -350,9 +510,10 @@ const isVideo = !isDrive && !isPdf && !isDoc;
       }
     });
 
-    // Picture-in-Picture Mode (Native + Floating Mini Player Fallback)
+    // Picture-in-Picture Mode
     const togglePiP = async () => {
-      if (video && document.pictureInPictureEnabled && typeof video.requestPictureInPicture === 'function') {
+      const vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      if (vid && document.pictureInPictureEnabled && typeof vid.requestPictureInPicture === 'function') {
         try {
           if (document.pictureInPictureElement) {
             await document.exitPictureInPicture();
@@ -360,7 +521,7 @@ const isVideo = !isDrive && !isPdf && !isDoc;
             showToast('Saindo do Picture-in-Picture', 'info', 1500);
             return;
           } else {
-            await video.requestPictureInPicture();
+            await vid.requestPictureInPicture();
             if (btnPip) btnPip.classList.add('active');
             showToast('Picture-in-Picture ativado', 'success', 1500);
             return;
@@ -384,238 +545,44 @@ const isVideo = !isDrive && !isPdf && !isDoc;
 
     btnPip?.addEventListener('click', togglePiP);
 
-    // Native HTML5 Video Specific Controls
-    if (video) {
-      // Remove native controls so MindFlix custom UI is used
-      video.removeAttribute('controls');
-
-      const mainPlayBtn = document.getElementById('btn-main-play');
-      const iconPlay = mainPlayBtn?.querySelector<HTMLElement>('.icon-play');
-      const iconPause = mainPlayBtn?.querySelector<HTMLElement>('.icon-pause');
-      const rewindBtn = document.getElementById('btn-rewind-10');
-      const forwardBtn = document.getElementById('btn-forward-10');
-      const timeCurrent = document.getElementById('time-current');
-      const timeDuration = document.getElementById('time-duration');
-      const timelineTrack = document.getElementById('timeline-track');
-      const timelineFill = document.getElementById('timeline-fill');
-      const timelineThumb = document.getElementById('timeline-thumb');
-
-      const formatTime = (secs: number) => {
-        if (isNaN(secs) || secs < 0) return '0:00';
-        const m = Math.floor(secs / 60);
-        const s = Math.floor(secs % 60);
-        return `${m}:${String(s).padStart(2, '0')}`;
-      };
-
-      const updatePlayStateUI = () => {
-        if (video.paused) {
-          if (iconPlay) iconPlay.style.display = 'block';
-          if (iconPause) iconPause.style.display = 'none';
-        } else {
-          if (iconPlay) iconPlay.style.display = 'none';
-          if (iconPause) iconPause.style.display = 'block';
-        }
-      };
-
-      video.addEventListener('play', updatePlayStateUI);
-      video.addEventListener('pause', updatePlayStateUI);
-
-      mainPlayBtn?.addEventListener('click', () => {
-        if (video.paused) {
-          video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      });
-
-      rewindBtn?.addEventListener('click', () => {
-        video.currentTime = Math.max(0, video.currentTime - 10);
-      });
-
-      forwardBtn?.addEventListener('click', () => {
-        video.currentTime = Math.min(video.duration, video.currentTime + 10);
-      });
-
-      // Time & Scrubber updates
-      video.addEventListener('timeupdate', () => {
-        if (timeCurrent) timeCurrent.textContent = formatTime(video.currentTime);
-        if (video.duration && !isNaN(video.duration)) {
-          if (timeDuration) timeDuration.textContent = formatTime(video.duration);
-          const pct = Math.min(100, (video.currentTime / video.duration) * 100);
-          if (timelineFill) timelineFill.style.width = `${pct}%`;
-          if (timelineThumb) timelineThumb.style.left = `${pct}%`;
-        }
-      });
-
-      video.addEventListener('loadedmetadata', () => {
-        if (video.duration && !isNaN(video.duration) && timeDuration) {
-          timeDuration.textContent = formatTime(video.duration);
-        }
-      });
-
-      if (timelineTrack) {
-        let isSeeking = false;
-        const seek = (e: MouseEvent) => {
-          if (!video.duration || isNaN(video.duration)) return;
-          const rect = timelineTrack.getBoundingClientRect();
-          const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-          video.currentTime = pos * video.duration;
-        };
-
-        timelineTrack.addEventListener('mousedown', (e) => {
-          isSeeking = true;
-          seek(e);
-        });
-
-        window.addEventListener('mousemove', (e) => {
-          if (isSeeking) seek(e);
-        });
-
-        window.addEventListener('mouseup', () => {
-          isSeeking = false;
-        });
-      }
-
-      // Handle video load error gracefully
-      video.addEventListener('error', () => {
-        if (errorOverlay) errorOverlay.style.display = 'flex';
-      });
-
-      retryBtn?.addEventListener('click', () => {
-        if (errorOverlay) errorOverlay.style.display = 'none';
-        video.load();
-        video.play().catch(() => {});
-      });
-
-      // Resume position check (respects prefs.auto_resume)
-      if (prefs.auto_resume !== false && saved && saved.position_seconds > 5 && !saved.completed) {
-        const setResumeTime = () => {
-          if (!isNaN(video.duration) && saved.position_seconds < video.duration - 2) {
-            video.currentTime = saved.position_seconds;
-          }
-        };
-        video.addEventListener('loadedmetadata', setResumeTime, { once: true });
-        if (video.readyState >= 1) setResumeTime();
-
-        const mins = Math.floor(saved.position_seconds / 60);
-        const secs = Math.floor(saved.position_seconds % 60);
-        showToast(`Continuando de ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 3000);
-      }
-
-      // Throttled progress saving with discreet save pill
-      let lastSave = 0;
-      const triggerSave = (manual = false) => {
-        if (!video.duration || isNaN(video.duration)) return;
-        saveLessonProgress(courseId, lessonId, video.currentTime, video.duration, manual);
-        lastSave = Date.now();
-        window.dispatchEvent(new CustomEvent('mindflix:progress-updated', { detail: { courseId, lessonId } }));
-
-        // Show save pill
-        if (savePill) {
-          savePill.style.display = 'flex';
-          setTimeout(() => { savePill.style.display = 'none'; }, 1500);
-        }
-      };
-
-      video.addEventListener('seeked', () => triggerSave());
-
-      // Unload safety: save exact position on page exit/navigate
-      const handleUnload = () => {
-        if (video && !isNaN(video.currentTime) && video.duration) {
-          saveLessonProgress(courseId, lessonId, video.currentTime, video.duration, video.currentTime / video.duration >= 0.85);
-        }
-      };
-      window.addEventListener('beforeunload', handleUnload);
-      window.addEventListener('pagehide', handleUnload);
-
-      video.addEventListener('timeupdate', () => {
-        const now = Date.now();
-        if (now - lastSave > 8000) triggerSave();
-
-        if (video.duration && video.currentTime / video.duration >= 0.85) {
-          if (!btnComplete?.classList.contains('btn-completed')) {
-            triggerSave(true);
-            updateCompleteUI(true);
-          }
-        }
-      });
-
-      video.addEventListener('pause', () => triggerSave());
-
-      // Next lesson countdown logic (respects prefs.autoplay_next)
-      let countdownInterval: any;
-      video.addEventListener('ended', () => {
-        triggerSave(true);
-        updateCompleteUI(true);
-
-        const currentPrefs = getUserPreferences();
-        if (currentPrefs.autoplay_next !== false && nextHref && overlay) {
-          overlay.style.display = 'flex';
-          let count = 6;
-          if (countdownSecs) countdownSecs.textContent = count.toString();
-
-          clearInterval(countdownInterval);
-          countdownInterval = setInterval(() => {
-            count--;
-            if (countdownSecs) countdownSecs.textContent = count.toString();
-            if (count <= 0) {
-              clearInterval(countdownInterval);
-              window.location.href = nextHref;
-            }
-          }, 1000);
-        }
-      });
-
-      video.addEventListener('leavepictureinpicture', () => {
-        if (btnPip) btnPip.classList.remove('active');
-      });
-
-      // Keyboard Shortcuts for video
-      window.addEventListener('keydown', (e) => {
-        const target = e.target as HTMLElement;
-        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable) return;
-        if (document.getElementById('cmd-palette-backdrop')?.style.display === 'flex') return;
-
-        if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
-          e.preventDefault();
-          video.paused ? video.play() : video.pause();
-        } else if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - 5);
-        } else if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + 5);
-        } else if (e.key === 'j' || e.key === 'J') {
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - 10);
-        } else if (e.key === 'l' || e.key === 'L') {
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + 10);
-        } else if (e.key === 'm' || e.key === 'M') {
-          e.preventDefault();
-          video.muted = !video.muted;
-          showToast(video.muted ? 'Áudio mutado' : 'Áudio ativado', 'info', 1500);
-        } else if (e.key === 'f' || e.key === 'F') {
-          e.preventDefault();
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          } else {
-            video.requestFullscreen().catch(() => {});
-          }
-        }
-      });
-    }
-
-    // Common shortcuts (Theater & Focus)
+    // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       const target = e.target as HTMLElement;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable) return;
       if (document.getElementById('cmd-palette-backdrop')?.style.display === 'flex') return;
 
-      if (e.key === 't' || e.key === 'T') {
-        e.preventDefault();
-        btnTheater?.click();
-      } else if (e.key === 'c' || e.key === 'C') {
+      const vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      if (vid) {
+        if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
+          e.preventDefault();
+          vid.paused ? vid.play().catch(() => {}) : vid.pause();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          vid.currentTime = Math.max(0, vid.currentTime - 5);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 5);
+        } else if (e.key === 'j' || e.key === 'J') {
+          e.preventDefault();
+          vid.currentTime = Math.max(0, vid.currentTime - 10);
+        } else if (e.key === 'l' || e.key === 'L') {
+          e.preventDefault();
+          vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 10);
+        } else if (e.key === 'm' || e.key === 'M') {
+          e.preventDefault();
+          vid.muted = !vid.muted;
+          showToast(vid.muted ? 'Áudio mutado' : 'Áudio ativado', 'info', 1500);
+        } else if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+          } else {
+            vid.requestFullscreen().catch(() => {});
+          }
+        }
+      }
+
+      if (e.key === 'c' || e.key === 'C') {
         e.preventDefault();
         btnFocus?.click();
       } else if (e.key === 'Escape' && document.body.classList.contains('focus-mode-active')) {
@@ -642,28 +609,32 @@ const isVideo = !isDrive && !isPdf && !isDoc;
     width: 100%;
     aspect-ratio: 16 / 9;
     background: #000000;
+    overflow: hidden;
   }
 
-  .drive-video-wrapper {
-    position: relative;
+  :global(.video-player-component .drive-video-wrapper) {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     background: #000000;
     overflow: hidden;
   }
 
-  .drive-player-frame {
+  :global(.video-player-component .drive-player-frame) {
     position: absolute;
-    top: -48px;
-    left: -2px;
-    width: calc(100% + 4px);
-    height: calc(100% + 48px);
-    border: none;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    margin: 0;
+    padding: 0;
     background: #000000;
     display: block;
   }
 
-  .drive-popout-blocker {
+  :global(.video-player-component .drive-popout-blocker) {
     position: absolute;
     top: 0;
     right: 0;
@@ -717,21 +688,12 @@ const isVideo = !isDrive && !isPdf && !isDoc;
     margin-top: 0.5rem;
   }
 
-  .html5-video {
+  :global(.video-player-component .html5-video) {
     width: 100%;
     height: 100%;
     object-fit: contain;
     outline: none;
     display: block;
-  }
-
-  /* Google Drive Video Embed */
-  .drive-video-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
     background: #000000;
   }
 
@@ -794,7 +756,7 @@ const isVideo = !isDrive && !isPdf && !isDoc;
   .next-lesson-overlay {
     position: absolute;
     inset: 0;
-    z-index: 15;
+    z-index: 60;
     background: rgba(7, 9, 14, 0.88);
     backdrop-filter: blur(16px);
     display: flex;
@@ -863,29 +825,88 @@ const isVideo = !isDrive && !isPdf && !isDoc;
     animation: fadeIn 0.2s ease;
   }
 
-  /* Bottom Controls Bar */
-  .player-controls-bar {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding: 0.35rem 0.65rem;
-    background: var(--bg-card);
-    border-top: 1px solid var(--border-subtle);
-  }
-
-  .controls-main-row {
+  /* Classroom Action Bar (Navigation, Focus & Complete) */
+  .classroom-nav-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-    width: 100%;
+    padding: 0.5rem 0.85rem;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-subtle);
+    gap: 0.75rem;
   }
 
-  .controls-left, .controls-center, .controls-right {
+  .nav-left, .nav-middle, .nav-right {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.5rem;
+  }
+
+  .nav-right {
+    margin-left: auto;
+  }
+
+  /* Lesson Materials Download Pills */
+  .lesson-materials-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    background: rgba(13, 17, 23, 0.95);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .materials-row-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    margin-right: 0.25rem;
+  }
+
+  .material-download-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.78125rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--motion-fast) var(--ease-out);
+    max-width: 100%;
+  }
+
+  .material-download-pill:hover {
+    background: rgba(0, 242, 254, 0.08);
+    border-color: rgba(0, 242, 254, 0.35);
+    color: var(--accent-cyan);
+    transform: translateY(-1px);
+  }
+
+  .material-download-pill .file-icon {
+    color: var(--accent-cyan);
+    flex-shrink: 0;
+  }
+
+  .material-download-pill .file-name-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+  }
+
+  .material-download-pill .download-icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: color var(--motion-fast) ease;
+  }
+
+  .material-download-pill:hover .download-icon {
+    color: var(--accent-cyan);
   }
 
   /* Timeline Scrubber Bar */
@@ -1037,6 +1058,36 @@ const isVideo = !isDrive && !isPdf && !isDoc;
     background: rgba(var(--accent-primary-rgb), 0.12);
   }
 
+  /* Media Source Provider Selector Dropdown */
+  .media-source-select-wrap {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .player-media-source-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-primary, #f1f5f9);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.45rem;
+    height: 24px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+
+  .player-media-source-select:hover {
+    border-color: var(--accent-cyan, #00f2fe);
+    background: rgba(0, 242, 254, 0.08);
+  }
+
+  .player-media-source-select option {
+    background: #121620;
+    color: #ffffff;
+  }
+
   /* Speed Popover */
   .speed-popover-container {
     position: relative;
@@ -1169,8 +1220,104 @@ const isVideo = !isDrive && !isPdf && !isDoc;
   }
 
   @media (max-width: 768px) {
+    .classroom-nav-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.65rem;
+      gap: 0.5rem;
+    }
+
+    /* Top row: Left has navigation, Right has complete button */
+    .classroom-nav-bar .nav-left {
+      order: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex: 1 1 auto;
+    }
+
+    .btn-nav-lesson {
+      padding: 0.35rem 0.55rem;
+      font-size: 0.78rem;
+    }
+
     .btn-label-desktop {
-      display: none;
+      display: inline !important;
+    }
+
+    .classroom-nav-bar .nav-right {
+      order: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-left: auto;
+    }
+
+    #btn-focus-mode {
+      display: none !important;
+    }
+
+    .btn-complete-toggle {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    /* Bottom row: Full width media source selector */
+    .classroom-nav-bar .nav-middle {
+      order: 3;
+      width: 100%;
+      padding-top: 0.35rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .media-source-select-wrap {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .player-media-source-select {
+      flex: 1;
+      height: 28px;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+    }
+
+    .btn-server-cfg {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Video frame mobile fixes - keep controls fully visible at bottom */
+    .drive-player-frame {
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      border: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .drive-popout-blocker {
+      display: none !important;
+    }
+
+    .video-viewport {
+      width: 100% !important;
+      aspect-ratio: 16 / 9 !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: hidden !important;
     }
   }
 </style>

@@ -1,13 +1,13 @@
 {
-  "last_scan_at": "2026-09-10T10:04:47.547760-03:00",
-  "courses_root": "D:\\Projetos Antigravity\\download synapse",
-  "total_courses": 56,
-  "total_modules": 428,
-  "total_lessons": 4227,
-  "new_courses": 0,
-  "new_lessons": 0,
-  "missing_courses": 0,
-  "missing_lessons": 0,
+  "last_scan_at": "2026-09-21T21:17:29.568602-03:00",
+  "courses_root": "G:\\Meu Drive\\Cursos\\Cursos Mindflix",
+  "total_courses": 241,
+  "total_modules": 409,
+  "total_lessons": 3933,
+  "new_courses": 2,
+  "new_lessons": 4,
+  "missing_courses": 24,
+  "missing_lessons": 5903,
   "dry_run": false,
   "status": "success"
 }

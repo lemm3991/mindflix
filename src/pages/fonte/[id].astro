@@ -1,0 +1,5 @@
+---
+// src/pages/fonte/[id].astro - Alias de rota para /source/[id]
+const { id } = Astro.params;
+return Astro.redirect(`/source/${id || ''}`);
+---

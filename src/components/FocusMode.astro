@@ -1,0 +1,255 @@
+---
+// FocusMode.astro - Componente Padronizado de Controle do Modo Foco Zen
+---
+
+<!-- Focus Mode Dark Backdrop Overlay -->
+<div class="focus-backdrop" id="focus-backdrop" aria-hidden="true"></div>
+
+<!-- Focus Mode Floating Bar (Top Center) -->
+<div class="focus-mode-bar" id="focus-mode-bar">
+  <div class="focus-pill">
+    <span class="focus-pulse-dot"></span>
+    <span>Modo Foco Zen</span>
+  </div>
+
+  <div class="focus-actions">
+    <button type="button" class="focus-action-btn" id="btn-focus-toggle-sidebar" title="Alternar Playlist de Aulas">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+      <span>Playlist</span>
+    </button>
+
+    <button type="button" class="focus-action-btn focus-action-exit" id="btn-exit-focus" title="Sair do Modo Foco (ESC)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+      <span>Sair do Foco (ESC)</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  import { showToast } from '../lib/toast';
+
+  function isMobileView(): boolean {
+    return window.innerWidth <= 768;
+  }
+
+  function toggleFocusMode(forceState?: boolean): boolean {
+    if (isMobileView()) {
+      document.body.classList.remove('focus-mode-active');
+      document.body.classList.remove('focus-sidebar-open');
+      return false;
+    }
+
+    const currentState = document.body.classList.contains('focus-mode-active');
+    const newState = forceState !== undefined ? forceState : !currentState;
+
+    if (newState) {
+      document.body.classList.add('focus-mode-active');
+      showToast('Modo Foco Zen ativado. Pressione C ou ESC para sair.', 'info', 3000);
+    } else {
+      document.body.classList.remove('focus-mode-active');
+      document.body.classList.remove('focus-sidebar-open');
+      showToast('Modo Foco desativado', 'info', 2000);
+    }
+
+    document.querySelectorAll('#btn-focus-mode, [data-action="toggle-focus"]').forEach(btn => {
+      btn.classList.toggle('active', newState);
+    });
+
+    return newState;
+  }
+
+  function exitFocusMode(): void {
+    toggleFocusMode(false);
+  }
+
+  // Ensure focus mode is disabled if window is resized to mobile
+  window.addEventListener('resize', () => {
+    if (isMobileView() && document.body.classList.contains('focus-mode-active')) {
+      exitFocusMode();
+    }
+  });
+
+  // Global event delegation for 100% robust focus button triggers
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target) return;
+
+    const focusBtn = target.closest('#btn-focus-mode, [data-action="toggle-focus"]');
+    if (focusBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFocusMode();
+      return;
+    }
+
+    const exitBtn = target.closest('#btn-exit-focus, #focus-backdrop');
+    if (exitBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      exitFocusMode();
+      return;
+    }
+
+    const toggleSidebarBtn = target.closest('#btn-focus-toggle-sidebar');
+    if (toggleSidebarBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isMobileView() && document.body.classList.contains('focus-mode-active')) {
+        document.body.classList.toggle('focus-sidebar-open');
+      }
+      return;
+    }
+  });
+
+  // Global keyboard shortcuts (C = Toggle, ESC = Exit)
+  document.addEventListener('keydown', (e) => {
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as HTMLElement).isContentEditable)) {
+      return;
+    }
+
+    if (isMobileView()) return;
+
+    if (e.key === 'c' || e.key === 'C') {
+      e.preventDefault();
+      toggleFocusMode();
+    } else if (e.key === 'Escape' && document.body.classList.contains('focus-mode-active')) {
+      e.preventDefault();
+      exitFocusMode();
+    }
+  });
+</script>
+
+<style>
+  /* Remove focus mode completely from mobile screens (<= 768px) */
+  @media (max-width: 768px) {
+    :global(#btn-focus-mode),
+    :global([data-action="toggle-focus"]),
+    .focus-backdrop,
+    .focus-mode-bar {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+  }
+
+  /* Focus Backdrop */
+  .focus-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 45;
+    transition: opacity 0.35s ease;
+  }
+
+  :global(body.focus-mode-active) .focus-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Floating Focus Bar */
+  .focus-mode-bar {
+    position: fixed;
+    top: 1.25rem;
+    left: 50%;
+    transform: translate(-50%, -130%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.5rem 1.15rem;
+    background: rgba(18, 22, 32, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: var(--radius-full, 9999px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  }
+
+  :global(body.focus-mode-active) .focus-mode-bar {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .focus-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--accent-cyan, #00f2fe);
+    letter-spacing: 0.2px;
+  }
+
+  .focus-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--accent-cyan, #00f2fe);
+    box-shadow: 0 0 10px var(--accent-cyan, #00f2fe);
+    animation: focusPulse 2s infinite;
+  }
+
+  @keyframes focusPulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 14px var(--accent-cyan, #00f2fe); }
+    100% { transform: scale(0.95); opacity: 0.8; }
+  }
+
+  .focus-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .focus-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary, #cbd5e1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .focus-action-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .focus-action-exit {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .focus-action-exit:hover {
+    background: rgba(239, 68, 68, 0.28);
+    color: #ffffff;
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+</style>

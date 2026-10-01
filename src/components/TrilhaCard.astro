@@ -1,0 +1,463 @@
+---
+// TrilhaCard.astro - Card de Destaque para Trilhas de Formação
+import type { Trilha } from '../lib/trilhas';
+import { getFirstPlayableLessonInTrilha } from '../lib/trilhas';
+import ProgressBar from './ProgressBar.astro';
+
+interface Props {
+  trilha: Trilha;
+}
+
+const { trilha } = Astro.props;
+
+// Find first playable lesson
+const firstPlayable = getFirstPlayableLessonInTrilha(trilha.id);
+const firstLessonId = firstPlayable ? firstPlayable.lesson.id : 'first';
+const watchUrl = `/watch/trilha/${trilha.id}/${firstLessonId}`;
+
+// Sequence summary preview (first 3 courses)
+const previewCourses = trilha.courses.slice(0, 3);
+const remainingCount = trilha.courses.length - previewCourses.length;
+---
+
+<div class="trilha-card" data-trilha-id={trilha.id} data-total-lessons={trilha.total_lessons_count} data-source={trilha.source}>
+  <div class="trilha-card-inner">
+    <!-- Card Media Header with Ambient Overlay -->
+    <div class="trilha-cover-wrapper">
+      <img
+        src={trilha.cover_image || '/covers/default-trilha.jpg'}
+        alt={trilha.title}
+        class="trilha-cover-img"
+        loading="lazy"
+        decoding="async"
+        onerror="this.style.display='none'"
+      />
+      <div class="trilha-cover-overlay"></div>
+      
+      <!-- Top Badges -->
+      <div class="trilha-badges">
+        <span class="badge-trilha-type">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          Trilha de Formação
+        </span>
+        <span class="badge-asimov-source">{trilha.provider}</span>
+      </div>
+
+      <!-- Duration & Stats Floating Pill -->
+      <div class="trilha-floating-stats">
+        <span class="stat-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+          {trilha.total_cursos} Cursos / Projetos
+        </span>
+        <span class="stat-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          {trilha.total_lessons_count} Aulas
+        </span>
+      </div>
+    </div>
+
+    <!-- Card Content Body -->
+    <div class="trilha-content">
+      <h3 class="trilha-title" title={trilha.title}>{trilha.title}</h3>
+      <p class="trilha-description">{trilha.description}</p>
+
+      <!-- Sequential Course Path Preview -->
+      <div class="trilha-sequence-box">
+        <span class="sequence-label">Sequência de Estudos:</span>
+        <ol class="sequence-list">
+          {previewCourses.map((c, i) => (
+            <li class="sequence-item">
+              <span class="sequence-num">{c.ordem}</span>
+              <span class="sequence-name">{c.course_title || c.nome_trilha}</span>
+            </li>
+          ))}
+          {remainingCount > 0 && (
+            <li class="sequence-item-more">
+              + mais {remainingCount} curso{remainingCount > 1 ? 's e projetos' : ''}
+            </li>
+          )}
+        </ol>
+      </div>
+
+      <!-- Trilha Progress Bar -->
+      <div class="trilha-progress-wrap" style="display: none;" id={`progress-wrap-${trilha.id}`}>
+        <div class="trilha-progress-meta">
+          <span class="progress-txt">Seu Progresso na Trilha</span>
+          <span class="progress-pct" id={`progress-pct-${trilha.id}`}>0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id={`progress-fill-${trilha.id}`} style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Card Actions -->
+      <div class="trilha-actions">
+        <a href={watchUrl} class="btn btn-primary btn-trilha-play" id={`btn-watch-${trilha.id}`}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span class="btn-text">Iniciar Trilha</span>
+        </a>
+        <button
+          type="button"
+          class="trilha-fav-btn"
+          data-fav-id={trilha.id}
+          data-trilha-id={trilha.id}
+          aria-label="Adicionar trilha à Minha Lista"
+          title="Adicionar à Minha Lista"
+          data-action="favorite"
+        >
+          <svg class="heart-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .trilha-card {
+    position: relative;
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 480px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s var(--ease-out),
+                box-shadow 0.3s ease,
+                border-color 0.3s ease;
+  }
+
+  :global(.trilhas-carousel-track) .trilha-card {
+    flex: 0 0 340px;
+    width: 340px;
+    min-width: 340px;
+    max-width: 340px;
+    flex-shrink: 0;
+  }
+
+  .trilha-card-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .trilha-cover-wrapper {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    background: #0f131c;
+  }
+
+  .trilha-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    transition: transform var(--motion-slow) ease-out;
+  }
+
+  .trilha-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(7, 9, 14, 0.2) 0%, rgba(7, 9, 14, 0.85) 80%, var(--bg-card) 100%);
+  }
+
+  .trilha-badges {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 2;
+  }
+
+  .badge-trilha-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-full);
+    background: rgba(0, 242, 254, 0.2);
+    border: 1px solid rgba(0, 242, 254, 0.5);
+    color: var(--accent-cyan);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(8px);
+  }
+
+  .badge-asimov-source {
+    padding: 0.25rem 0.55rem;
+    border-radius: var(--radius-full);
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+  }
+
+  .trilha-floating-stats {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    z-index: 2;
+  }
+
+  .stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: var(--radius-sm);
+    font-size: 0.72rem;
+    color: #e2e8f0;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .trilha-content {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.75rem;
+  }
+
+  .trilha-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.3;
+    margin: 0;
+    min-height: 2.9rem;
+    max-height: 2.9rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .trilha-description {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    margin: 0;
+    min-height: 2.4rem;
+    max-height: 2.4rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .trilha-sequence-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 0.85rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .sequence-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-cyan);
+    margin-bottom: 0.4rem;
+  }
+
+  .sequence-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .sequence-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+
+  .sequence-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .sequence-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sequence-item-more {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-style: italic;
+    padding-left: 1.45rem;
+  }
+
+  .trilha-progress-wrap {
+    margin-top: auto;
+  }
+
+  .trilha-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .progress-txt {
+    color: var(--text-secondary);
+  }
+
+  .progress-pct {
+    color: var(--accent-cyan);
+    font-weight: 700;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-cyan), #6366f1);
+    border-radius: var(--radius-full);
+    transition: width 0.4s ease;
+  }
+
+  .trilha-actions {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-trilha-play {
+    flex: 1;
+    justify-content: center;
+    padding: 0.7rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .trilha-fav-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md, 8px);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .trilha-fav-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    transform: scale(1.05);
+  }
+
+  .trilha-fav-btn.active {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .trilha-fav-btn.active .heart-icon {
+    fill: currentColor;
+  }
+</style>
+
+<script>
+  import { toggleFavorite, isCourseFavorite } from '../lib/progress';
+  import { showToast } from '../lib/toast';
+
+  function initTrilhaFavorites() {
+    const favButtons = document.querySelectorAll<HTMLButtonElement>('.trilha-fav-btn');
+    favButtons.forEach(btn => {
+      const id = btn.getAttribute('data-fav-id');
+      if (!id) return;
+
+      const isFav = isCourseFavorite(id);
+      btn.classList.toggle('active', isFav);
+      const heart = btn.querySelector('.heart-icon');
+      if (heart) {
+        heart.setAttribute('fill', isFav ? 'currentColor' : 'none');
+      }
+
+      if (!btn.dataset.bound) {
+        btn.dataset.bound = 'true';
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const nowFav = await toggleFavorite(id);
+          btn.classList.toggle('active', nowFav);
+          if (heart) {
+            heart.setAttribute('fill', nowFav ? 'currentColor' : 'none');
+          }
+          showToast(
+            nowFav ? 'Trilha adicionada à Minha Lista' : 'Trilha removida da Minha Lista',
+            nowFav ? 'success' : 'info'
+          );
+        });
+      }
+    });
+  }
+
+  document.addEventListener('astro:page-load', initTrilhaFavorites);
+  window.addEventListener('mindflix:favorites-changed', initTrilhaFavorites);
+  initTrilhaFavorites();
+</script>

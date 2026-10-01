@@ -1,36 +1,38 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import catalogData from '../data/catalog.json';
 import type { Course, Category, CatalogData, Lesson } from '../types/catalog';
 
-function getNodeModule(name: string): any {
-  if (typeof window !== 'undefined') return null;
-  try {
-    const req = Function('return require')();
-    return req ? req(name) : null;
-  } catch {
-    return null;
-  }
+let cachedCatalog: CatalogData | null = null;
+let lastCatalogLoadTime = 0;
+const CATALOG_CACHE_TTL_MS = 5000;
+
+export function invalidateCatalogCache(): void {
+  cachedCatalog = null;
+  lastCatalogLoadTime = 0;
 }
 
 function loadMergedCatalog(): CatalogData {
   const baseCatalog = catalogData as CatalogData;
 
-  // Check if we are running in Node.js server environment (SSR / API)
+  // Check if we are running in browser context
   if (typeof window !== 'undefined') {
     return baseCatalog;
   }
 
-  try {
-    const fs = getNodeModule('node:fs');
-    const path = getNodeModule('node:path');
-    const os = getNodeModule('node:os');
+  const now = Date.now();
+  if (cachedCatalog && (now - lastCatalogLoadTime) < CATALOG_CACHE_TTL_MS) {
+    return cachedCatalog;
+  }
 
-    if (!fs || !path) return baseCatalog;
+  try {
 
     const primaryCatalog = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
-    const tmpCatalog = path.join(os.tmpdir(), 'catalog.json');
+    const tmpDir = path.resolve(process.cwd(), '.tmp');
+    const tmpCatalog = path.join(tmpDir, 'catalog.json');
 
     const primaryOverrides = path.resolve(process.cwd(), 'src', 'data', 'manual_overrides.json');
-    const tmpOverrides = path.join(os.tmpdir(), 'manual_overrides.json');
+    const tmpOverrides = path.join(tmpDir, 'manual_overrides.json');
 
     let catalogToUse = baseCatalog;
 
@@ -52,7 +54,7 @@ function loadMergedCatalog(): CatalogData {
     }
 
     const primaryCatOverrides = path.resolve(process.cwd(), 'src', 'data', 'categories_overrides.json');
-    const tmpCatOverrides = path.join(os.tmpdir(), 'categories_overrides.json');
+    const tmpCatOverrides = path.join(tmpDir, 'categories_overrides.json');
 
     // Read categories overrides from disk if available
     let customCategories: any[] | null = null;
@@ -90,6 +92,8 @@ function loadMergedCatalog(): CatalogData {
     }
 
     if (Object.keys(overrides).length === 0) {
+      cachedCatalog = catalogToUse;
+      lastCatalogLoadTime = now;
       return catalogToUse;
     }
 
@@ -111,11 +115,17 @@ function loadMergedCatalog(): CatalogData {
       };
     });
 
-    return {
+    const finalResult = {
       ...catalogToUse,
       courses: mergedCourses
     };
+
+    cachedCatalog = finalResult;
+    lastCatalogLoadTime = now;
+    return finalResult;
   } catch (e) {
+    cachedCatalog = baseCatalog;
+    lastCatalogLoadTime = now;
     return baseCatalog;
   }
 }
@@ -124,12 +134,75 @@ export function getCatalog(): CatalogData {
   return loadMergedCatalog();
 }
 
+const ROOT_ORGANIZATION_PATHS = new Set([
+  'ai lab',
+  'asimov',
+  'asimov/asimov skills',
+  'asimov/cursos',
+  'asimov/projetos',
+  'asimov/trilhas asimov',
+  'asimov skills',
+  'cursos',
+  'projetos',
+  'trilhas asimov',
+  'hashtag',
+  'hashtag/soft skills',
+  'soft skills',
+  'sctec',
+  'outros',
+  'diversos'
+]);
+
+const ROOT_ORGANIZATION_TITLES = new Set([
+  'ai lab',
+  'asimov',
+  'asimov skills',
+  'cursos',
+  'projetos',
+  'trilhas asimov',
+  'hashtag',
+  'soft skills',
+  'sctec',
+  'outros',
+  'diversos'
+]);
+
+const ROOT_ORGANIZATION_SLUGS = new Set([
+  'course-ai-lab',
+  'course-asimov',
+  'course-asimov-skills',
+  'course-cursos',
+  'course-projetos',
+  'course-trilhas-asimov',
+  'course-hashtag',
+  'course-hashtag-soft-skills',
+  'course-soft-skills',
+  'course-sctec',
+  'course-outros',
+  'course-diversos'
+]);
+
+export function isOrganizationRootFolder(course: Course | undefined | null): boolean {
+  if (!course) return false;
+  const rel = (course.relative_path || '').trim().toLowerCase().replace(/\\/g, '/');
+  const slug = (course.slug || course.id || '').trim().toLowerCase();
+  const rawTitle = (course.raw_title || '').trim().toLowerCase();
+  const displayTitle = (course.display_title || '').trim().toLowerCase();
+
+  return (
+    ROOT_ORGANIZATION_PATHS.has(rel) ||
+    ROOT_ORGANIZATION_SLUGS.has(slug) ||
+    ROOT_ORGANIZATION_TITLES.has(rawTitle) ||
+    ROOT_ORGANIZATION_TITLES.has(displayTitle)
+  );
+}
+
 export function getAllCourses(): Course[] {
-  return getCatalog().courses;
+  return getCatalog().courses.filter(c => !isOrganizationRootFolder(c) && !c.is_hidden && (c.lessons_count ?? 0) > 0);
 }
 
 export function getCourseById(id: string): Course | undefined {
-  return getCatalog().courses.find(c => c.id === id || c.slug === id);
+  return getCatalog().courses.find(c => (c.id === id || c.slug === id) && !isOrganizationRootFolder(c) && (c.lessons_count ?? 0) > 0);
 }
 
 export function getCategories(): Category[] {
@@ -140,13 +213,51 @@ export function getCategoryById(id: string): Category | undefined {
   return getCatalog().categories.find(c => c.id === id);
 }
 
+export function isComecePorAqui(course: Course | undefined): boolean {
+  if (!course) return false;
+  if (course.is_comece_por_aqui) return true;
+  const title = (course.display_title || course.raw_title || '').toLowerCase();
+  const path = (course.relative_path || '').toLowerCase();
+  return (
+    title.startsWith('comece por aqui') ||
+    title.startsWith('comece aqui') ||
+    title.startsWith('01 - comece por aqui') ||
+    title.startsWith('01. comece por aqui') ||
+    title.startsWith('01 - comece aqui') ||
+    title.startsWith('01. comece aqui') ||
+    title.includes('comece por aqui') ||
+    title.includes('comece aqui') ||
+    path.includes('comece por aqui') ||
+    path.includes('comece aqui')
+  );
+}
+
+export function isProjectCourse(course: Course | undefined): boolean {
+  if (!course) return false;
+  const path = (course.relative_path || '').toLowerCase();
+  // Never treat courses in 'outros' or 'diversos' as Asimov projects
+  if (path.startsWith('outros') || path.startsWith('diversos') || course.source === 'outros' || course.source === 'diversos') {
+    return false;
+  }
+  if (course.is_project) return true;
+  const title = (course.display_title || course.raw_title || '').toLowerCase();
+  return (
+    path.includes('asimov/projetos') ||
+    path.includes('asimov\\projetos') ||
+    (path.startsWith('asimov') && title.startsWith('[projeto]')) ||
+    (Array.isArray(course.categories) && course.categories.includes('projetos') && path.includes('asimov'))
+  );
+}
+
 export function getCoursesByCategory(categoryId: string): Course[] {
-  return getCatalog().courses.filter(c => c.categories.includes(categoryId));
+  return getCatalog().courses.filter(c => 
+    c.categories.includes(categoryId) && !isComecePorAqui(c) && !isProjectCourse(c) && !isOrganizationRootFolder(c) && !c.is_hidden && (c.lessons_count ?? 0) > 0
+  );
 }
 
 export function getFeaturedCourse(): Course {
   const catalog = getCatalog();
-  const featured = catalog.courses.find(c => c.is_featured);
+  const featured = catalog.courses.find(c => c.is_featured && !isComecePorAqui(c) && !isProjectCourse(c));
   return featured || catalog.courses[0];
 }
 
@@ -204,4 +315,15 @@ export function searchCourses(query: string): Course[] {
     return false;
   });
 }
+
+export {
+  STUDY_SOURCES,
+  getCourseSourceId,
+  getSourceById,
+  filterCoursesBySource,
+  getActiveSource,
+  setActiveSource,
+  type StudySourceId,
+  type StudySource
+} from './sources';
 

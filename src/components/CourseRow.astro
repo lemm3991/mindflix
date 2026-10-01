@@ -1,6 +1,7 @@
 ---
 // CourseRow.astro - Smooth horizontal carousel with drag momentum, edge fades and contextual arrows
 import type { Course } from '../types/catalog';
+import { getCourseSourceId } from '../lib/sources';
 import CourseCard from './CourseCard.astro';
 
 interface Props {
@@ -9,9 +10,10 @@ interface Props {
   viewAllHref?: string;
   icon?: string;
   categoryId?: string;
+  eagerCount?: number;
 }
 
-const { title, courses, viewAllHref, icon, categoryId } = Astro.props;
+const { title, courses, viewAllHref, icon, categoryId, eagerCount = 0 } = Astro.props;
 const rowId = `row-${title.toLowerCase().replace(/[^\w]/g, '-')}`;
 ---
 
@@ -50,9 +52,13 @@ const rowId = `row-${title.toLowerCase().replace(/[^\w]/g, '-')}`;
 
     <div class="row-carousel-container">
       <div class="row-track" id={rowId}>
-        {courses.map(course => (
-          <div class="card-item-wrapper">
-            <CourseCard course={course} />
+        {courses.map((course, idx) => (
+          <div class="card-item-wrapper" data-source={getCourseSourceId(course)}>
+            <CourseCard 
+              course={course} 
+              loading={idx < eagerCount ? 'eager' : 'lazy'}
+              fetchpriority={idx < eagerCount && idx < 2 ? 'high' : 'auto'}
+            />
           </div>
         ))}
       </div>
@@ -61,90 +67,135 @@ const rowId = `row-${title.toLowerCase().replace(/[^\w]/g, '-')}`;
 )}
 
 <script>
-  document.querySelectorAll<HTMLElement>('.course-row-section').forEach(row => {
-    const track = row.querySelector<HTMLElement>('.row-track');
-    const prevBtn = row.querySelector<HTMLButtonElement>('.arrow-prev');
-    const nextBtn = row.querySelector<HTMLButtonElement>('.arrow-next');
+  import { getActiveSource } from '../lib/sources';
 
-    if (!track) return;
+  function initRows() {
+    const currentSource = getActiveSource();
 
-    // Update arrow visibility
-    const updateArrows = () => {
-      const scrollLeft = track.scrollLeft;
-      const maxScroll = track.scrollWidth - track.clientWidth - 5;
+    document.querySelectorAll<HTMLElement>('.course-row-section').forEach(row => {
+      const track = row.querySelector<HTMLElement>('.row-track');
+      const prevBtn = row.querySelector<HTMLButtonElement>('.arrow-prev');
+      const nextBtn = row.querySelector<HTMLButtonElement>('.arrow-next');
+      const countEl = row.querySelector<HTMLElement>('.course-count');
+      const cardWrappers = row.querySelectorAll<HTMLElement>('.card-item-wrapper');
 
-      if (prevBtn) {
-        if (scrollLeft > 20) {
-          prevBtn.style.opacity = '1';
-          prevBtn.style.pointerEvents = 'auto';
+      // Filter by active study source
+      let visibleCount = 0;
+      cardWrappers.forEach(card => {
+        const itemSource = card.getAttribute('data-source') || 'outros';
+        if (currentSource === 'all' || itemSource === currentSource) {
+          card.style.display = 'block';
+          visibleCount++;
         } else {
-          prevBtn.style.opacity = '0';
-          prevBtn.style.pointerEvents = 'none';
+          card.style.display = 'none';
         }
+      });
+
+      if (countEl) countEl.textContent = `(${visibleCount})`;
+
+      if (visibleCount === 0) {
+        row.style.display = 'none';
+      } else {
+        row.style.display = 'block';
       }
 
-      if (nextBtn) {
-        if (scrollLeft < maxScroll) {
-          nextBtn.style.opacity = '1';
-          nextBtn.style.pointerEvents = 'auto';
-        } else {
-          nextBtn.style.opacity = '0';
-          nextBtn.style.pointerEvents = 'none';
+      if (!track) return;
+      track.scrollLeft = 0;
+
+      // Update arrow visibility
+      const updateArrows = () => {
+        const scrollLeft = track.scrollLeft;
+        const maxScroll = track.scrollWidth - track.clientWidth - 5;
+
+        if (prevBtn) {
+          if (scrollLeft > 20) {
+            prevBtn.style.opacity = '1';
+            prevBtn.style.pointerEvents = 'auto';
+          } else {
+            prevBtn.style.opacity = '0';
+            prevBtn.style.pointerEvents = 'none';
+          }
         }
+
+        if (nextBtn) {
+          if (scrollLeft < maxScroll && maxScroll > 0) {
+            nextBtn.style.opacity = '1';
+            nextBtn.style.pointerEvents = 'auto';
+          } else {
+            nextBtn.style.opacity = '0';
+            nextBtn.style.pointerEvents = 'none';
+          }
+        }
+      };
+
+      track.addEventListener('scroll', updateArrows, { passive: true });
+      updateArrows();
+
+      // Smooth button scroll
+      if (prevBtn && !prevBtn.dataset.bound) {
+        prevBtn.dataset.bound = 'true';
+        prevBtn.addEventListener('click', () => {
+          track.scrollBy({ left: -track.clientWidth * 0.75, behavior: 'smooth' });
+        });
       }
-    };
 
-    track.addEventListener('scroll', updateArrows, { passive: true });
-    updateArrows();
-
-    // Smooth button scroll
-    prevBtn?.addEventListener('click', () => {
-      track.scrollBy({ left: -track.clientWidth * 0.75, behavior: 'smooth' });
-    });
-
-    nextBtn?.addEventListener('click', () => {
-      track.scrollBy({ left: track.clientWidth * 0.75, behavior: 'smooth' });
-    });
-
-    // Mouse Drag-to-Scroll
-    let isDown = false;
-    let startX = 0;
-    let scrollLeftStart = 0;
-    let hasMoved = false;
-
-    track.addEventListener('mousedown', (e) => {
-      // Don't drag if clicking buttons or links
-      if ((e.target as HTMLElement).closest('button, a')) return;
-      isDown = true;
-      hasMoved = false;
-      track.classList.add('dragging');
-      startX = e.pageX - track.offsetLeft;
-      scrollLeftStart = track.scrollLeft;
-    });
-
-    window.addEventListener('mouseup', () => {
-      if (!isDown) return;
-      isDown = false;
-      track.classList.remove('dragging');
-    });
-
-    track.addEventListener('mousemove', (e) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - track.offsetLeft;
-      const walk = (x - startX) * 1.5;
-      track.scrollLeft = scrollLeftStart - walk;
-      if (Math.abs(walk) > 5) hasMoved = true;
-    });
-
-    // Prevent navigation click if user was dragging
-    track.addEventListener('click', (e) => {
-      if (hasMoved) {
-        e.preventDefault();
-        e.stopPropagation();
+      if (nextBtn && !nextBtn.dataset.bound) {
+        nextBtn.dataset.bound = 'true';
+        nextBtn.addEventListener('click', () => {
+          track.scrollBy({ left: track.clientWidth * 0.75, behavior: 'smooth' });
+        });
       }
-    }, true);
+
+      // Mouse Drag-to-Scroll
+      let isDown = false;
+      let startX = 0;
+      let scrollLeftStart = 0;
+      let hasMoved = false;
+
+      if (!track.dataset.dragBound) {
+        track.dataset.dragBound = 'true';
+
+        track.addEventListener('mousedown', (e) => {
+          if ((e.target as HTMLElement).closest('button, a')) return;
+          isDown = true;
+          hasMoved = false;
+          track.classList.add('dragging');
+          startX = e.pageX - track.offsetLeft;
+          scrollLeftStart = track.scrollLeft;
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (!isDown) return;
+          isDown = false;
+          track.classList.remove('dragging');
+        });
+
+        track.addEventListener('mousemove', (e) => {
+          if (!isDown) return;
+          e.preventDefault();
+          const x = e.pageX - track.offsetLeft;
+          const walk = (x - startX) * 1.5;
+          track.scrollLeft = scrollLeftStart - walk;
+          if (Math.abs(walk) > 5) hasMoved = true;
+        });
+
+        track.addEventListener('click', (e) => {
+          if (hasMoved) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, true);
+      }
+    });
+  }
+
+  // Listen to source switch events
+  window.addEventListener('mindflix:source-changed', () => {
+    initRows();
   });
+
+  document.addEventListener('astro:page-load', initRows);
+  initRows();
 </script>
 
 <style>

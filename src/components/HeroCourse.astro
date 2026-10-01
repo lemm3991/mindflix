@@ -1,15 +1,44 @@
 ---
 // HeroCourse.astro - Rotating editorial showcase with mouse parallax and smooth crossfade
 import type { Course } from '../types/catalog';
-import { getFirstPlayableLesson, isPlayableVideoLesson } from '../lib/catalog';
+import { getAllCourses, getFirstPlayableLesson, isPlayableVideoLesson, isComecePorAqui, isProjectCourse } from '../lib/catalog';
+import { getLessonDriveId } from '../lib/drive';
+import { getCourseSourceId } from '../lib/sources';
 import ProgressBar from './ProgressBar.astro';
 
 interface Props {
-  featuredCourses: Course[];
+  featuredCourses?: Course[];
+  limit?: number;
 }
 
-const { featuredCourses } = Astro.props;
-const courses = featuredCourses.length > 0 ? featuredCourses : [];
+const { featuredCourses, limit = 5 } = Astro.props;
+
+let courses: Course[] = [];
+
+if (featuredCourses && featuredCourses.length > 0) {
+  courses = featuredCourses;
+} else {
+  const allCourses = getAllCourses();
+  const eligibleHeroCourses = allCourses.filter(c => {
+    if (c.is_hidden || (c as any).missing || isComecePorAqui(c) || isProjectCourse(c)) return false;
+    const firstVideo = getFirstPlayableLesson(c);
+    return Boolean(firstVideo && isPlayableVideoLesson(firstVideo));
+  });
+
+  const poolToSample = eligibleHeroCourses.length >= limit 
+    ? eligibleHeroCourses 
+    : (eligibleHeroCourses.length > 0 ? eligibleHeroCourses : allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c)));
+
+  const pool = [...poolToSample];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  courses = pool.slice(0, Math.min(limit, pool.length));
+  if (courses.length === 0) {
+    courses = allCourses.slice(0, Math.min(limit, allCourses.length));
+  }
+}
 ---
 
 <section class="hero-section" id="home-hero-section">
@@ -26,10 +55,17 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
       const firstLesson = getFirstPlayableLesson(course);
       const isVideo = isPlayableVideoLesson(firstLesson);
       const videoPath = isVideo ? (firstLesson?.relative_path || '') : '';
+      const sourceId = getCourseSourceId(course);
+      const driveId = getLessonDriveId(firstLesson);
+      const videoSrc = driveId 
+        ? `/api/video?drive_id=${driveId}&stream=1`
+        : (videoPath ? `/api/video?path=${encodeURIComponent(videoPath)}` : '');
+
       return (
         <div
           class={`hero-video-item ${idx === 0 ? 'active' : ''}`}
           data-video-index={idx}
+          data-source={sourceId}
         >
           {course.cover_image && (
             <img
@@ -37,19 +73,23 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
               src={course.cover_image}
               alt={course.display_title}
               loading={idx === 0 ? 'eager' : 'lazy'}
+              fetchpriority={idx === 0 ? 'high' : 'auto'}
+              decoding={idx === 0 ? 'sync' : 'async'}
+              onerror="this.style.display='none'"
             />
           )}
-          {videoPath && !videoPath.startsWith('drive:') && (
+          {videoSrc ? (
             <video
               class="hero-bg-video"
+              autoplay
               muted
               loop
               playsinline
               preload={idx === 0 ? 'auto' : 'none'}
-              src={idx === 0 ? `/api/video?path=${encodeURIComponent(videoPath)}` : undefined}
-              data-src={`/api/video?path=${encodeURIComponent(videoPath)}`}
+              src={idx === 0 ? videoSrc : undefined}
+              data-src={videoSrc}
             ></video>
-          )}
+          ) : null}
         </div>
       );
     })}
@@ -62,12 +102,14 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     {courses.map((course, idx) => {
       const firstLesson = getFirstPlayableLesson(course);
       const watchUrl = firstLesson ? `/watch/${course.id}/${firstLesson.id}` : '/courses';
+      const sourceId = getCourseSourceId(course);
       return (
         <div
           class={`hero-slide ${idx === 0 ? 'active' : ''}`}
           data-slide-index={idx}
           data-course-id={course.id}
           data-categories={(course.categories || []).join(',')}
+          data-source={sourceId}
         >
           <div class="hero-meta">
             <div class="badges-row">
@@ -123,24 +165,50 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
       );
     })}
 
-    <!-- Slide Indicators / Dots -->
-    {courses.length > 1 && (
-      <div class="hero-indicators">
-        {courses.map((_, idx) => (
-          <button
-            type="button"
-            class={`indicator-dot ${idx === 0 ? 'active' : ''}`}
-            data-dot-index={idx}
-            aria-label={`Ir para destaque ${idx + 1}`}
-          ></button>
-        ))}
-      </div>
-    )}
+    <!-- Hero Footer Controls (Indicators + Sound Toggle) -->
+    <div class="hero-footer-controls">
+      {courses.length > 1 && (
+        <div class="hero-indicators">
+          {courses.map((_, idx) => (
+            <button
+              type="button"
+              class={`indicator-dot ${idx === 0 ? 'active' : ''}`}
+              data-dot-index={idx}
+              aria-label={`Ir para destaque ${idx + 1}`}
+            ></button>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        class="hero-sound-btn"
+        id="hero-sound-toggle"
+        aria-label="Ativar/Desativar som do trailer"
+        title="Clique para ativar som"
+      >
+        <span class="sound-icon sound-icon-muted">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </span>
+        <span class="sound-icon sound-icon-unmuted" style="display: none;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </span>
+        <span class="sound-label">Mudo</span>
+      </button>
+    </div>
   </div>
 </section>
 
 <script>
   import { getAllCourses } from '../lib/catalog';
+  import { getActiveSource } from '../lib/sources';
   import { getCourseCompletionStats, isCourseFavorite, toggleFavorite, getUserPreferences, getNextLessonToWatch } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
@@ -150,24 +218,86 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
   const slides = document.querySelectorAll<HTMLElement>('.hero-slide');
   const dots = document.querySelectorAll<HTMLElement>('.indicator-dot');
   const allCourses = getAllCourses();
-
   const videoItems = document.querySelectorAll<HTMLElement>('.hero-video-item');
+  const soundBtn = document.getElementById('hero-sound-toggle');
+
+  let currentSlide = 0;
+  let rotationTimer: any;
+  let isHeroMuted = true;
+
+  function updateSoundUI() {
+    if (!soundBtn) return;
+    const mutedIcon = soundBtn.querySelector<HTMLElement>('.sound-icon-muted');
+    const unmutedIcon = soundBtn.querySelector<HTMLElement>('.sound-icon-unmuted');
+    const soundLabel = soundBtn.querySelector<HTMLElement>('.sound-label');
+
+    if (isHeroMuted) {
+      if (mutedIcon) mutedIcon.style.display = 'inline-flex';
+      if (unmutedIcon) unmutedIcon.style.display = 'none';
+      if (soundLabel) soundLabel.textContent = 'Mudo';
+      soundBtn.classList.remove('unmuted');
+      soundBtn.title = 'Clique para ativar som';
+    } else {
+      if (mutedIcon) mutedIcon.style.display = 'none';
+      if (unmutedIcon) unmutedIcon.style.display = 'inline-flex';
+      if (soundLabel) soundLabel.textContent = 'Som Ativo';
+      soundBtn.classList.add('unmuted');
+      soundBtn.title = 'Clique para mutar';
+    }
+  }
+
+  function setHeroMuted(muted: boolean) {
+    isHeroMuted = muted;
+    videoItems.forEach((item, idx) => {
+      const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
+      if (vid) {
+        if (idx === currentSlide) {
+          vid.muted = isHeroMuted;
+          if (!isHeroMuted) {
+            vid.volume = 0.8;
+            vid.play().catch(() => {});
+          }
+        } else {
+          vid.muted = true;
+          if (!vid.paused) {
+            vid.pause();
+          }
+        }
+      }
+    });
+    updateSoundUI();
+  }
+
+  if (soundBtn) {
+    soundBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setHeroMuted(!isHeroMuted);
+    });
+  }
 
   function updateVideoBackdrop(index: number) {
     videoItems.forEach((item, idx) => {
       const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
+
       if (idx === index) {
         item.classList.add('active');
         if (vid) {
+          vid.muted = isHeroMuted;
           if (!vid.src && vid.dataset.src) {
             vid.src = vid.dataset.src;
+          }
+          if (!isHeroMuted) {
+            vid.volume = 0.8;
           }
           vid.play().catch(() => {});
         }
       } else {
         item.classList.remove('active');
-        if (vid && !vid.paused) {
-          vid.pause();
+        if (vid) {
+          vid.muted = true;
+          if (!vid.paused) {
+            vid.pause();
+          }
         }
       }
     });
@@ -183,16 +313,7 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     }
   });
 
-  // Initial video start
-  updateVideoBackdrop(0);
-
-  // Multi-slide rotation
-  let currentSlide = 0;
-  const totalSlides = slides.length;
-  let rotationTimer: any;
-
   function setSlide(index: number) {
-    if (index === currentSlide) return;
     slides[currentSlide]?.classList.remove('active');
     dots[currentSlide]?.classList.remove('active');
 
@@ -203,23 +324,50 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     updateVideoBackdrop(currentSlide);
   }
 
-  function nextSlide() {
-    const next = (currentSlide + 1) % totalSlides;
-    setSlide(next);
-  }
+  function setupHeroRotation() {
+    clearInterval(rotationTimer);
+    const activeSource = getActiveSource();
 
-  if (totalSlides > 1) {
-    rotationTimer = setInterval(nextSlide, 12000);
-
-    dots.forEach(dot => {
-      dot.addEventListener('click', () => {
-        clearInterval(rotationTimer);
-        const idx = parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-        setSlide(idx);
-        rotationTimer = setInterval(nextSlide, 12000);
-      });
+    // Find eligible slide indices for the current source
+    const eligibleIndices: number[] = [];
+    slides.forEach((slide, idx) => {
+      const s = slide.getAttribute('data-source') || 'outros';
+      if (activeSource === 'all' || s === activeSource) {
+        eligibleIndices.push(idx);
+      }
     });
+
+    if (eligibleIndices.length > 0) {
+      // Activate the first matching slide
+      setSlide(eligibleIndices[0]);
+
+      if (eligibleIndices.length > 1) {
+        let eligiblePos = 0;
+        rotationTimer = setInterval(() => {
+          eligiblePos = (eligiblePos + 1) % eligibleIndices.length;
+          setSlide(eligibleIndices[eligiblePos]);
+        }, 12000);
+      }
+    } else {
+      // Fallback to slide 0 if no match
+      setSlide(0);
+    }
   }
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      clearInterval(rotationTimer);
+      const idx = parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+      setSlide(idx);
+    });
+  });
+
+  // Listen to source changes
+  window.addEventListener('mindflix:source-changed', () => {
+    setupHeroRotation();
+  });
+
+  setupHeroRotation();
 
   // Mouse Parallax on Hero
   const prefs = getUserPreferences();
@@ -525,12 +673,21 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     background: rgba(244, 63, 94, 0.1);
   }
 
+  /* Hero Footer Controls (Indicators + Sound Toggle) */
+  .hero-footer-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    max-width: 740px;
+  }
+
   /* Slide Indicators */
   .hero-indicators {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    margin-top: 2rem;
   }
 
   .indicator-dot {
@@ -548,6 +705,45 @@ const courses = featuredCourses.length > 0 ? featuredCourses : [];
     width: 24px;
     background: var(--accent-cyan);
     box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+  }
+
+  /* Hero Sound Toggle Button */
+  .hero-sound-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all var(--motion-fast) var(--ease-out);
+    user-select: none;
+  }
+
+  .hero-sound-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .hero-sound-btn.unmuted {
+    background: rgba(0, 242, 254, 0.12);
+    border-color: rgba(0, 242, 254, 0.4);
+    color: var(--accent-cyan);
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+  }
+
+  .sound-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   @media (max-width: 768px) {

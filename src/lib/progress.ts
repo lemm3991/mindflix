@@ -16,10 +16,11 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   auto_preview: false,
   auto_resume: true,
   remember_speed_per_course: false,
-  parallax_enabled: true,
+  parallax_enabled: false,
   interactive_bg_enabled: true,
   reduce_motion: false,
   theme_id: 'cyan-indigo',
+  background_style: 'waves',
   gemini_api_key: '',
   selected_categories: [],
   first_login_notice_seen: false
@@ -50,7 +51,43 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
   
   if (flatLessons.length === 0) return defaultRes;
   
-  // 1. Check if there is an in-progress lesson (partially watched, not yet completed)
+  // 1. Find the LAST lesson index marked as completed in course order
+  let lastCompletedIdx = -1;
+  for (let i = flatLessons.length - 1; i >= 0; i--) {
+    const item = flatLessons[i];
+    const prog = allProgress[item.lesson.id];
+    if (prog && prog.completed) {
+      lastCompletedIdx = i;
+      break;
+    }
+  }
+
+  // If at least one lesson is marked completed, return the next video immediately after it
+  if (lastCompletedIdx >= 0) {
+    const nextIdx = lastCompletedIdx + 1;
+    if (nextIdx < flatLessons.length) {
+      const nextItem = flatLessons[nextIdx];
+      return {
+        lesson: nextItem.lesson,
+        module: nextItem.module,
+        isResume: true,
+        watchUrl: `/watch/${course.id}/${nextItem.lesson.id}`,
+        label: `Continuar: ${nextItem.lesson.display_title}`
+      };
+    } else {
+      // All lessons are completed: default to first lesson for rewatching
+      const first = flatLessons[0];
+      return {
+        lesson: first.lesson,
+        module: first.module,
+        isResume: true,
+        watchUrl: `/watch/${course.id}/${first.lesson.id}`,
+        label: 'Reassistir Curso'
+      };
+    }
+  }
+
+  // 2. If NO lesson is marked completed yet, check for an in-progress lesson
   let inProgressItem: { lesson: Lesson; module: Module; lastWatched?: string } | null = null;
   for (const item of flatLessons) {
     const prog = allProgress[item.lesson.id];
@@ -60,7 +97,7 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
       }
     }
   }
-  
+
   if (inProgressItem) {
     return {
       lesson: inProgressItem.lesson,
@@ -70,31 +107,15 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
       label: `Continuar: ${inProgressItem.lesson.display_title}`
     };
   }
-  
-  // 2. Find the FIRST uncompleted lesson in course order
-  for (let i = 0; i < flatLessons.length; i++) {
-    const item = flatLessons[i];
-    const prog = allProgress[item.lesson.id];
-    if (!prog || !prog.completed) {
-      const isFirst = i === 0;
-      return {
-        lesson: item.lesson,
-        module: item.module,
-        isResume: !isFirst,
-        watchUrl: `/watch/${course.id}/${item.lesson.id}`,
-        label: isFirst ? 'Assistir Agora' : `Próxima: ${item.lesson.display_title}`
-      };
-    }
-  }
-  
-  // 3. If all lessons are completed, default to first lesson for rewatching
+
+  // 3. Fallback to first lesson
   const first = flatLessons[0];
   return {
     lesson: first.lesson,
     module: first.module,
-    isResume: true,
+    isResume: false,
     watchUrl: `/watch/${course.id}/${first.lesson.id}`,
-    label: 'Reassistir Curso'
+    label: 'Assistir Agora'
   };
 }
 
@@ -166,7 +187,31 @@ export async function saveLessonProgress(
 
     if (!current || !current.last_watched_at || new Date(now) >= new Date(current.last_watched_at)) {
       existing[lessonId] = progress;
-      localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(existing));
+      saveAllLocalProgress(existing);
+    }
+
+    if (durationSeconds > 0) {
+      try {
+        const raw = localStorage.getItem('mindflix_real_durations');
+        const map = raw ? JSON.parse(raw) : {};
+        const totalSecs = Math.round(durationSeconds);
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        const hrs = Math.floor(mins / 60);
+        const m = mins % 60;
+        const durFormatted = hrs > 0 
+          ? `${String(hrs).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+          : `${String(m).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        
+        map[lessonId] = {
+          duration_seconds: totalSecs,
+          duration_formatted: durFormatted
+        };
+        localStorage.setItem('mindflix_real_durations', JSON.stringify(map));
+        window.dispatchEvent(new CustomEvent('mindflix-duration-updated', { 
+          detail: { lessonId, duration_seconds: totalSecs, duration_formatted: durFormatted } 
+        }));
+      } catch (e) {}
     }
 
     // Update recent courses list
@@ -244,14 +289,29 @@ export function getLessonProgress(lessonId: string): UserProgress | null {
   return all[lessonId] || null;
 }
 
+function getUserScopedKey(baseKey: string): string {
+  const user = getLocalUser();
+  return user ? `${baseKey}_${user.id}` : baseKey;
+}
+
 export function getAllLocalProgress(): Record<string, UserProgress> {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.PROGRESS);
+    const key = getUserScopedKey(STORAGE_KEYS.PROGRESS);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.PROGRESS);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
   }
+}
+
+export function saveAllLocalProgress(progressMap: Record<string, UserProgress>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = getUserScopedKey(STORAGE_KEYS.PROGRESS);
+    localStorage.setItem(key, JSON.stringify(progressMap));
+    localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(progressMap));
+  } catch {}
 }
 
 export function getCourseCompletionStats(courseId: string, totalLessons: number): { completedCount: number; percentage: number } {
@@ -266,9 +326,11 @@ export function getCourseCompletionStats(courseId: string, totalLessons: number)
 export function trackRecentCourse(courseId: string): void {
   if (typeof window === 'undefined') return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.RECENT_COURSES);
+    const key = getUserScopedKey(STORAGE_KEYS.RECENT_COURSES);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.RECENT_COURSES);
     let list: string[] = raw ? JSON.parse(raw) : [];
     list = [courseId, ...list.filter(id => id !== courseId)].slice(0, 10);
+    localStorage.setItem(key, JSON.stringify(list));
     localStorage.setItem(STORAGE_KEYS.RECENT_COURSES, JSON.stringify(list));
   } catch (err) {
     console.warn(err);
@@ -278,7 +340,8 @@ export function trackRecentCourse(courseId: string): void {
 export function getRecentCourseIds(): string[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.RECENT_COURSES);
+    const key = getUserScopedKey(STORAGE_KEYS.RECENT_COURSES);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.RECENT_COURSES);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -289,7 +352,8 @@ export function getRecentCourseIds(): string[] {
 export function getFavoriteCourseIds(): string[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.FAVORITES);
+    const key = getUserScopedKey(STORAGE_KEYS.FAVORITES);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.FAVORITES);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -302,6 +366,8 @@ export async function toggleFavorite(courseId: string): Promise<boolean> {
   const isFav = favorites.includes(courseId);
   const updated = isFav ? favorites.filter(id => id !== courseId) : [...favorites, courseId];
   
+  const key = getUserScopedKey(STORAGE_KEYS.FAVORITES);
+  localStorage.setItem(key, JSON.stringify(updated));
   localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updated));
 
   const user = getLocalUser();
@@ -317,6 +383,12 @@ export async function toggleFavorite(courseId: string): Promise<boolean> {
     }
   }
 
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('mindflix:favorites-changed', {
+      detail: { id: courseId, isFav: !isFav }
+    }));
+  }
+
   return !isFav;
 }
 
@@ -325,15 +397,44 @@ export function isCourseFavorite(courseId: string): boolean {
   return getFavoriteCourseIds().includes(courseId);
 }
 
+export const isFavorite = isCourseFavorite;
+export const isTrilhaFavorite = isCourseFavorite;
+export const toggleTrilhaFavorite = toggleFavorite;
+
 function getPrefStorageKey(): string {
-  const user = getLocalUser();
-  return user ? `${STORAGE_KEYS.PREFERENCES}_${user.id}` : STORAGE_KEYS.PREFERENCES;
+  return getUserScopedKey(STORAGE_KEYS.PREFERENCES);
+}
+
+function checkParallaxDefaultMigration(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const MIGRATION_KEY = 'mindflix_parallax_disabled_v1';
+    if (!localStorage.getItem(MIGRATION_KEY)) {
+      const keys = [
+        STORAGE_KEYS.PREFERENCES,
+        `${STORAGE_KEYS.PREFERENCES}_user-lemmg0800`,
+        `${STORAGE_KEYS.PREFERENCES}_user-tamydoagro`
+      ];
+      for (const k of keys) {
+        const raw = localStorage.getItem(k);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            parsed.parallax_enabled = false;
+            localStorage.setItem(k, JSON.stringify(parsed));
+          } catch {}
+        }
+      }
+      localStorage.setItem(MIGRATION_KEY, 'true');
+    }
+  } catch {}
 }
 
 // PREFERENCES
 export function getUserPreferences(): UserPreferences {
   if (typeof window === 'undefined') return DEFAULT_PREFERENCES;
   try {
+    checkParallaxDefaultMigration();
     const key = getPrefStorageKey();
     const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.PREFERENCES);
     return raw ? { ...DEFAULT_PREFERENCES, ...JSON.parse(raw) } : DEFAULT_PREFERENCES;
@@ -438,3 +539,58 @@ export async function syncProgressFromSupabase(): Promise<void> {
     console.warn('Failed syncing remote progress, preserving local:', err);
   }
 }
+
+// CONVENIENCE HELPERS FOR SIDEBARS & TRILHAS
+export function isLessonCompleted(lessonId: string): boolean {
+  if (typeof window === 'undefined') return false;
+  const all = getAllLocalProgress();
+  return Boolean(all[lessonId]?.completed);
+}
+
+export async function toggleLessonCompleted(lessonId: string, courseId?: string): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  const all = getAllLocalProgress();
+  const current = all[lessonId];
+  const newCompleted = !current?.completed;
+  const cId = courseId || current?.course_id || 'unknown';
+
+  await saveLessonProgress(cId, lessonId, newCompleted ? 100 : 0, 100, newCompleted);
+
+  // Dispatch global event for reactive UI update
+  window.dispatchEvent(new CustomEvent('mindflix:progress-updated', {
+    detail: { lessonId, courseId: cId, completed: newCompleted }
+  }));
+
+  return newCompleted;
+}
+
+export function getUserProgress(): { completed_lessons: Record<string, boolean>; lesson_positions: Record<string, number> } {
+  if (typeof window === 'undefined') return { completed_lessons: {}, lesson_positions: {} };
+  const all = getAllLocalProgress();
+  const completed_lessons: Record<string, boolean> = {};
+  const lesson_positions: Record<string, number> = {};
+
+  for (const [id, item] of Object.entries(all)) {
+    if (item.completed) {
+      completed_lessons[id] = true;
+    }
+    if (item.position_seconds > 0) {
+      lesson_positions[id] = item.position_seconds;
+    }
+  }
+
+  return { completed_lessons, lesson_positions };
+}
+
+export function getRealDurationForLesson(lessonId: string): { duration_seconds: number; duration_formatted: string } | null {
+  if (typeof window === 'undefined' || !lessonId) return null;
+  try {
+    const raw = localStorage.getItem('mindflix_real_durations');
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    return map[lessonId] || null;
+  } catch (e) {
+    return null;
+  }
+}
+

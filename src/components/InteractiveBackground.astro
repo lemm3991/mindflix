@@ -1,6 +1,6 @@
 ---
-// InteractiveBackground.astro - Fluid Animated Wave Ribbons & Interactive Mouse Canvas
-// Guaranteed active 60fps animation loop, mouse deflection, cursor rays, and ambient flow
+// InteractiveBackground.astro - Fluid Animated Canvas Background with 4 Ambient Study Styles
+// Supported styles: 'waves' (Ondas Topográficas), 'aurora' (Aurora Nórdica), 'cyber-grid' (Matriz Cibernética), 'nebula' (Nebulosa Cósmica)
 interface Props {
   disableInteraction?: boolean;
 }
@@ -8,26 +8,27 @@ interface Props {
 const { disableInteraction = false } = Astro.props;
 ---
 
-<div class="bg-viewport" aria-hidden="true">
+<div class="bg-viewport" id="bg-viewport" aria-hidden="true" transition:persist="bg-viewport">
   <!-- Subtle ambient glow orbs -->
-  <div class="glow-orb orb-cyan"></div>
-  <div class="glow-orb orb-indigo"></div>
-  <div class="glow-orb orb-purple"></div>
+  <div class="glow-orb orb-primary"></div>
+  <div class="glow-orb orb-secondary"></div>
+  <div class="glow-orb orb-accent"></div>
   
-  <!-- Interactive Canvas Lines & Particles -->
+  <!-- Interactive Canvas Background -->
   <canvas
     id="interactive-lines-canvas"
     class="interactive-lines-canvas"
     data-disable-interaction={disableInteraction ? 'true' : 'false'}
   ></canvas>
 
-  <!-- Balanced vignette overlay allowing lines to remain clearly visible -->
+  <!-- Balanced vignette overlay -->
   <div class="bg-vignette"></div>
 </div>
 
 <script>
   import { getUserPreferences } from '../lib/progress';
   import { getThemePreset, applyTheme, type ThemePreset } from '../lib/theme';
+  import { type BackgroundStyleId } from '../lib/backgrounds';
 
   interface WavePoint {
     x: number;
@@ -65,6 +66,35 @@ const { disableInteraction = false } = Astro.props;
     decay: number;
   }
 
+  interface AuroraCurtain {
+    baseY: number;
+    amplitude: number;
+    wavelength: number;
+    speed: number;
+    phase: number;
+    colorStops: { stop: number; color: string }[];
+  }
+
+  interface Star {
+    x: number;
+    y: number;
+    size: number;
+    baseAlpha: number;
+    alpha: number;
+    twinkleSpeed: number;
+    twinklePhase: number;
+  }
+
+  interface Meteor {
+    x: number;
+    y: number;
+    length: number;
+    speed: number;
+    alpha: number;
+    angle: number;
+    active: boolean;
+  }
+
   const canvas = document.getElementById('interactive-lines-canvas') as HTMLCanvasElement | null;
   if (canvas) {
     const ctx = canvas.getContext('2d');
@@ -74,20 +104,26 @@ const { disableInteraction = false } = Astro.props;
       let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
       let currentTheme: ThemePreset = getThemePreset(getUserPreferences().theme_id);
+      let currentStyle: BackgroundStyleId = (getUserPreferences().background_style as BackgroundStyleId) || 'waves';
       
-      // Apply theme on load to sync orbs and root CSS variables
       applyTheme(currentTheme.id);
 
       window.addEventListener('mindflix:theme-changed', (e: Event) => {
         const customEv = e as CustomEvent<ThemePreset>;
         if (customEv.detail) {
           currentTheme = customEv.detail;
-          initLines();
-          initParticles();
+          initAll();
         }
       });
 
-      // Check if on video page or interaction is disabled in user preferences
+      window.addEventListener('mindflix:background-changed', (e: Event) => {
+        const customEv = e as CustomEvent<{ styleId: BackgroundStyleId }>;
+        if (customEv.detail && customEv.detail.styleId) {
+          currentStyle = customEv.detail.styleId;
+          initAll();
+        }
+      });
+
       function isWatchPage(): boolean {
         try {
           const prefs = getUserPreferences();
@@ -113,7 +149,6 @@ const { disableInteraction = false } = Astro.props;
 
       const isMobile = window.innerWidth < 768;
 
-      // Mouse state with smooth lerping
       const mouse = {
         x: -9999,
         y: -9999,
@@ -128,12 +163,15 @@ const { disableInteraction = false } = Astro.props;
       let animFrameId: number;
       let isVisible = true;
 
-      // --- 1. Wave Ribbons Setup ---
+      // --- 1. WAVES ASSETS ---
       const lineCount = isMobile ? 9 : 14;
       const pointSpacing = isMobile ? 40 : 26;
       const lines: WaveLine[] = [];
+      const particleCount = isMobile ? 16 : 34;
+      const particles: NodeParticle[] = [];
+      const ripples: Ripple[] = [];
 
-      function initLines() {
+      function initWaves() {
         lines.length = 0;
         const totalPoints = Math.ceil(width / pointSpacing) + 4;
         const lineColors = currentTheme.lineColors;
@@ -163,13 +201,7 @@ const { disableInteraction = false } = Astro.props;
             activeColor: colorScheme.active
           });
         }
-      }
 
-      // --- 2. Floating Constellation Nodes ---
-      const particleCount = isMobile ? 16 : 34;
-      const particles: NodeParticle[] = [];
-
-      function initParticles() {
         particles.length = 0;
         for (let i = 0; i < particleCount; i++) {
           particles.push({
@@ -184,9 +216,6 @@ const { disableInteraction = false } = Astro.props;
         }
       }
 
-      // --- 3. Dynamic Ripples on Fast Mouse Movement ---
-      const ripples: Ripple[] = [];
-
       function addRipple(x: number, y: number, intensity = 28) {
         if (isWatchPage()) return;
         if (ripples.length > 4) ripples.shift();
@@ -200,12 +229,286 @@ const { disableInteraction = false } = Astro.props;
         });
       }
 
-      initLines();
-      initParticles();
+      // --- 2. ESCURO MINIMALISTA (100% ESTÁTICO, SEM EFEITOS OU INTERAÇÕES) ---
+      function initDarkMinimal() {
+        // Sem elementos móveis ou partículas
+      }
 
-      // Mouse & Touch Tracking
-      function updatePointer(clientX: number, clientY: number) {
+      // --- 3. FLUXO RETILÍNEO (STRAIGHT LINES & DATA PULSES) ASSETS ---
+      interface DataTrack {
+        type: 'h' | 'v';
+        coord: number;
+        start: number;
+        end: number;
+        alpha: number;
+        isMain: boolean;
+      }
+
+      interface DataPacket {
+        x: number;
+        y: number;
+        trackIndex: number;
+        axis: 'h' | 'v';
+        dir: 1 | -1;
+        speed: number;
+        length: number;
+        headRadius: number;
+        color: string;
+        alpha: number;
+        isSurge?: boolean;
+        surgeEnergy?: number;
+      }
+
+      interface ClickSurge {
+        x: number;
+        y: number;
+        radius: number;
+        maxRadius: number;
+        alpha: number;
+        nodesHit: Set<string>;
+      }
+
+      interface SparkParticle {
+        x: number;
+        y: number;
+        vx: number;
+        vy: number;
+        alpha: number;
+        size: number;
+        color: string;
+        life: number;
+      }
+
+      const dataTracks: DataTrack[] = [];
+      const dataPackets: DataPacket[] = [];
+      const clickSurges: ClickSurge[] = [];
+      const sparkParticles: SparkParticle[] = [];
+      const junctionNodes: { x: number; y: number; glow: number }[] = [];
+
+      function initCyberGrid() {
+        dataTracks.length = 0;
+        dataPackets.length = 0;
+        junctionNodes.length = 0;
+
+        // Denser, closer grid lines for a precise technical canvas
+        const hSpacing = isMobile ? 32 : 38;
+        const vSpacing = isMobile ? 42 : 50;
+
+        // Horizontal Tracks (subtle, sober opacity)
+        const hCount = Math.floor(height / hSpacing);
+        for (let i = 1; i <= hCount; i++) {
+          const y = i * hSpacing;
+          const isMain = i % 2 === 0;
+          dataTracks.push({
+            type: 'h',
+            coord: y,
+            start: 0,
+            end: width,
+            alpha: isMain ? 0.045 : 0.022,
+            isMain
+          });
+        }
+
+        // Vertical Tracks (subtle, sober opacity)
+        const vCount = Math.floor(width / vSpacing);
+        for (let j = 1; j <= vCount; j++) {
+          const x = j * vSpacing;
+          const isMain = j % 2 === 0;
+          dataTracks.push({
+            type: 'v',
+            coord: x,
+            start: 0,
+            end: height,
+            alpha: isMain ? 0.045 : 0.022,
+            isMain
+          });
+        }
+
+        // Create Intersection Nodes (subtle tech grid dots)
+        for (let i = 1; i <= hCount; i += 2) {
+          for (let j = 1; j <= vCount; j += 2) {
+            junctionNodes.push({
+              x: j * vSpacing,
+              y: i * hSpacing,
+              glow: 0
+            });
+          }
+        }
+
+        // Spawn very rare ambient energy flash points (2 on mobile, 3 on desktop)
+        const packetCount = isMobile ? 2 : 3;
+        for (let k = 0; k < packetCount; k++) {
+          spawnRandomPacket();
+        }
+      }
+
+      function spawnRandomPacket(
+        customTrackCoord?: number,
+        fromSurge = false,
+        startPos?: { x: number; y: number },
+        forceAxis?: 'h' | 'v',
+        forceDir?: 1 | -1
+      ): DataPacket | null {
+        if (dataTracks.length === 0) return null;
+
+        const axis = forceAxis || (Math.random() > 0.5 ? 'h' : 'v');
+        const dir = forceDir !== undefined ? forceDir : (Math.random() > 0.5 ? 1 : -1);
+        
+        // Accelerated high-speed energy flashes
+        const speed = fromSurge 
+          ? (15.0 + Math.random() * 7.0)
+          : (9.5 + Math.random() * 7.0);
+
+        let px = 0;
+        let py = 0;
+
+        if (startPos) {
+          px = startPos.x;
+          py = startPos.y;
+        } else if (axis === 'h') {
+          // Pick a horizontal track
+          const hTracks = dataTracks.filter(t => t.type === 'h');
+          const chosen = hTracks[Math.floor(Math.random() * hTracks.length)];
+          py = chosen ? chosen.coord : Math.random() * height;
+          px = dir === 1 ? -60 : width + 60;
+        } else {
+          // Pick a vertical track
+          const vTracks = dataTracks.filter(t => t.type === 'v');
+          const chosen = vTracks[Math.floor(Math.random() * vTracks.length)];
+          px = chosen ? chosen.coord : Math.random() * width;
+          py = dir === 1 ? -60 : height + 60;
+        }
+
+        const isAlt = Math.random() > 0.35;
+        const packet: DataPacket = {
+          x: px,
+          y: py,
+          trackIndex: 0,
+          axis,
+          dir,
+          speed,
+          length: fromSurge ? (55 + Math.random() * 40) : (40 + Math.random() * 35),
+          headRadius: fromSurge ? 2.4 : (1.6 + Math.random() * 0.8),
+          color: isAlt ? currentTheme.accentPrimary : currentTheme.accentSecondary,
+          alpha: fromSurge ? 1.0 : (0.75 + Math.random() * 0.25),
+          isSurge: fromSurge,
+          surgeEnergy: fromSurge ? 1.0 : 0
+        };
+
+        dataPackets.push(packet);
+        return packet;
+      }
+
+      function triggerSurgeAt(clickX: number, clickY: number) {
         if (isWatchPage()) return;
+
+        // 1. Initial click epicenter flash
+        clickSurges.push({
+          x: clickX,
+          y: clickY,
+          radius: 4,
+          maxRadius: isMobile ? 80 : 120,
+          alpha: 1.0,
+          nodesHit: new Set()
+        });
+
+        // 2. Find closest horizontal and vertical tracks for neat alignment, or use exact click position
+        let bestY = clickY;
+        let minHDist = Infinity;
+        let bestX = clickX;
+        let minVDist = Infinity;
+
+        dataTracks.forEach((track) => {
+          if (track.type === 'h') {
+            const d = Math.abs(track.coord - clickY);
+            if (d < minHDist) {
+              minHDist = d;
+              bestY = track.coord;
+            }
+          } else {
+            const d = Math.abs(track.coord - clickX);
+            if (d < minVDist) {
+              minVDist = d;
+              bestX = track.coord;
+            }
+          }
+        });
+
+        // Snapping within 30px for visual harmony with lines
+        const originX = minVDist < 35 ? bestX : clickX;
+        const originY = minHDist < 35 ? bestY : clickY;
+
+        // 3. Spawns EXACTLY 4 energy flash pulses - ONE FOR EACH CARDINAL DIRECTION (Left, Right, Up, Down)
+        // 1. LEFT (←)
+        spawnRandomPacket(undefined, true, { x: originX, y: originY }, 'h', -1);
+        // 2. RIGHT (→)
+        spawnRandomPacket(undefined, true, { x: originX, y: originY }, 'h', 1);
+        // 3. UP (↑)
+        spawnRandomPacket(undefined, true, { x: originX, y: originY }, 'v', -1);
+        // 4. DOWN (↓)
+        spawnRandomPacket(undefined, true, { x: originX, y: originY }, 'v', 1);
+      }
+
+      // --- 4. NEBULA & STARS ASSETS ---
+      const stars: Star[] = [];
+      const meteors: Meteor[] = [];
+      const stardust: NodeParticle[] = [];
+
+      function initNebula() {
+        stars.length = 0;
+        const starCount = isMobile ? 60 : 120;
+        for (let i = 0; i < starCount; i++) {
+          stars.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            size: 0.8 + Math.random() * 1.8,
+            baseAlpha: 0.2 + Math.random() * 0.6,
+            alpha: 0.2 + Math.random() * 0.6,
+            twinkleSpeed: 0.002 + Math.random() * 0.005,
+            twinklePhase: Math.random() * Math.PI * 2
+          });
+        }
+
+        stardust.length = 0;
+        const dustCount = isMobile ? 20 : 40;
+        for (let i = 0; i < dustCount; i++) {
+          stardust.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+            radius: 1.0 + Math.random() * 1.6,
+            alpha: 0.3 + Math.random() * 0.4,
+            color: i % 2 === 0 ? currentTheme.accentPrimary : currentTheme.accentSecondary
+          });
+        }
+
+        meteors.length = 0;
+        for (let i = 0; i < 2; i++) {
+          meteors.push({
+            x: Math.random() * width,
+            y: Math.random() * height * 0.5,
+            length: 80 + Math.random() * 100,
+            speed: 6 + Math.random() * 4,
+            alpha: 0,
+            angle: Math.PI / 4 + (Math.random() - 0.5) * 0.2,
+            active: false
+          });
+        }
+      }
+
+      function initAll() {
+        initWaves();
+        initDarkMinimal();
+        initCyberGrid();
+        initNebula();
+      }
+
+      initAll();
+
+      // Pointer Tracking
+      function updatePointer(clientX: number, clientY: number) {
+        if (isWatchPage() || currentStyle === 'aurora') return;
         mouse.targetX = clientX;
         mouse.targetY = clientY;
         if (!mouse.active) {
@@ -233,7 +536,12 @@ const { disableInteraction = false } = Astro.props;
       }, { passive: true });
 
       window.addEventListener('click', (e) => {
-        if (!isWatchPage()) addRipple(e.clientX, e.clientY, 40);
+        if (!isWatchPage() && currentStyle !== 'aurora') {
+          addRipple(e.clientX, e.clientY, 40);
+          if (currentStyle === 'cyber-grid') {
+            triggerSurgeAt(e.clientX, e.clientY);
+          }
+        }
       });
 
       document.addEventListener('mouseleave', () => {
@@ -242,18 +550,15 @@ const { disableInteraction = false } = Astro.props;
         mouse.targetY = -9999;
       });
 
-      // Window resize
       let resizeTimeout: ReturnType<typeof setTimeout>;
       window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
           resizeCanvas();
-          initLines();
-          initParticles();
+          initAll();
         }, 120);
       }, { passive: true });
 
-      // Tab visibility management
       document.addEventListener('visibilitychange', () => {
         isVisible = !document.hidden;
         if (isVisible) {
@@ -264,7 +569,6 @@ const { disableInteraction = false } = Astro.props;
         }
       });
 
-      // Fullscreen video pause
       document.addEventListener('fullscreenchange', () => {
         if (document.fullscreenElement) {
           cancelAnimationFrame(animFrameId);
@@ -274,7 +578,465 @@ const { disableInteraction = false } = Astro.props;
         }
       });
 
-      // Main 60 FPS Animation & Interaction Loop
+      // --- RENDERERS ---
+      
+      // 1. Render Waves
+      function renderWaves(dt: number, onWatch: boolean) {
+        if (!ctx) return;
+        const mouseRadius = mouse.radius;
+        const mouseRadiusSq = mouseRadius * mouseRadius;
+
+        // Ripples
+        if (!onWatch) {
+          for (let r = ripples.length - 1; r >= 0; r--) {
+            const rip = ripples[r];
+            rip.radius += 3.0;
+            rip.intensity *= rip.decay;
+            if (rip.radius > rip.maxRadius || rip.intensity < 0.5) {
+              ripples.splice(r, 1);
+              continue;
+            }
+            ctx.strokeStyle = `rgba(${currentTheme.primaryRgb}, ${Math.min(rip.intensity * 0.008, 0.16)})`;
+            ctx.lineWidth = 1.1;
+            ctx.beginPath();
+            ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+
+        // Lines
+        lines.forEach((line) => {
+          line.phase += line.speed * dt;
+          const pts = line.points;
+          let lineNearMouse = false;
+
+          for (let i = 0; i < pts.length; i++) {
+            const pt = pts[i];
+            const naturalWave = Math.sin(pt.x * line.wavelength + line.phase) * line.amplitude;
+            let target = pt.baseY + naturalWave;
+
+            if (!onWatch && mouse.active) {
+              const dx = pt.x - mouse.x;
+              const dy = pt.currY - mouse.y;
+              const distSq = dx * dx + dy * dy;
+              if (distSq < mouseRadiusSq && distSq > 0) {
+                lineNearMouse = true;
+                const dist = Math.sqrt(distSq);
+                const factor = (1 - dist / mouseRadius);
+                target += (dy / dist) * factor * 55;
+              }
+            }
+
+            if (!onWatch) {
+              for (let r = 0; r < ripples.length; r++) {
+                const rip = ripples[r];
+                const rdx = pt.x - rip.x;
+                const rdy = pt.currY - rip.y;
+                const rDist = Math.sqrt(rdx * rdx + rdy * rdy);
+                const waveDiff = Math.abs(rDist - rip.radius);
+                if (waveDiff < 32) {
+                  const waveFactor = Math.cos((waveDiff / 32) * (Math.PI / 2)) * rip.intensity;
+                  target += (rdy >= 0 ? 1 : -1) * waveFactor * 0.38;
+                }
+              }
+            }
+
+            pt.currY += (target - pt.currY) * 0.13;
+          }
+
+          ctx.beginPath();
+          ctx.lineWidth = lineNearMouse ? 1.6 : 1.2;
+
+          if (!onWatch && lineNearMouse) {
+            const lineGrad = ctx.createLinearGradient(0, 0, width, 0);
+            lineGrad.addColorStop(0, line.color);
+            const mouseNorm = Math.max(0, Math.min(1, mouse.x / width));
+            lineGrad.addColorStop(Math.max(0, mouseNorm - 0.22), line.color);
+            lineGrad.addColorStop(mouseNorm, line.activeColor);
+            lineGrad.addColorStop(Math.min(1, mouseNorm + 0.22), line.color);
+            lineGrad.addColorStop(1, line.color);
+            ctx.strokeStyle = lineGrad;
+          } else {
+            ctx.strokeStyle = line.color;
+          }
+
+          for (let i = 0; i < pts.length; i++) {
+            const pt = pts[i];
+            if (i === 0) {
+              ctx.moveTo(pt.x, pt.currY);
+            } else {
+              const prev = pts[i - 1];
+              const midX = (prev.x + pt.x) / 2;
+              const midY = (prev.currY + pt.currY) / 2;
+              ctx.quadraticCurveTo(prev.x, prev.currY, midX, midY);
+            }
+          }
+          ctx.stroke();
+        });
+
+        // Constellation Particles
+        if (!onWatch && particles.length > 0) {
+          const maxConnDist = isMobile ? 85 : 125;
+          const maxConnDistSq = maxConnDist * maxConnDist;
+          const mouseConnDist = isMobile ? 110 : 175;
+          const mouseConnDistSq = mouseConnDist * mouseConnDist;
+
+          for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x < -10) p.x = width + 10;
+            else if (p.x > width + 10) p.x = -10;
+            if (p.y < -10) p.y = height + 10;
+            else if (p.y > height + 10) p.y = -10;
+
+            if (mouse.active) {
+              const pdx = p.x - mouse.x;
+              const pdy = p.y - mouse.y;
+              const pdistSq = pdx * pdx + pdy * pdy;
+
+              if (pdistSq < mouseConnDistSq && pdistSq > 0) {
+                const pdist = Math.sqrt(pdistSq);
+                const pushStrength = (1 - pdist / mouseConnDist) * 0.55;
+                p.x += (pdx / pdist) * pushStrength;
+                p.y += (pdy / pdist) * pushStrength;
+
+                const rayAlpha = (1 - pdist / mouseConnDist) * 0.5;
+                ctx.strokeStyle = `rgba(${currentTheme.primaryRgb}, ${rayAlpha})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(mouse.x, mouse.y);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+              }
+            }
+
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            for (let j = i + 1; j < particles.length; j++) {
+              const p2 = particles[j];
+              const dx = p.x - p2.x;
+              const dy = p.y - p2.y;
+              const dSq = dx * dx + dy * dy;
+
+              if (dSq < maxConnDistSq) {
+                const alpha = (1 - Math.sqrt(dSq) / maxConnDist) * 0.22;
+                ctx.strokeStyle = `rgba(${currentTheme.secondaryRgb}, ${alpha})`;
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Render Escuro Minimalista (100% estático, sem desenhos na canvas)
+      function renderDarkMinimal(dt: number, onWatch: boolean) {
+        // Nada a renderizar no canvas: fundo puro e sóbrio via CSS
+      }
+
+      // 3. Render Fluxo Retilíneo (Straight Lines, Glowing Pulses & Click Surges)
+      function renderCyberGrid(dt: number, onWatch: boolean) {
+        if (!ctx) return;
+
+        // A. Draw Subtle Geometric Track Grid
+        ctx.lineWidth = 1;
+        dataTracks.forEach((track) => {
+          ctx.strokeStyle = `rgba(${track.isMain ? currentTheme.primaryRgb : currentTheme.secondaryRgb}, ${track.alpha})`;
+          ctx.beginPath();
+          if (track.type === 'h') {
+            ctx.moveTo(track.start, track.coord);
+            ctx.lineTo(track.end, track.coord);
+          } else {
+            ctx.moveTo(track.coord, track.start);
+            ctx.lineTo(track.coord, track.end);
+          }
+          ctx.stroke();
+        });
+
+        // B. Draw Intersection Nodes (Subtle Tech Crosses / Dots)
+        junctionNodes.forEach((node) => {
+          if (node.glow > 0.05) {
+            node.glow *= 0.94;
+            ctx.fillStyle = `rgba(${currentTheme.primaryRgb}, ${node.glow * 0.8})`;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 2.5 + node.glow * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillStyle = `rgba(255, 255, 255, 0.07)`;
+            ctx.fillRect(node.x - 1, node.y - 1, 2, 2);
+          }
+        });
+
+        // C. Update & Render Click Expanding Surges (Orthogonal Rectangles / Diamond Pulse)
+        if (!onWatch) {
+          for (let c = clickSurges.length - 1; c >= 0; c--) {
+            const surge = clickSurges[c];
+            surge.radius += 4.5;
+            surge.alpha *= 0.94;
+
+            if (surge.radius > surge.maxRadius || surge.alpha < 0.02) {
+              clickSurges.splice(c, 1);
+              continue;
+            }
+
+            // Light up junction nodes crossed by the shockwave
+            junctionNodes.forEach((node) => {
+              const dx = Math.abs(node.x - surge.x);
+              const dy = Math.abs(node.y - surge.y);
+              const d = Math.max(dx, dy);
+              if (Math.abs(d - surge.radius) < 20) {
+                node.glow = Math.max(node.glow, surge.alpha * 0.9);
+              }
+            });
+
+            // Diamond shockwave
+            ctx.strokeStyle = `rgba(${currentTheme.primaryRgb}, ${surge.alpha * 0.4})`;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(surge.x, surge.y - surge.radius);
+            ctx.lineTo(surge.x + surge.radius, surge.y);
+            ctx.lineTo(surge.x, surge.y + surge.radius);
+            ctx.lineTo(surge.x - surge.radius, surge.y);
+            ctx.closePath();
+            ctx.stroke();
+
+            // Orthogonal Cross Beams from click
+            const beamLen = Math.min(surge.radius * 1.5, surge.maxRadius);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${surge.alpha * 0.5})`;
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(surge.x - beamLen, surge.y);
+            ctx.lineTo(surge.x + beamLen, surge.y);
+            ctx.moveTo(surge.x, surge.y - beamLen);
+            ctx.lineTo(surge.x, surge.y + beamLen);
+            ctx.stroke();
+          }
+        }
+
+        // D. Update & Render Data Packets (Streaks of light traveling straight)
+        for (let i = dataPackets.length - 1; i >= 0; i--) {
+          const p = dataPackets[i];
+          const speedMultiplier = (dt / 16.6) || 1;
+          const delta = p.speed * speedMultiplier * p.dir;
+
+          if (p.axis === 'h') {
+            p.x += delta;
+          } else {
+            p.y += delta;
+          }
+
+          // Trigger intersection glows as packets pass through nodes
+          if (Math.random() < 0.25) {
+            junctionNodes.forEach((n) => {
+              const dist = Math.hypot(n.x - p.x, n.y - p.y);
+              if (dist < 8) {
+                n.glow = Math.max(n.glow, p.isSurge ? 0.9 : 0.4);
+                // Slight chance of 90-degree bifurcation for regular packets
+                if (!p.isSurge && Math.random() < 0.08) {
+                  p.axis = p.axis === 'h' ? 'v' : 'h';
+                  p.dir = Math.random() > 0.5 ? 1 : -1;
+                }
+              }
+            });
+          }
+
+          // Check if packet exited screen
+          const isOut = (p.axis === 'h' && (p.x < -100 || p.x > width + 100)) ||
+                        (p.axis === 'v' && (p.y < -100 || p.y > height + 100));
+
+          if (isOut) {
+            dataPackets.splice(i, 1);
+            if (!p.isSurge && dataPackets.filter(dp => !dp.isSurge).length < (isMobile ? 2 : 3)) {
+              spawnRandomPacket();
+            }
+            continue;
+          }
+
+          // Draw Glowing Laser Flash Trail
+          const tailLen = p.length;
+          let tailStartX = p.x;
+          let tailStartY = p.y;
+
+          if (p.axis === 'h') {
+            tailStartX = p.x - (tailLen * p.dir);
+          } else {
+            tailStartY = p.y - (tailLen * p.dir);
+          }
+
+          const streakGrad = ctx.createLinearGradient(tailStartX, tailStartY, p.x, p.y);
+          streakGrad.addColorStop(0, `rgba(${currentTheme.secondaryRgb}, 0)`);
+          streakGrad.addColorStop(0.5, `rgba(${currentTheme.secondaryRgb}, ${p.alpha * 0.45})`);
+          streakGrad.addColorStop(0.9, `rgba(${currentTheme.primaryRgb}, ${p.alpha * 0.95})`);
+          streakGrad.addColorStop(1, `rgba(255, 255, 255, ${p.alpha})`);
+
+          ctx.strokeStyle = streakGrad;
+          ctx.lineWidth = p.isSurge ? 2.6 : 1.8;
+          ctx.beginPath();
+          ctx.moveTo(tailStartX, tailStartY);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+
+          // Draw Intense White-Hot Energy Point
+          const headRad = p.headRadius;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, headRad, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Outer Radiant Glow Halo
+          const glowGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, headRad * (p.isSurge ? 5.0 : 3.5));
+          glowGrad.addColorStop(0, `rgba(${currentTheme.primaryRgb}, ${p.alpha * (p.isSurge ? 0.95 : 0.75)})`);
+          glowGrad.addColorStop(0.5, `rgba(${currentTheme.secondaryRgb}, ${p.alpha * 0.35})`);
+          glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = glowGrad;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, headRad * (p.isSurge ? 5.0 : 3.5), 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // E. Update & Render Click Spark Particles
+        for (let s = sparkParticles.length - 1; s >= 0; s--) {
+          const sp = sparkParticles[s];
+          sp.x += sp.vx;
+          sp.y += sp.vy;
+          sp.vx *= 0.95;
+          sp.vy *= 0.95;
+          sp.alpha *= 0.93;
+          sp.life -= 1;
+
+          if (sp.life <= 0 || sp.alpha < 0.02) {
+            sparkParticles.splice(s, 1);
+            continue;
+          }
+
+          ctx.fillStyle = sp.color;
+          ctx.globalAlpha = sp.alpha;
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // 4. Render Nebula & Stars
+      function renderNebula(dt: number, onWatch: boolean) {
+        if (!ctx) return;
+
+        // Cosmic gas clouds
+        const cloudX1 = width * 0.3 + Math.sin(lastTime * 0.0003) * 40;
+        const cloudY1 = height * 0.35 + Math.cos(lastTime * 0.0004) * 30;
+        const cloudRad1 = Math.min(width, height) * 0.55;
+
+        const g1 = ctx.createRadialGradient(cloudX1, cloudY1, 10, cloudX1, cloudY1, cloudRad1);
+        g1.addColorStop(0, `rgba(${currentTheme.primaryRgb}, 0.12)`);
+        g1.addColorStop(0.6, `rgba(${currentTheme.secondaryRgb}, 0.05)`);
+        g1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = g1;
+        ctx.fillRect(0, 0, width, height);
+
+        const cloudX2 = width * 0.7 + Math.cos(lastTime * 0.00035) * 40;
+        const cloudY2 = height * 0.65 + Math.sin(lastTime * 0.0003) * 30;
+        const cloudRad2 = Math.min(width, height) * 0.6;
+
+        const g2 = ctx.createRadialGradient(cloudX2, cloudY2, 10, cloudX2, cloudY2, cloudRad2);
+        g2.addColorStop(0, `rgba(${currentTheme.secondaryRgb}, 0.1)`);
+        g2.addColorStop(0.7, `rgba(${currentTheme.primaryRgb}, 0.03)`);
+        g2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = g2;
+        ctx.fillRect(0, 0, width, height);
+
+        // Twinkling stars
+        stars.forEach((star) => {
+          star.twinklePhase += star.twinkleSpeed * dt;
+          star.alpha = star.baseAlpha + Math.sin(star.twinklePhase) * 0.25;
+
+          ctx.fillStyle = '#ffffff';
+          ctx.globalAlpha = Math.max(0.05, Math.min(1, star.alpha));
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        // Stardust with cursor gravity
+        stardust.forEach((dust) => {
+          dust.x += dust.vx;
+          dust.y += dust.vy;
+
+          if (dust.x < -10) dust.x = width + 10;
+          else if (dust.x > width + 10) dust.x = -10;
+          if (dust.y < -10) dust.y = height + 10;
+          else if (dust.y > height + 10) dust.y = -10;
+
+          if (!onWatch && mouse.active) {
+            const dx = mouse.x - dust.x;
+            const dy = mouse.y - dust.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 200 && dist > 10) {
+              const pull = (1 - dist / 200) * 0.6;
+              dust.x += (dx / dist) * pull;
+              dust.y += (dy / dist) * pull;
+            }
+          }
+
+          ctx.fillStyle = dust.color;
+          ctx.globalAlpha = dust.alpha;
+          ctx.beginPath();
+          ctx.arc(dust.x, dust.y, dust.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        // Meteors
+        if (!onWatch && Math.random() < 0.003) {
+          const inactiveMeteor = meteors.find(m => !m.active);
+          if (inactiveMeteor) {
+            inactiveMeteor.active = true;
+            inactiveMeteor.x = Math.random() * width * 0.8;
+            inactiveMeteor.y = Math.random() * height * 0.4;
+            inactiveMeteor.alpha = 0.8;
+          }
+        }
+
+        meteors.forEach((m) => {
+          if (!m.active) return;
+          m.x += Math.cos(m.angle) * m.speed;
+          m.y += Math.sin(m.angle) * m.speed;
+          m.alpha -= 0.015;
+
+          if (m.alpha <= 0 || m.x > width || m.y > height) {
+            m.active = false;
+            return;
+          }
+
+          const tailX = m.x - Math.cos(m.angle) * m.length;
+          const tailY = m.y - Math.sin(m.angle) * m.length;
+
+          const meteorGrad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+          meteorGrad.addColorStop(0, `rgba(255, 255, 255, ${m.alpha})`);
+          meteorGrad.addColorStop(0.3, `rgba(${currentTheme.primaryRgb}, ${m.alpha * 0.8})`);
+          meteorGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+          ctx.strokeStyle = meteorGrad;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(m.x, m.y);
+          ctx.lineTo(tailX, tailY);
+          ctx.stroke();
+        });
+      }
+
+      // Main Loop
       let lastTime = performance.now();
 
       function loop(timestamp: number) {
@@ -284,7 +1046,6 @@ const { disableInteraction = false } = Astro.props;
 
         if (ctx) {
           ctx.clearRect(0, 0, width, height);
-
           const onWatch = isWatchPage();
 
           // Smooth mouse position lerping
@@ -297,16 +1058,15 @@ const { disableInteraction = false } = Astro.props;
           }
 
           const mouseRadius = mouse.radius;
-          const mouseRadiusSq = mouseRadius * mouseRadius;
 
-          // --- A. Render Mouse Ambient Glow Spotlight ---
-          if (!onWatch && mouse.active && mouse.x > 0 && mouse.y > 0) {
+          // Mouse Ambient Spotlight (desativado no modo Escuro Minimalista)
+          if (!onWatch && currentStyle !== 'aurora' && mouse.active && mouse.x > 0 && mouse.y > 0) {
             const glowGrad = ctx.createRadialGradient(
               mouse.x, mouse.y, 0,
               mouse.x, mouse.y, mouseRadius * 1.2
             );
-            glowGrad.addColorStop(0, `rgba(${currentTheme.primaryRgb}, 0.18)`);
-            glowGrad.addColorStop(0.45, `rgba(${currentTheme.secondaryRgb}, 0.08)`);
+            glowGrad.addColorStop(0, `rgba(${currentTheme.primaryRgb}, 0.16)`);
+            glowGrad.addColorStop(0.45, `rgba(${currentTheme.secondaryRgb}, 0.07)`);
             glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
             ctx.fillStyle = glowGrad;
@@ -315,178 +1075,21 @@ const { disableInteraction = false } = Astro.props;
             ctx.fill();
           }
 
-          // --- B. Update & Render Dynamic Ripples ---
-          if (!onWatch) {
-            for (let r = ripples.length - 1; r >= 0; r--) {
-              const rip = ripples[r];
-              rip.radius += 3.0;
-              rip.intensity *= rip.decay;
-
-              if (rip.radius > rip.maxRadius || rip.intensity < 0.5) {
-                ripples.splice(r, 1);
-                continue;
-              }
-
-              ctx.strokeStyle = `rgba(${currentTheme.primaryRgb}, ${Math.min(rip.intensity * 0.008, 0.16)})`;
-              ctx.lineWidth = 1.1;
-              ctx.beginPath();
-              ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
-              ctx.stroke();
-            }
-          }
-
-          // --- C. Update & Render Topographic Wave Lines ---
-          lines.forEach((line) => {
-            line.phase += line.speed * dt;
-
-            const pts = line.points;
-            let lineNearMouse = false;
-
-            for (let i = 0; i < pts.length; i++) {
-              const pt = pts[i];
-
-              // Continuous natural harmonic wave movement
-              const naturalWave = Math.sin(pt.x * line.wavelength + line.phase) * line.amplitude;
-              let target = pt.baseY + naturalWave;
-
-              // Mouse deflection force field
-              if (!onWatch && mouse.active) {
-                const dx = pt.x - mouse.x;
-                const dy = pt.currY - mouse.y;
-                const distSq = dx * dx + dy * dy;
-
-                if (distSq < mouseRadiusSq && distSq > 0) {
-                  lineNearMouse = true;
-                  const dist = Math.sqrt(distSq);
-                  const factor = (1 - dist / mouseRadius);
-                  const pushY = (dy / dist) * factor * 55;
-                  target += pushY;
-                }
-              }
-
-              // Ripple perturbations
-              if (!onWatch) {
-                for (let r = 0; r < ripples.length; r++) {
-                  const rip = ripples[r];
-                  const rdx = pt.x - rip.x;
-                  const rdy = pt.currY - rip.y;
-                  const rDist = Math.sqrt(rdx * rdx + rdy * rdy);
-                  const waveDiff = Math.abs(rDist - rip.radius);
-                  if (waveDiff < 32) {
-                    const waveFactor = Math.cos((waveDiff / 32) * (Math.PI / 2)) * rip.intensity;
-                    target += (rdy >= 0 ? 1 : -1) * waveFactor * 0.38;
-                  }
-                }
-              }
-
-              // Spring damping physics
-              pt.currY += (target - pt.currY) * 0.13;
-            }
-
-            // Draw smooth bezier ribbon
-            ctx.beginPath();
-            ctx.lineWidth = lineNearMouse ? 1.6 : 1.2;
-
-            if (!onWatch && lineNearMouse) {
-              const lineGrad = ctx.createLinearGradient(0, 0, width, 0);
-              lineGrad.addColorStop(0, line.color);
-              const mouseNorm = Math.max(0, Math.min(1, mouse.x / width));
-              lineGrad.addColorStop(Math.max(0, mouseNorm - 0.22), line.color);
-              lineGrad.addColorStop(mouseNorm, line.activeColor);
-              lineGrad.addColorStop(Math.min(1, mouseNorm + 0.22), line.color);
-              lineGrad.addColorStop(1, line.color);
-              ctx.strokeStyle = lineGrad;
-            } else {
-              ctx.strokeStyle = line.color;
-            }
-
-            for (let i = 0; i < pts.length; i++) {
-              const pt = pts[i];
-              if (i === 0) {
-                ctx.moveTo(pt.x, pt.currY);
-              } else {
-                const prev = pts[i - 1];
-                const midX = (prev.x + pt.x) / 2;
-                const midY = (prev.currY + pt.currY) / 2;
-                ctx.quadraticCurveTo(prev.x, prev.currY, midX, midY);
-              }
-            }
-            ctx.stroke();
-          });
-
-          // --- D. Update & Render Constellation Nodes & Connecting Rays ---
-          if (!onWatch && particles.length > 0) {
-            const maxConnDist = isMobile ? 85 : 125;
-            const maxConnDistSq = maxConnDist * maxConnDist;
-            const mouseConnDist = isMobile ? 110 : 175;
-            const mouseConnDistSq = mouseConnDist * mouseConnDist;
-
-            for (let i = 0; i < particles.length; i++) {
-              const p = particles[i];
-
-              p.x += p.vx;
-              p.y += p.vy;
-
-              if (p.x < -10) p.x = width + 10;
-              else if (p.x > width + 10) p.x = -10;
-              if (p.y < -10) p.y = height + 10;
-              else if (p.y > height + 10) p.y = -10;
-
-              if (mouse.active) {
-                const pdx = p.x - mouse.x;
-                const pdy = p.y - mouse.y;
-                const pdistSq = pdx * pdx + pdy * pdy;
-
-                if (pdistSq < mouseConnDistSq && pdistSq > 0) {
-                  const pdist = Math.sqrt(pdistSq);
-                  const pushStrength = (1 - pdist / mouseConnDist) * 0.55;
-                  p.x += (pdx / pdist) * pushStrength;
-                  p.y += (pdy / pdist) * pushStrength;
-
-                  // Glowing Laser Ray from Cursor to Node
-                  const rayAlpha = (1 - pdist / mouseConnDist) * 0.5;
-                  ctx.strokeStyle = `rgba(${currentTheme.primaryRgb}, ${rayAlpha})`;
-                  ctx.lineWidth = 1;
-                  ctx.beginPath();
-                  ctx.moveTo(mouse.x, mouse.y);
-                  ctx.lineTo(p.x, p.y);
-                  ctx.stroke();
-                }
-              }
-
-              // Draw particle node
-              ctx.fillStyle = p.color;
-              ctx.globalAlpha = p.alpha;
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.globalAlpha = 1;
-
-              // Connecting lines between nearby nodes
-              for (let j = i + 1; j < particles.length; j++) {
-                const p2 = particles[j];
-                const dx = p.x - p2.x;
-                const dy = p.y - p2.y;
-                const dSq = dx * dx + dy * dy;
-
-                if (dSq < maxConnDistSq) {
-                  const alpha = (1 - Math.sqrt(dSq) / maxConnDist) * 0.22;
-                  ctx.strokeStyle = `rgba(${currentTheme.secondaryRgb}, ${alpha})`;
-                  ctx.lineWidth = 0.8;
-                  ctx.beginPath();
-                  ctx.moveTo(p.x, p.y);
-                  ctx.lineTo(p2.x, p2.y);
-                  ctx.stroke();
-                }
-              }
-            }
+          // Render active background style
+          if (currentStyle === 'aurora') {
+            renderDarkMinimal(dt, onWatch);
+          } else if (currentStyle === 'cyber-grid') {
+            renderCyberGrid(dt, onWatch);
+          } else if (currentStyle === 'nebula') {
+            renderNebula(dt, onWatch);
+          } else {
+            renderWaves(dt, onWatch);
           }
         }
 
         animFrameId = requestAnimationFrame(loop);
       }
 
-      // Unconditional start of the animation loop
       animFrameId = requestAnimationFrame(loop);
     }
   }
@@ -502,6 +1105,20 @@ const { disableInteraction = false } = Astro.props;
     background-color: var(--bg-main);
   }
 
+  /* Escuro Minimalista (não totalmente preto, sem orbs, sem efeitos) */
+  :global(html[data-bg-style="aurora"]) .bg-viewport {
+    background: radial-gradient(circle at 50% 30%, #121620 0%, #0c0f16 55%, #080a0f 100%) !important;
+  }
+
+  :global(html[data-bg-style="aurora"]) .glow-orb {
+    display: none !important;
+    opacity: 0 !important;
+  }
+
+  :global(html[data-bg-style="aurora"]) .bg-vignette {
+    background: radial-gradient(circle at 50% 40%, transparent 60%, rgba(5, 7, 10, 0.4) 100%) !important;
+  }
+
   /* Distant ambient glow orbs */
   .glow-orb {
     position: absolute;
@@ -513,30 +1130,45 @@ const { disableInteraction = false } = Astro.props;
     transition: transform 1.2s var(--ease-out);
   }
 
-  .orb-cyan {
+  .orb-primary {
     width: 650px;
     height: 650px;
     top: -150px;
     right: -100px;
-    background: radial-gradient(circle, #00f2fe 0%, #3b82f6 70%, transparent 100%);
+    background: radial-gradient(circle, var(--accent-cyan) 0%, var(--accent-blue) 70%, transparent 100%);
   }
 
-  .orb-indigo {
+  .orb-secondary {
     width: 750px;
     height: 750px;
     bottom: -200px;
     left: -150px;
-    background: radial-gradient(circle, #6366f1 0%, #8b5cf6 70%, transparent 100%);
+    background: radial-gradient(circle, var(--accent-blue) 0%, var(--accent-cyan) 70%, transparent 100%);
   }
 
-  .orb-purple {
+  .orb-accent {
     width: 500px;
     height: 500px;
     top: 40%;
     left: 45%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+    background: radial-gradient(circle, var(--accent-cyan) 0%, transparent 70%);
     opacity: 0.08;
+  }
+
+  /* Style specific orb modifications */
+  :global(html[data-bg-style="cyber-grid"]) .orb-primary {
+    background: radial-gradient(circle, #38bdf8 0%, #6366f1 70%, transparent 100%);
+  }
+  :global(html[data-bg-style="cyber-grid"]) .orb-secondary {
+    background: radial-gradient(circle, #0284c7 0%, #4338ca 70%, transparent 100%);
+  }
+
+  :global(html[data-bg-style="nebula"]) .orb-primary {
+    background: radial-gradient(circle, #ec4899 0%, #8b5cf6 70%, transparent 100%);
+  }
+  :global(html[data-bg-style="nebula"]) .orb-secondary {
+    background: radial-gradient(circle, #a855f7 0%, #3b82f6 70%, transparent 100%);
   }
 
   /* Interactive Canvas */
@@ -548,7 +1180,7 @@ const { disableInteraction = false } = Astro.props;
     display: block;
   }
 
-  /* Balanced vignette overlay allowing lines to remain clearly visible */
+  /* Balanced vignette overlay */
   .bg-vignette {
     position: absolute;
     inset: 0;

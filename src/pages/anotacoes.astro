@@ -1,0 +1,482 @@
+---
+// src/pages/anotacoes.astro - Página "Minhas Anotações" do Aluno
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Minhas Anotações — Mindflix">
+  <div class="anotacoes-page container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-info">
+        <div class="badge-icon-title">
+          <div class="header-icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="page-title">Minhas Anotações</h1>
+            <p class="page-subtitle">Seu caderno de estudos pessoal. Suas anotações ficam salvas no navegador e vinculadas a cada aula.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search / Filter input -->
+      <div class="anotacoes-search-wrap" id="anotacoes-search-wrap" style="display: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="anotacoes-search-input" placeholder="Buscar nas anotações..." />
+      </div>
+    </div>
+
+    <!-- Notes Container (Populated via JS) -->
+    <div class="notes-grid-container" id="notes-grid-container">
+      <!-- Loading Skeleton -->
+      <div class="notes-loading-skeleton">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+    </div>
+
+    <!-- Friendly Empty State (Displayed if 0 notes) -->
+    <div class="notes-empty-state" id="notes-empty-state" style="display: none;">
+      <div class="empty-icon-box">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+      </div>
+      <h2 class="empty-title">Você ainda não possui anotações</h2>
+      <p class="empty-desc">
+        Durante qualquer aula do Mindflix, você encontra uma área discreta de anotações logo abaixo do vídeo.
+        Escreva resumos, adicione checklists de tarefas e organize seus estudos. Suas anotações ficam salvas automaticamente e persistem no seu navegador!
+      </p>
+      <div class="empty-actions">
+        <a href="/courses" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>Explorar Cursos e Iniciar Estudos</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .anotacoes-page {
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+    min-height: 75vh;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .badge-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    color: var(--accent-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0 0 0;
+  }
+
+  .anotacoes-search-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    align-items: center;
+  }
+
+  .anotacoes-search-wrap svg {
+    position: absolute;
+    left: 0.85rem;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .anotacoes-search-wrap input {
+    width: 100%;
+    padding: 0.55rem 0.85rem 0.55rem 2.4rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+    color: #ffffff;
+    font-size: 0.84rem;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .anotacoes-search-wrap input:focus {
+    border-color: var(--accent-cyan);
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  /* Grid Layout */
+  .notes-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 640px) {
+    .notes-grid-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Note Card */
+  :global(.note-card) {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+  }
+
+  :global(.note-card:hover) {
+    border-color: rgba(0, 242, 254, 0.35);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35), 0 0 15px rgba(0, 242, 254, 0.1);
+    transform: translateY(-2px);
+  }
+
+  :global(.note-card-header) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  :global(.note-card-course) {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent-cyan);
+  }
+
+  :global(.note-card-lesson) {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  :global(.note-card-module) {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  :global(.note-card-body) {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    max-height: 180px;
+    overflow-y: auto;
+    word-break: break-word;
+  }
+
+  :global(.note-card-body h3) {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    margin: 0.4rem 0 0.2rem 0;
+  }
+
+  :global(.note-card-body ul) {
+    padding-left: 1.1rem;
+    margin: 0.3rem 0;
+  }
+
+  :global(.note-card-body .note-checklist-item) {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: 0.25rem 0;
+  }
+
+  :global(.note-card-body .note-checklist-item input[type="checkbox"]) {
+    margin-top: 0.2rem;
+    accent-color: var(--accent-cyan);
+    pointer-events: none; /* read-only preview on list */
+  }
+
+  :global(.note-card-body .note-checklist-item.checked span) {
+    text-decoration: line-through;
+    opacity: 0.55;
+  }
+
+  :global(.note-card-footer) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  :global(.note-card-date) {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  :global(.note-card-actions) {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  :global(.btn-go-lesson) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  :global(.btn-delete-card-note) {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  :global(.btn-delete-card-note:hover) {
+    background: rgba(244, 63, 94, 0.15);
+    border-color: rgba(244, 63, 94, 0.4);
+    color: var(--accent-rose, #f43f5e);
+  }
+
+  /* Empty State */
+  .notes-empty-state {
+    max-width: 540px;
+    margin: 4rem auto;
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .empty-icon-box {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(0, 242, 254, 0.08);
+    border: 1px solid rgba(0, 242, 254, 0.2);
+    color: var(--accent-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem auto;
+  }
+
+  .empty-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.65rem 0;
+  }
+
+  .empty-desc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0 0 1.75rem 0;
+  }
+
+  .empty-actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Skeleton Loading */
+  .notes-loading-skeleton {
+    display: contents;
+  }
+
+  .skeleton-card {
+    height: 220px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    opacity: 0.6;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.4; }
+  }
+</style>
+
+<script>
+  import { getAllUserNotes, deleteNoteForLesson, type NoteItem } from '../lib/notes';
+  import { showToast } from '../lib/toast';
+
+  const gridContainer = document.getElementById('notes-grid-container');
+  const emptyState = document.getElementById('notes-empty-state');
+  const searchWrap = document.getElementById('anotacoes-search-wrap');
+  const searchInput = document.getElementById('anotacoes-search-input') as HTMLInputElement;
+
+  let allNotes: NoteItem[] = [];
+
+  function formatDate(isoStr: string): string {
+    if (!isoStr) return '';
+    try {
+      const d = new Date(isoStr);
+      return `Salvo em ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    } catch {
+      return '';
+    }
+  }
+
+  function renderNotes(filterText: string = '') {
+    if (!gridContainer || !emptyState) return;
+
+    const query = filterText.toLowerCase().trim();
+    const filtered = allNotes.filter(n => 
+      !query || 
+      n.courseTitle.toLowerCase().includes(query) ||
+      n.lessonTitle.toLowerCase().includes(query) ||
+      (n.moduleTitle && n.moduleTitle.toLowerCase().includes(query)) ||
+      n.content.toLowerCase().includes(query)
+    );
+
+    if (allNotes.length === 0) {
+      gridContainer.style.display = 'none';
+      if (searchWrap) searchWrap.style.display = 'none';
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    if (searchWrap) searchWrap.style.display = 'flex';
+    gridContainer.style.display = 'grid';
+
+    if (filtered.length === 0) {
+      gridContainer.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+          Nenhuma anotação encontrada para "${filterText}".
+        </div>
+      `;
+      return;
+    }
+
+    gridContainer.innerHTML = filtered.map(note => `
+      <div class="note-card" data-lesson-id="${note.lessonId}">
+        <div class="note-card-header">
+          <span class="note-card-course">${note.courseTitle}</span>
+          <h3 class="note-card-lesson">${note.lessonTitle}</h3>
+          ${note.moduleTitle ? `<span class="note-card-module">${note.moduleTitle}</span>` : ''}
+        </div>
+
+        <div class="note-card-body">
+          ${note.content}
+        </div>
+
+        <div class="note-card-footer">
+          <span class="note-card-date">${formatDate(note.updatedAt)}</span>
+          <div class="note-card-actions">
+            <button type="button" class="btn-delete-card-note" data-delete-id="${note.lessonId}" title="Excluir esta anotação">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+            <a href="${note.watchUrl}" class="btn btn-primary btn-sm btn-go-lesson">
+              <span>Ir para aula</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // Attach delete handlers
+    gridContainer.querySelectorAll<HTMLButtonElement>('.btn-delete-card-note').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = btn.getAttribute('data-delete-id');
+        if (id && confirm('Deseja excluir esta anotação?')) {
+          deleteNoteForLesson(id);
+          allNotes = allNotes.filter(n => n.lessonId !== id);
+          renderNotes(searchInput ? searchInput.value : '');
+          showToast('Anotação excluída com sucesso', 'info');
+        }
+      });
+    });
+  }
+
+  function loadNotes() {
+    allNotes = getAllUserNotes();
+    renderNotes();
+  }
+
+  loadNotes();
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      renderNotes(searchInput.value);
+    });
+  }
+
+  // Listen for storage changes or note save/delete events
+  window.addEventListener('mindflix-note-saved', loadNotes);
+  window.addEventListener('mindflix-note-deleted', loadNotes);
+</script>

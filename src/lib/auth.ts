@@ -1,4 +1,6 @@
-// auth.ts - Pre-configured Authorized Accounts with Custom Password Persistence
+// src/lib/auth.ts - Client-Side Authentication API Helpers (Zero Credentials Exposed)
+import { setLocalUser } from './supabase';
+
 export interface ValidUser {
   id: string;
   username: string;
@@ -23,58 +25,75 @@ export const AUTHORIZED_USERS = [
   }
 ];
 
-const CUSTOM_PASS_KEY = 'mindflix_custom_passwords';
+export interface LoginResult {
+  success: boolean;
+  user?: ValidUser;
+  error?: string;
+  retryAfterSeconds?: number;
+}
 
-function getCustomPasswords(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
+export async function loginWithCredentials(username: string, password: string): Promise<LoginResult> {
   try {
-    const raw = localStorage.getItem(CUSTOM_PASS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
 
-export function getUserPassword(username: string): string {
-  const custom = getCustomPasswords();
-  const key = username.toLowerCase();
-  if (custom[key]) return custom[key];
+    const data = await res.json().catch(() => ({}));
 
-  const found = AUTHORIZED_USERS.find(u => u.username.toLowerCase() === key || u.email.toLowerCase() === key);
-  return found ? found.defaultPassword : '';
-}
-
-export function updateUserPassword(username: string, newPassword: string): boolean {
-  if (typeof window === 'undefined' || !username || !newPassword) return false;
-  const custom = getCustomPasswords();
-  const key = username.toLowerCase();
-  custom[key] = newPassword.trim();
-  try {
-    localStorage.setItem(CUSTOM_PASS_KEY, JSON.stringify(custom));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function authenticateUser(inputLogin: string, inputPass: string): ValidUser | null {
-  if (!inputLogin || !inputPass) return null;
-  const normLogin = inputLogin.trim().toLowerCase();
-
-  const found = AUTHORIZED_USERS.find(
-    u => u.username.toLowerCase() === normLogin || u.email.toLowerCase() === normLogin
-  );
-
-  if (found) {
-    const currentPass = getUserPassword(found.username);
-    if (currentPass === inputPass.trim()) {
-      return {
-        id: found.id,
-        username: found.username,
-        email: found.email,
-        name: found.name
-      };
+    if (res.ok && data.success && data.user) {
+      setLocalUser({
+        id: data.user.id,
+        email: data.user.email,
+        full_name: data.user.full_name
+      });
+      return { success: true, user: data.user };
     }
+
+    return {
+      success: false,
+      error: data.error || 'Credenciais inválidas.',
+      retryAfterSeconds: data.retryAfterSeconds
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: 'Erro de conexão com o servidor. Verifique sua internet.'
+    };
   }
-  return null;
+}
+
+export async function logoutUser(): Promise<void> {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } catch {}
+  setLocalUser(null);
+  window.location.href = '/login';
+}
+
+export async function changeUserPassword(newPassword: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.success) {
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: data.error || 'Falha ao alterar senha.'
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: 'Erro ao comunicar com o servidor.'
+    };
+  }
 }

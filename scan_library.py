@@ -25,7 +25,7 @@ except ImportError as e:
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MINDFLIX_DIR = CURRENT_DIR
 
-# Read COURSES_ROOT from env or .env file, default to parent directory
+# Read COURSES_ROOT from env or .env file, default to Google Drive path if available
 def resolve_courses_root():
     env_root = os.environ.get("COURSES_ROOT")
     if env_root and os.path.isdir(env_root):
@@ -39,10 +39,13 @@ def resolve_courses_root():
                 line = line.strip()
                 if line.startswith("COURSES_ROOT=") and not line.startswith("#"):
                     val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    if os.path.isdir(val):
+                        return os.path.abspath(val)
                     candidate = os.path.abspath(os.path.join(MINDFLIX_DIR, val))
                     if os.path.isdir(candidate):
                         return candidate
 
+    # Default to root directory
     return os.path.abspath(os.path.join(MINDFLIX_DIR, ".."))
 
 COURSES_ROOT = resolve_courses_root()
@@ -67,7 +70,7 @@ def load_categories_overrides():
 # Supported extensions
 VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".ts"}
 AUDIO_EXTS = {".mp3", ".m4a", ".wav", ".ogg"}
-DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md"}
+DOC_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z", ".tar", ".gz", ".ipynb", ".pbix", ".csv", ".sql", ".py", ".r", ".url", ".webloc"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
 DEFAULT_IGNORE = {
@@ -148,10 +151,19 @@ CATEGORIES = [
         "name": "Formações & Trilhas",
         "icon": "compass",
         "description": "Jornadas completas e trilhas multi-curso para formação profissional acelerada."
+    },
+    {
+        "id": "projetos",
+        "name": "Projetos Práticos",
+        "icon": "folder-git-2",
+        "description": "Projetos práticos guiados, soluções completas de ponta a ponta e implementações reais."
     }
 ]
 
 CATEGORY_RULES = {
+    "projetos": [
+        "projeto", "[projeto]", "projetos"
+    ],
     "ia": [
         "ia", "inteligência artificial", "inteligencia artificial", "claude", "gpt", "chatgpt", 
         "gemini", "llm", "deep learning", "visão computacional", "prompt", "openai", "anthropic", 
@@ -185,7 +197,7 @@ CATEGORY_RULES = {
         "pnl", "neurolinguística", "neurolinguistica", "soft skills", "liderança", "mindset", "psicologia", "desenvolvimento pessoal"
     ],
     "saude-lifestyle": [
-        "marmita", "marmitas", "fit", "nutri", "massagem", "stress", "saudável", "funcional"
+        "marmita", "marmitas", "fit", "nutri", "massagem", "stress", "saudável", "funcional", "pão", "pao", "gluten", "glúten", "panificação", "panificacao", "culinária", "culinaria", "receita", "receitas"
     ],
     "musica": [
         "violão", "violo", "violao", "música", "musica", "harmonia", "percepção", "tríade"
@@ -238,6 +250,9 @@ TITLE_OVERRIDES = {
     "Massagem Anti-Stress - Thiago Nishida": "Massagem Anti-Stress — Método Thiago Nishida",
     "Practitioner em PNL - Otavio Castanho": "Practitioner em PNL — Otavio Castanho",
     "Projeto 60 Dias": "Projeto 60 Dias — Transformação Completa",
+    "Pão sem glúten": "Pão Sem Glúten — Panificação Saudável",
+    "Pao sem gluten": "Pão Sem Glúten — Panificação Saudável",
+    "Po sem glten": "Pão Sem Glúten — Panificação Saudável",
     "SCTEC": "SCTEC — Formação em Data & Tech",
     "Supabase Impressionador": "Supabase Impressionador — Backend Moderno",
     "TRILHA NOCODE - IA": "Trilha NoCode com Inteligência Artificial",
@@ -377,30 +392,47 @@ def probe_media_file(full_path, cache, deep=False):
     }
     return duration, dur_formatted, meta
 
-def extract_thumbnail_if_needed(video_full_path, course_id, cache):
-    """Extracts a frame at ~15% into public/covers/{course_id}.jpg if not already present."""
+def extract_thumbnail_if_needed(video_full_path, course_id, cache, force=False):
+    """Extracts a frame from the course video into public/covers/{course_id}.jpg."""
     os.makedirs(COVERS_DIR, exist_ok=True)
     out_path = os.path.join(COVERS_DIR, f"{course_id}.jpg")
     web_cover_url = f"/covers/{course_id}.jpg"
 
-    if os.path.isfile(out_path):
+    if not force and os.path.isfile(out_path) and os.path.getsize(out_path) > 1000:
         return web_cover_url
 
-    try:
-        # Extract frame at 15s or 15% using ffmpeg
-        cmd = [
-            "ffmpeg", "-y", "-ss", "00:00:15", "-i", video_full_path,
-            "-vframes", "1", "-q:v", "3", out_path
-        ]
-        subprocess.run(cmd, capture_output=True, timeout=8)
-        if os.path.isfile(out_path) and os.path.getsize(out_path) > 1000:
-            return web_cover_url
-    except Exception:
-        pass
+    offsets = ["00:00:15", "00:00:05", "00:00:30", "00:00:01"]
+    for ss in offsets:
+        try:
+            cmd = [
+                "ffmpeg", "-y", "-ss", ss, "-i", video_full_path,
+                "-vframes", "1", "-q:v", "3", out_path
+            ]
+            subprocess.run(cmd, capture_output=True, timeout=10)
+            if os.path.isfile(out_path) and os.path.getsize(out_path) > 1000:
+                return web_cover_url
+        except Exception:
+            pass
     return None
+
+def infer_source(rel_path, raw_folder):
+    p = (rel_path + "/" + raw_folder).lower()
+    if p.startswith("ai lab") or "/ai lab" in p or "ai lab" in p:
+        return "ai-lab"
+    if p.startswith("asimov") or "/asimov" in p or "asimov" in p:
+        return "asimov"
+    if p.startswith("hashtag") or "/hashtag" in p or "hashtag" in p or "impressionador" in p:
+        return "hashtag"
+    if p.startswith("sctec") or "/sctec" in p or "sctec" in p:
+        return "sctec"
+    if p.startswith("outros") or "/outros" in p or "outros" in p:
+        return "outros"
+    return "outros"
 
 def infer_provider(raw_folder, rel_path, is_asimov=False):
     lower = (raw_folder + " " + rel_path).lower()
+    if "ai lab" in lower:
+        return "AI LAB"
     if is_asimov or "asimov" in lower:
         return "Asimov Academy"
     if "sctec" in lower:
@@ -473,20 +505,81 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
 
     course_candidates = []
 
-    # 1. Asimov directory courses
+    # 1. AI LAB
+    ai_lab_dir = os.path.join(courses_root, "AI LAB")
+    if os.path.isdir(ai_lab_dir):
+        for entry in sorted(os.listdir(ai_lab_dir), key=natural_sort_key):
+            full = os.path.join(ai_lab_dir, entry)
+            if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+                course_candidates.append({
+                    "raw_name": entry,
+                    "rel_path": f"AI LAB/{entry}",
+                    "full_path": full,
+                    "is_asimov": False,
+                    "source": "ai-lab"
+                })
+
+    # 2. Asimov (Scan subfolders: Cursos, Asimov Skills, Trilhas Asimov, Projetos, and direct folders)
     asimov_dir = os.path.join(courses_root, "Asimov")
     if os.path.isdir(asimov_dir):
+        for sub in ["Cursos", "Asimov Skills", "Trilhas Asimov", "Projetos"]:
+            sub_full = os.path.join(asimov_dir, sub)
+            if os.path.isdir(sub_full):
+                for entry in sorted(os.listdir(sub_full), key=natural_sort_key):
+                    full = os.path.join(sub_full, entry)
+                    if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+                        course_candidates.append({
+                            "raw_name": entry,
+                            "rel_path": f"Asimov/{sub}/{entry}",
+                            "full_path": full,
+                            "is_asimov": True,
+                            "source": "asimov"
+                        })
+        # Direct folders in Asimov
         for entry in sorted(os.listdir(asimov_dir), key=natural_sort_key):
+            if entry in ["Cursos", "Asimov Skills", "Trilhas Asimov", "Projetos"] or entry.lower() in DEFAULT_IGNORE:
+                continue
             full = os.path.join(asimov_dir, entry)
-            if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
+            if os.path.isdir(full):
                 course_candidates.append({
                     "raw_name": entry,
                     "rel_path": f"Asimov/{entry}",
                     "full_path": full,
-                    "is_asimov": True
+                    "is_asimov": True,
+                    "source": "asimov"
                 })
 
-    # 2. SCTEC directory courses
+    # 3. Hashtag
+    hashtag_dir = os.path.join(courses_root, "Hashtag")
+    if os.path.isdir(hashtag_dir):
+        for entry in sorted(os.listdir(hashtag_dir), key=natural_sort_key):
+            full = os.path.join(hashtag_dir, entry)
+            if not os.path.isdir(full) or entry.lower() in DEFAULT_IGNORE:
+                continue
+
+            # Soft Skills subfolders as individual courses (ignoring 'introdução')
+            if entry.lower() == "soft skills" or entry.lower() == "especialização soft skills":
+                for sub in sorted(os.listdir(full), key=natural_sort_key):
+                    sub_full = os.path.join(full, sub)
+                    # Ignore 'introdução' / '01. Introdução'
+                    if os.path.isdir(sub_full) and "introdu" not in sub.lower() and sub.lower() not in DEFAULT_IGNORE:
+                        course_candidates.append({
+                            "raw_name": sub,
+                            "rel_path": f"Hashtag/Soft Skills/{sub}",
+                            "full_path": sub_full,
+                            "is_asimov": False,
+                            "source": "hashtag-soft-skills"
+                        })
+            else:
+                course_candidates.append({
+                    "raw_name": entry,
+                    "rel_path": f"Hashtag/{entry}",
+                    "full_path": full,
+                    "is_asimov": False,
+                    "source": "hashtag"
+                })
+
+    # 4. SCTEC
     sctec_dir = os.path.join(courses_root, "SCTEC")
     if os.path.isdir(sctec_dir):
         for entry in sorted(os.listdir(sctec_dir), key=natural_sort_key):
@@ -496,25 +589,28 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                     "raw_name": entry,
                     "rel_path": f"SCTEC/{entry}",
                     "full_path": full,
-                    "is_asimov": False
+                    "is_asimov": False,
+                    "source": "sctec"
                 })
 
-    # 3. Asimov Skills directory courses
-    skills_dir = os.path.join(courses_root, "Asimov Skills")
-    if os.path.isdir(skills_dir):
-        for entry in sorted(os.listdir(skills_dir), key=natural_sort_key):
-            full = os.path.join(skills_dir, entry)
+    # 5. outros
+    outros_dir = os.path.join(courses_root, "outros")
+    if os.path.isdir(outros_dir):
+        for entry in sorted(os.listdir(outros_dir), key=natural_sort_key):
+            full = os.path.join(outros_dir, entry)
             if os.path.isdir(full) and entry.lower() not in DEFAULT_IGNORE:
                 course_candidates.append({
                     "raw_name": entry,
-                    "rel_path": f"Asimov Skills/{entry}",
+                    "rel_path": f"outros/{entry}",
                     "full_path": full,
-                    "is_asimov": True
+                    "is_asimov": False,
+                    "source": "outros"
                 })
 
-    # 4. Root directory courses
+    # 6. Any other direct folders in root
+    known_roots = {"AI LAB", "Asimov", "Hashtag", "SCTEC", "outros", "Asimov Skills"}
     for entry in sorted(os.listdir(courses_root), key=natural_sort_key):
-        if entry.lower() in DEFAULT_IGNORE or entry in {"Asimov", "SCTEC", "Asimov Skills"}:
+        if entry in known_roots or entry.lower() in DEFAULT_IGNORE:
             continue
         full = os.path.join(courses_root, entry)
         if os.path.isdir(full):
@@ -522,7 +618,8 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                 "raw_name": entry,
                 "rel_path": entry,
                 "full_path": full,
-                "is_asimov": False
+                "is_asimov": False,
+                "source": "outros"
             })
 
     print(f"Total Course Candidates Found: {len(course_candidates)}")
@@ -546,27 +643,19 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         provider = infer_provider(raw_name, rel_path, is_asimov=is_asimov)
         categories, tags = classify_course(clean_title, raw_name, rel_path)
 
-        # Check local cover image in folder
-        local_cover = None
-        for img_name in ["cover.jpg", "cover.png", "capa.jpg", "capa.png", "thumb.jpg"]:
-            candidate_cover = os.path.join(full_path, img_name)
-            if os.path.isfile(candidate_cover):
-                local_cover = f"/api/video?path={rel_path}/{img_name}"
-                break
-
-        # Also check 'imagens cursos' directory if exists
-        if not local_cover:
-            covers_dir_cand = os.path.join(courses_root, "imagens cursos")
-            if os.path.isdir(covers_dir_cand):
-                candidates_names = [raw_name, clean_title]
-                for c_name in candidates_names:
-                    for ext in [".png", ".jpg", ".jpeg"]:
-                        cand_img = os.path.join(covers_dir_cand, f"{c_name}{ext}")
-                        if os.path.isfile(cand_img):
-                            local_cover = f"/api/video?path=imagens cursos/{c_name}{ext}"
-                            break
-                    if local_cover:
-                        break
+        is_project = bool("asimov/projetos" in rel_path.lower() or "asimov\\projetos" in rel_path.lower() or raw_name.startswith("[Projeto]") or rel_path.lower().startswith("projetos"))
+        is_comece_por_aqui = bool(
+            raw_name.lower().startswith("comece") or 
+            clean_title.lower().startswith("comece") or
+            "comece por aqui" in raw_name.lower() or
+            "comece aqui" in raw_name.lower() or
+            "comece por aqui" in clean_title.lower() or
+            "comece aqui" in clean_title.lower() or
+            "comece por aqui" in rel_path.lower() or
+            "comece aqui" in rel_path.lower()
+        )
+        if is_project and "projetos" not in categories:
+            categories.insert(0, "projetos")
 
         # Scan modules and lessons
         modules = []
@@ -664,6 +753,29 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                     video_files = [f for f in m_files if os.path.splitext(f)[1].lower() in VIDEO_EXTS]
                     other_files = [f for f in m_files if os.path.splitext(f)[1].lower() in DOC_EXTS or os.path.splitext(f)[1].lower() in AUDIO_EXTS]
 
+                    matching_mats = {}
+                    general_mats = []
+                    for o_file in other_files:
+                        o_lower = o_file.lower()
+                        if any(k in o_lower for k in ["artigo", "transcricao", "transcrição", "transcript", "article"]):
+                            continue
+                        matched_v = None
+                        for v_file in video_files:
+                            base_v_name = os.path.splitext(v_file)[0][:10]
+                            if o_file.startswith(base_v_name):
+                                matched_v = v_file
+                                break
+                        mat_item = {
+                            "id": f"mat-{slugify(os.path.splitext(o_file)[0])}",
+                            "title": clean_display_title(o_file),
+                            "type": "pdf" if o_file.lower().endswith(".pdf") else "document",
+                            "relative_path": f"{rel_path}/{m_entry}/{o_file}"
+                        }
+                        if matched_v:
+                            matching_mats.setdefault(matched_v, []).append(mat_item)
+                        else:
+                            general_mats.append(mat_item)
+
                     for idx, v_file in enumerate(video_files, 1):
                         v_full = os.path.join(m_full, v_file)
                         v_rel = f"{rel_path}/{m_entry}/{v_file}"
@@ -674,20 +786,7 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                         if not first_video_for_thumb:
                             first_video_for_thumb = v_full
 
-                        # Check for matching materials (strictly excluding articles and transcripts)
-                        base_v_name = os.path.splitext(v_file)[0][:10]
-                        mats = []
-                        for o_file in other_files:
-                            o_lower = o_file.lower()
-                            if any(k in o_lower for k in ["artigo", "transcricao", "transcrição", "transcript", "article"]):
-                                continue
-                            if o_file.startswith(base_v_name):
-                                mats.append({
-                                    "id": f"{les_id}-mat-{len(mats)+1}",
-                                    "title": clean_display_title(o_file),
-                                    "type": "pdf" if o_file.endswith(".pdf") else "document",
-                                    "relative_path": f"{rel_path}/{m_entry}/{o_file}"
-                                })
+                        mats = (matching_mats.get(v_file) or []) + general_mats
 
                         lessons.append({
                             "id": les_id,
@@ -733,7 +832,31 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         else:
             # Single-folder course (videos directly in root)
             video_files = [f for f in entries if os.path.splitext(f)[1].lower() in VIDEO_EXTS]
-            other_files = [f for f in entries if os.path.splitext(f)[1].lower() in DOC_EXTS]
+            other_files = [f for f in entries if os.path.splitext(f)[1].lower() in DOC_EXTS or os.path.splitext(f)[1].lower() in AUDIO_EXTS]
+
+            matching_mats = {}
+            general_mats = []
+            for o_file in other_files:
+                o_lower = o_file.lower()
+                if any(k in o_lower for k in ["artigo", "transcricao", "transcrição", "transcript", "article"]):
+                    continue
+                matched_v = None
+                for v_file in video_files:
+                    base_v_name = os.path.splitext(v_file)[0][:10]
+                    if o_file.startswith(base_v_name):
+                        matched_v = v_file
+                        break
+                mat_item = {
+                    "id": f"mat-{slugify(os.path.splitext(o_file)[0])}",
+                    "title": clean_display_title(o_file),
+                    "type": "pdf" if o_file.lower().endswith(".pdf") else "document",
+                    "relative_path": f"{rel_path}/{o_file}"
+                }
+                if matched_v:
+                    matching_mats.setdefault(matched_v, []).append(mat_item)
+                else:
+                    general_mats.append(mat_item)
+
             if video_files or other_files:
                 m_id = f"{course_id}-mod-01"
                 lessons = []
@@ -742,6 +865,9 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                     dur, dur_fmt, meta = probe_media_file(v_full, cache, deep=deep)
                     if not first_video_for_thumb:
                         first_video_for_thumb = v_full
+
+                    mats = (matching_mats.get(v_file) or []) + general_mats
+
                     lessons.append({
                         "id": f"{m_id}-les-{slugify(os.path.splitext(v_file)[0])}",
                         "order_index": idx,
@@ -751,7 +877,7 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
                         "type": "video",
                         "duration_seconds": dur,
                         "duration_formatted": dur_fmt,
-                        "materials": []
+                        "materials": mats
                     })
                 modules.append({
                     "id": m_id,
@@ -768,9 +894,9 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         total_hours = total_seconds // 3600
         total_mins = (total_seconds % 3600) // 60
 
-        # Thumbnail extraction if no local cover
-        cover_image = local_cover
-        if not cover_image and first_video_for_thumb and not dry_run:
+        # Extract video frame thumbnail for card cover
+        cover_image = None
+        if first_video_for_thumb and not dry_run:
             cover_image = extract_thumbnail_if_needed(first_video_for_thumb, course_id, cache)
 
         desc = (f"Curso prático sobre {clean_title}, ministrado por {provider}. "
@@ -794,7 +920,7 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
         final_provider = override.get("provider", provider)
         final_cats = override.get("categories", categories)
         final_tags = override.get("tags", tags)
-        final_cover = override.get("cover_image", cover_image)
+        final_cover = cover_image or f"/covers/{course_id}.jpg"
         is_hidden = override.get("is_hidden", False)
         is_featured = override.get("is_featured", clean_title in [
             "Dominando o Ecossistema Claude",
@@ -834,11 +960,11 @@ def scan_library(courses_root, dry_run=False, deep=False, verbose=False, scan_dr
             "total_duration_formatted": f"{total_hours}h {total_mins:02d}m",
             "cover_image": final_cover,
             "is_featured": is_featured,
+            "is_project": is_project,
+            "is_comece_por_aqui": is_comece_por_aqui,
             "is_hidden": is_hidden,
             "classification_source": "manual" if course_id in overrides else "rule",
-            "classification_confidence": 0.95 if course_id in overrides else 0.85,
-            "discovered_at": old_courses_map.get(course_id, {}).get("discovered_at", datetime.now().astimezone().isoformat()),
-            "last_scanned_at": datetime.now().astimezone().isoformat(),
+            "source": item.get("source") or infer_source(rel_path, raw_name),
             "modules": modules
         }
         scanned_courses.append(course_record)
