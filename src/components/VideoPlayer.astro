@@ -1,7 +1,7 @@
 ---
 // VideoPlayer.astro - Advanced Video Player with Theater/Focus modes, Keyboard Shortcuts, Speed Popover, and Next Lesson Countdown
 import type { Lesson } from '../types/catalog';
-import { getLessonDriveId, isDriveLesson, getDrivePreviewUrl } from '../lib/drive';
+import { buildServerStreamUrl } from '../lib/mediaProvider';
 
 interface Props {
   courseId: string;
@@ -13,10 +13,7 @@ interface Props {
 
 const { courseId, lesson, nextLessonHref, nextLessonTitle = 'Próxima Aula', prevLessonHref } = Astro.props;
 
-const driveId = getLessonDriveId(lesson);
-const videoStreamUrl = `/api/video?path=${encodeURIComponent(lesson.relative_path || '')}`;
-const drivePreviewUrl = driveId ? getDrivePreviewUrl(driveId) : videoStreamUrl;
-const isDrive = true; // All videos hosted on Google Drive
+const videoStreamUrl = buildServerStreamUrl(lesson.relative_path || '');
 
 const ext = (lesson.relative_path || '').split('.').pop()?.toLowerCase() || '';
 const isPdf = lesson.type === 'pdf' || ext === 'pdf';
@@ -31,9 +28,7 @@ const isVideo = !isPdf && !isDoc;
   data-lesson-id={lesson.id}
   data-next-href={nextLessonHref || ''}
   data-next-title={nextLessonTitle}
-  data-is-drive={isDrive ? 'true' : 'false'}
   data-relative-path={lesson.relative_path || ''}
-  data-drive-id={driveId || ''}
 >
   <!-- Next Lesson Countdown Overlay (Shown on Video End) -->
   <div class="next-lesson-overlay" id="next-lesson-overlay" style="display: none;">
@@ -64,20 +59,22 @@ const isVideo = !isPdf && !isDoc;
     <span>Progresso salvo</span>
   </div>
 
-  <!-- Main Video Viewport (Supports Google Drive & Local Video Stream & PDFs/Docs) -->
+  <!-- Main Video Viewport (Streaming Server & PDFs/Docs) -->
   <div class="video-viewport" id="video-viewport">
     {isVideo ? (
       <div class="drive-video-wrapper">
-        <iframe
-          id="drive-video-iframe"
-          class="drive-player-frame"
-          src={drivePreviewUrl}
-          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-          allowfullscreen
+        <video
+          id="main-video-player"
+          class="html5-video"
+          src={videoStreamUrl}
+          data-src={videoStreamUrl}
+          controls
+          autoplay
+          playsinline
+          webkit-playsinline
+          controlsList="nodownload"
           title={lesson.display_title}
-        ></iframe>
-        <!-- Blocker to prevent clicking Google Drive's native pop-out button in the top right -->
-        <div class="drive-popout-blocker" title=""></div>
+        ></video>
       </div>
     ) : isPdf ? (
       <div class="doc-player-wrapper">
@@ -122,11 +119,11 @@ const isVideo = !isPdf && !isDoc;
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
-        <h3 class="video-error-title">Vídeo Indisponível</h3>
-        <p class="video-error-desc" id="video-error-desc">Este arquivo de mídia está disponível apenas na biblioteca local ou ainda em processo de sincronização com o Google Drive.</p>
+        <h3 class="video-error-title">Servidor Indisponível</h3>
+        <p class="video-error-desc" id="video-error-desc">Não foi possível carregar o vídeo do servidor de streaming. Verifique se o servidor está ativo.</p>
         <div class="video-error-actions">
           <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-video">Tentar Novamente</button>
-          <a href="/courses" class="btn btn-primary btn-sm">Voltar aos Cursos</a>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-error-config-server">Configurar Servidor</button>
         </div>
       </div>
     </div>
@@ -168,16 +165,13 @@ const isVideo = !isPdf && !isDoc;
       )}
     </div>
 
-    <!-- Media Source Provider Selector (Row 2 on mobile, inline on desktop) -->
+    <!-- Media Server Status & Config (Row 2 on mobile, inline on desktop) -->
     <div class="nav-middle">
-      <div class="media-source-select-wrap" title="Fonte dos vídeos (Servidor ou Google Drive)">
-        <select id="player-media-source-select" class="player-media-source-select">
-          <option value="auto">⚡ Auto (Servidor + Fallback)</option>
-          <option value="server">🟢 Servidor Local</option>
-          <option value="drive">🔵 Google Drive</option>
-        </select>
-        <button type="button" class="btn btn-ghost btn-sm btn-server-cfg" id="btn-config-server" title="Configurar URL do Servidor Cloudflare/Local">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="media-source-select-wrap" title="Servidor de Streaming dos Vídeos">
+        <button type="button" class="btn btn-ghost btn-sm btn-server-status-pill" id="btn-config-server" title="Servidor de Streaming (Clique para ver ou alterar a URL)">
+          <span class="pulse-dot-indicator pulse-testing" id="player-server-dot"></span>
+          <span class="server-label" id="player-server-label">Servidor</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="server-cfg-icon">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
@@ -213,9 +207,6 @@ const isVideo = !isPdf && !isDoc;
     saveUserPreferences
   } from '../lib/progress';
   import {
-    getMediaMode,
-    setMediaMode,
-    getActiveMediaProvider,
     buildServerStreamUrl,
     getMediaServerUrl,
     setMediaServerUrl,
@@ -236,66 +227,52 @@ const isVideo = !isPdf && !isDoc;
   const btnPip = document.getElementById('btn-pip-mode');
   const errorOverlay = document.getElementById('video-error-overlay');
   const retryBtn = document.getElementById('btn-retry-video');
+  const btnErrorConfigServer = document.getElementById('btn-error-config-server');
+  const serverDot = document.getElementById('player-server-dot');
+  const serverLabel = document.getElementById('player-server-label');
 
   const courseId = wrapper?.getAttribute('data-course-id') || '';
   const lessonId = wrapper?.getAttribute('data-lesson-id') || '';
   const nextHref = wrapper?.getAttribute('data-next-href') || '';
   const relPath = wrapper?.getAttribute('data-relative-path') || '';
-  const dId = wrapper?.getAttribute('data-drive-id') || '';
 
   if (courseId && lessonId) {
     const prefs = getUserPreferences();
 
-    // Source Provider Selector
-    const sourceSelect = document.getElementById('player-media-source-select') as HTMLSelectElement | null;
-    if (sourceSelect) {
-      sourceSelect.value = getMediaMode();
-      sourceSelect.addEventListener('change', () => {
-        const mode = sourceSelect.value as any;
-        setMediaMode(mode);
-        initPlayerSource();
-        showToast(`Fonte alterada para: ${sourceSelect.options[sourceSelect.selectedIndex].text}`, 'info', 2000);
-      });
-    }
-
-    const btnConfigServer = document.getElementById('btn-config-server');
-    btnConfigServer?.addEventListener('click', async () => {
+    async function promptConfigServer() {
       const currentUrl = getMediaServerUrl();
       const newUrl = prompt('URL do Servidor de Streaming (Cloudflare Tunnel ou IP Local):', currentUrl);
       if (newUrl !== null && newUrl.trim() !== '') {
         setMediaServerUrl(newUrl.trim());
         showToast('Testando conexão com o servidor...', 'info', 2000);
-        const isOnline = await checkServerHealth(newUrl.trim(), true);
-        if (isOnline) {
-          showToast('Servidor de streaming conectado com sucesso!', 'success', 3000);
-        } else {
-          showToast('Servidor offline ou inacessível nesta URL.', 'warning', 4000);
-        }
-        initPlayerSource();
+        await updateServerStatusUI();
+        initPlayerSource(true);
       }
-    });
+    }
 
-    function loadDrive(container: HTMLElement, fileId: string) {
-      const driveUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-      const curIframe = container.querySelector('#drive-video-iframe') as HTMLIFrameElement | null;
-      if (!curIframe || curIframe.src !== driveUrl) {
-        container.innerHTML = `
-          <iframe
-            id="drive-video-iframe"
-            class="drive-player-frame"
-            src="${driveUrl}"
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-            allowfullscreen
-            title="${lessonId}"
-          ></iframe>
-          <div class="drive-popout-blocker"></div>
-        `;
+    const btnConfigServer = document.getElementById('btn-config-server');
+    btnConfigServer?.addEventListener('click', promptConfigServer);
+    btnErrorConfigServer?.addEventListener('click', promptConfigServer);
+
+    async function updateServerStatusUI() {
+      const url = getMediaServerUrl();
+      if (serverDot) serverDot.className = 'pulse-dot-indicator pulse-testing';
+      if (serverLabel) serverLabel.textContent = 'Verificando...';
+
+      const isOnline = await checkServerHealth(url);
+      if (isOnline) {
+        if (serverDot) serverDot.className = 'pulse-dot-indicator pulse-online';
+        if (serverLabel) serverLabel.textContent = 'Servidor Online 🟢';
+      } else {
+        if (serverDot) serverDot.className = 'pulse-dot-indicator pulse-offline';
+        if (serverLabel) serverLabel.textContent = 'Servidor Offline 🔴';
       }
+      return isOnline;
     }
 
     let countdownInterval: any = null;
 
-    // Attach complete playback and progression hooks to local server HTML5 video
+    // Attach complete playback and progression hooks to streaming server HTML5 video
     function setupHtml5Video(vid: HTMLVideoElement) {
       if ((vid as any).__mindflix_setup_done) return;
       (vid as any).__mindflix_setup_done = true;
@@ -407,18 +384,15 @@ const isVideo = !isPdf && !isDoc;
       });
     }
 
-    async function initPlayerSource() {
-      const activeProvider = await getActiveMediaProvider();
-      const viewport = document.getElementById('video-viewport');
-      if (!viewport) return;
+    async function initPlayerSource(forceReload = false) {
+      if (!relPath) return;
+      const serverStreamUrl = buildServerStreamUrl(relPath);
+      let vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
 
-      const wrapperDiv = viewport.querySelector('.drive-video-wrapper') as HTMLElement | null;
-      if (!wrapperDiv) return;
-
-      if (activeProvider === 'server' && relPath) {
-        const serverStreamUrl = buildServerStreamUrl(relPath);
-        const curVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
-        if (!curVid || curVid.getAttribute('data-src') !== serverStreamUrl) {
+      if (!vid) {
+        const viewport = document.getElementById('video-viewport');
+        const wrapperDiv = viewport?.querySelector('.drive-video-wrapper') as HTMLElement | null;
+        if (wrapperDiv) {
           wrapperDiv.innerHTML = `
             <video
               id="main-video-player"
@@ -433,46 +407,38 @@ const isVideo = !isPdf && !isDoc;
               title="${lessonId}"
             ></video>
           `;
-          const newVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
-          if (newVid) {
-            setupHtml5Video(newVid);
-            newVid.addEventListener('error', () => {
-              if (dId && getMediaMode() === 'auto') {
-                showToast('Servidor offline. Alternando para o Google Drive...', 'warning', 3000);
-                loadDrive(wrapperDiv, dId);
-              }
-            });
-          }
-        } else {
-          setupHtml5Video(curVid);
-        }
-      } else if (dId) {
-        loadDrive(wrapperDiv, dId);
-      } else if (relPath) {
-        const serverStreamUrl = buildServerStreamUrl(relPath);
-        wrapperDiv.innerHTML = `
-          <video
-            id="main-video-player"
-            class="html5-video"
-            src="${serverStreamUrl}"
-            data-src="${serverStreamUrl}"
-            controls
-            autoplay
-            playsinline
-            webkit-playsinline
-            controlsList="nodownload"
-            title="${lessonId}"
-          ></video>
-        `;
-        const newVid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
-        if (newVid) {
-          setupHtml5Video(newVid);
+          vid = wrapperDiv.querySelector('#main-video-player') as HTMLVideoElement | null;
         }
       }
+
+      if (vid) {
+        if (forceReload || vid.getAttribute('data-src') !== serverStreamUrl) {
+          vid.setAttribute('data-src', serverStreamUrl);
+          vid.src = serverStreamUrl;
+          vid.load();
+        }
+
+        setupHtml5Video(vid);
+
+        vid.addEventListener('error', () => {
+          if (errorOverlay) errorOverlay.style.display = 'flex';
+        });
+
+        vid.addEventListener('canplay', () => {
+          if (errorOverlay) errorOverlay.style.display = 'none';
+        });
+      }
+
+      updateServerStatusUI();
     }
 
+    retryBtn?.addEventListener('click', () => {
+      if (errorOverlay) errorOverlay.style.display = 'none';
+      initPlayerSource(true);
+    });
+
     initPlayerSource();
-    window.addEventListener('mindflix:media-mode-changed', initPlayerSource);
+    window.addEventListener('mindflix:media-server-url-changed', () => initPlayerSource(true));
 
     // Mark completed toggle (Shared across Video and Drive)
     const saved = getLessonProgress(lessonId);
@@ -1087,34 +1053,63 @@ const isVideo = !isPdf && !isDoc;
     background: rgba(var(--accent-primary-rgb), 0.12);
   }
 
-  /* Media Source Provider Selector Dropdown */
+  /* Media Server Status Pill */
   .media-source-select-wrap {
     display: inline-flex;
     align-items: center;
   }
 
-  .player-media-source-select {
+  .btn-server-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
     border-radius: var(--radius-sm, 6px);
     color: var(--text-primary, #f1f5f9);
     font-size: 0.72rem;
     font-weight: 600;
-    padding: 0.2rem 0.45rem;
-    height: 24px;
+    padding: 0.2rem 0.55rem;
+    height: 26px;
     cursor: pointer;
-    outline: none;
     transition: all 0.2s ease;
   }
 
-  .player-media-source-select:hover {
+  .btn-server-status-pill:hover {
     border-color: var(--accent-cyan, #00f2fe);
     background: rgba(0, 242, 254, 0.08);
   }
 
-  .player-media-source-select option {
-    background: #121620;
-    color: #ffffff;
+  .btn-server-status-pill .server-cfg-icon {
+    opacity: 0.6;
+    transition: transform 0.2s ease;
+  }
+
+  .btn-server-status-pill:hover .server-cfg-icon {
+    opacity: 1;
+    transform: rotate(30deg);
+  }
+
+  .pulse-dot-indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .pulse-online {
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+  }
+
+  .pulse-offline {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+  }
+
+  .pulse-testing {
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
   }
 
   /* Speed Popover */
@@ -1306,24 +1301,14 @@ const isVideo = !isPdf && !isDoc;
       width: 100%;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      justify-content: center;
     }
 
-    .player-media-source-select {
-      flex: 1;
+    .btn-server-status-pill {
+      width: 100%;
+      justify-content: center;
       height: 28px;
       font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
-    }
-
-    .btn-server-cfg {
-      width: 28px;
-      height: 28px;
-      flex-shrink: 0;
-      padding: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
     }
 
     /* Video frame mobile fixes - keep controls fully visible at bottom */

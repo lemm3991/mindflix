@@ -129,8 +129,8 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
     <div class="media-provider-config-card">
       <div class="card-header-row">
         <div class="card-header-info">
-          <h3 class="card-title">🌐 Fonte de Reprodução dos Vídeos</h3>
-          <p class="card-desc">Escolha de onde os vídeos serão reproduzidos (Servidor de Streaming ou Google Drive). Se o servidor estiver offline, o sistema faz fallback automático para o Drive sem duplicar aulas.</p>
+          <h3 class="card-title">🌐 Servidor de Streaming dos Vídeos</h3>
+          <p class="card-desc">Todos os cursos e vídeos são reproduzidos diretamente do Servidor de Streaming configurado abaixo.</p>
         </div>
         <div class="server-status-pill" id="server-status-pill">
           <span class="pulse-dot-indicator" id="status-dot"></span>
@@ -139,28 +139,19 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
       </div>
 
       <div class="provider-controls-row">
-        <div class="form-group flex-2">
-          <label for="input-media-server-url">URL do Servidor de Streaming (HTTP / Cloudflare Tunnel)</label>
+        <div class="form-group flex-1">
+          <label for="input-media-server-url">URL do Servidor de Streaming (Cloudflare Tunnel / HTTP)</label>
           <div class="input-with-btn">
             <input
               type="url"
               id="input-media-server-url"
               class="form-input mono"
-              placeholder="https://everyone-prototype-invitation-estimated.trycloudflare.com"
+              placeholder="https://bin-practice-brighton-campaign.trycloudflare.com"
             />
             <button type="button" class="btn btn-secondary btn-sm" id="btn-save-server-url">
               <span>Testar e Salvar</span>
             </button>
           </div>
-        </div>
-
-        <div class="form-group flex-1">
-          <label for="select-media-mode">Modo de Operação</label>
-          <select id="select-media-mode" class="form-select">
-            <option value="auto">⚡ Auto (Servidor com Fallback p/ Drive)</option>
-            <option value="server">🟢 Apenas Servidor Local / Cloudflare</option>
-            <option value="drive">🔵 Apenas Google Drive</option>
-          </select>
         </div>
       </div>
     </div>
@@ -512,8 +503,6 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 <script>
   import { showToast } from '../lib/toast';
   import {
-    getMediaMode,
-    setMediaMode,
     getMediaServerUrl,
     setMediaServerUrl,
     checkServerHealth
@@ -524,13 +513,11 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
     if (!pageContainer) return;
 
     const mediaServerUrlInput = document.getElementById('input-media-server-url') as HTMLInputElement | null;
-    const mediaModeSelect = document.getElementById('select-media-mode') as HTMLSelectElement | null;
     const btnSaveServerUrl = document.getElementById('btn-save-server-url');
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
 
     if (mediaServerUrlInput) mediaServerUrlInput.value = getMediaServerUrl();
-    if (mediaModeSelect) mediaModeSelect.value = getMediaMode();
 
     async function updateServerStatusUI() {
       if (!statusText || !statusDot) return;
@@ -544,7 +531,7 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
         statusText.textContent = 'Servidor Online 🟢';
         statusDot.className = 'pulse-dot-indicator pulse-online';
       } else {
-        statusText.textContent = 'Servidor Offline 🔴 (Fallback Drive Ativo)';
+        statusText.textContent = 'Servidor Offline 🔴';
         statusDot.className = 'pulse-dot-indicator pulse-offline';
       }
     }
@@ -558,13 +545,6 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
         showToast('URL do Servidor salva!', 'success', 2000);
         await updateServerStatusUI();
       }
-    });
-
-    mediaModeSelect?.addEventListener('change', () => {
-      const mode = mediaModeSelect.value as any;
-      setMediaMode(mode);
-      showToast(`Modo alterado para: ${mediaModeSelect.options[mediaModeSelect.selectedIndex].text}`, 'info', 2000);
-      updateServerStatusUI();
     });
 
     // Navigation Tabs Logic

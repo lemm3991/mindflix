@@ -2,7 +2,7 @@
 // HeroCourse.astro - Rotating editorial showcase with mouse parallax and smooth crossfade
 import type { Course } from '../types/catalog';
 import { getAllCourses, getFirstPlayableLesson, isPlayableVideoLesson, isComecePorAqui, isProjectCourse } from '../lib/catalog';
-import { getLessonDriveId } from '../lib/drive';
+import { buildServerStreamUrl } from '../lib/mediaProvider';
 import { getCourseSourceId } from '../lib/sources';
 import ProgressBar from './ProgressBar.astro';
 
@@ -56,10 +56,7 @@ if (featuredCourses && featuredCourses.length > 0) {
       const isVideo = isPlayableVideoLesson(firstLesson);
       const videoPath = isVideo ? (firstLesson?.relative_path || '') : '';
       const sourceId = getCourseSourceId(course);
-      const driveId = getLessonDriveId(firstLesson);
-      const videoSrc = driveId 
-        ? `/api/video?drive_id=${driveId}&stream=1`
-        : (videoPath ? `/api/video?path=${encodeURIComponent(videoPath)}` : '');
+      const videoSrc = videoPath ? buildServerStreamUrl(videoPath) : '';
 
       return (
         <div

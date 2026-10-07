@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
+import { DEFAULT_MEDIA_SERVER_URL } from '../../lib/mediaProvider';
 
 // Centralized courses root directory resolution from env, .env file, or system candidate
 function getCoursesRoot(): string {
@@ -25,46 +26,7 @@ function getCoursesRoot(): string {
     }
   } catch {}
 
-  const gDriveCandidate = 'G:\\Meu Drive\\Cursos\\Cursos Mindflix';
-  if (fs.existsSync(gDriveCandidate)) {
-    return gDriveCandidate;
-  }
-
   return path.resolve(process.cwd(), '..');
-}
-
-// Helper to lookup lesson drive ID from catalog.json
-function getDriveIdFromCatalog(relPath: string): string | null {
-  try {
-    const catalogPath = path.resolve(process.cwd(), 'src', 'data', 'catalog.json');
-    if (fs.existsSync(catalogPath)) {
-      const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
-      if (!catalog || !catalog.courses) return null;
-
-      const normTarget = relPath.replace(/\\/g, '/').toLowerCase().trim();
-      const filenameTarget = path.basename(normTarget);
-
-      for (const course of catalog.courses) {
-        for (const mod of (course.modules || [])) {
-          for (const les of (mod.lessons || [])) {
-            if (les.relative_path) {
-              const lesNorm = les.relative_path.replace(/\\/g, '/').toLowerCase().trim();
-              const lesFilename = path.basename(lesNorm);
-              
-              if (lesNorm === normTarget || (filenameTarget && lesFilename === filenameTarget)) {
-                if (les.drive_file_id || les.drive_url) {
-                  return les.drive_file_id || les.drive_url || null;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Catalog lookup error:', err);
-  }
-  return null;
 }
 
 // Helper to safely resolve and verify local media files across Windows MAX_PATH & encodings
@@ -130,82 +92,15 @@ function resolveSafeFilePath(root: string, relPath: string): { filePath: string;
   return null;
 }
 
-async function proxyGoogleDriveStream(cleanId: string, request: Request): Promise<Response> {
-  // On Vercel serverless environment, proxying large video streams exceeds free bandwidth limits (10GB Fast Origin Transfer)
-  if (process.env.VERCEL) {
-    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
-  }
-  try {
-    const range = request.headers.get('range');
-    const upstreamHeaders: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    };
-    if (range) {
-      upstreamHeaders['Range'] = range;
-    }
-
-    const driveUrl = `https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`;
-    const upstreamRes = await fetch(driveUrl, {
-      headers: upstreamHeaders,
-      redirect: 'follow'
-    });
-
-    if (!upstreamRes.ok && upstreamRes.status !== 206) {
-      return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
-    }
-
-    const responseHeaders = new Headers();
-    responseHeaders.set('Content-Type', upstreamRes.headers.get('content-type') || 'video/mp4');
-    responseHeaders.set('Content-Disposition', 'inline');
-    responseHeaders.set('Accept-Ranges', 'bytes');
-    responseHeaders.set('Cache-Control', 'public, max-age=3600');
-
-    if (upstreamRes.headers.get('content-length')) {
-      responseHeaders.set('Content-Length', upstreamRes.headers.get('content-length')!);
-    }
-    if (upstreamRes.headers.get('content-range')) {
-      responseHeaders.set('Content-Range', upstreamRes.headers.get('content-range')!);
-    }
-
-    return new Response(upstreamRes.body, {
-      status: upstreamRes.status,
-      headers: responseHeaders
-    });
-  } catch (err) {
-    console.error('Failed to proxy Google Drive stream:', err);
-    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
-  }
-}
-
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const relPath = url.searchParams.get('path');
-  const driveId = url.searchParams.get('drive_id');
-  const streamParam = url.searchParams.get('stream');
-
-  // If a Google Drive ID is provided directly
-  if (driveId) {
-    const cleanId = driveId.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
-    if (streamParam === '1' || streamParam === 'true') {
-      return proxyGoogleDriveStream(cleanId, request);
-    }
-    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
-  }
 
   if (!relPath) {
-    return new Response(JSON.stringify({ error: 'Parâmetro "path" ou "drive_id" é obrigatório.' }), {
+    return new Response(JSON.stringify({ error: 'Parâmetro "path" é obrigatório.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
-  }
-
-  // If relPath is a full Google Drive URL or drive:ID
-  if (relPath.includes('drive.google.com') || relPath.startsWith('drive:')) {
-    const cleanId = relPath.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
-    if (streamParam === '1' || streamParam === 'true') {
-      return proxyGoogleDriveStream(cleanId, request);
-    }
-    return Response.redirect(`https://drive.google.com/file/d/${cleanId}/preview`, 302);
   }
 
   // If relPath is a .url or .webloc internet shortcut, redirect directly to the target web page
@@ -249,37 +144,16 @@ export const GET: APIRoute = async ({ request }) => {
     }
   }
 
-  // Check catalog for Google Drive file ID
-  const driveIdFromCatalog = getDriveIdFromCatalog(relPath);
-  if (driveIdFromCatalog) {
-    const cleanId = driveIdFromCatalog.replace(/^drive:/i, '').replace(/.*\/file\/d\/([a-zA-Z0-9_-]+).*/, '$1');
-    if (streamParam === '1' || streamParam === 'true') {
-      return proxyGoogleDriveStream(cleanId, request);
-    }
-    return Response.redirect(`https://drive.usercontent.google.com/download?id=${cleanId}&export=download&confirm=t`, 302);
-  }
-
   const coursesRoot = getCoursesRoot();
   const resolved = resolveSafeFilePath(coursesRoot, relPath);
 
+  // If not found locally on disk, redirect to the Streaming Server
   if (!resolved) {
     const isDownload = url.searchParams.get('download') === '1' || url.searchParams.get('download') === 'true';
-    if (isDownload) {
-      return new Response(
-        `<!DOCTYPE html><html><body style="background:#0b0e14;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;"><div style="text-align:center;max-width:500px;padding:2rem;background:#161a23;border-radius:12px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 10px 40px rgba(0,0,0,0.5);"><h2 style="margin-top:0;">Arquivo Indisponível</h2><p style="color:#94a3b8;font-size:0.9rem;line-height:1.5;">O arquivo "${relPath}" não foi localizado na biblioteca local ou no Google Drive.</p><button onclick="window.close()" style="background:#00f2fe;color:#000;border:none;padding:0.5rem 1.25rem;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:0.5rem;">Fechar Janela</button></div></body></html>`,
-        {
-          status: 404,
-          headers: { 'Content-Type': 'text/html; charset=utf-8' }
-        }
-      );
-    }
-    return new Response(JSON.stringify({ 
-      error: 'Arquivo não encontrado na biblioteca local.',
-      expectedPath: relPath 
-    }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const serverUrl = process.env.MEDIA_SERVER_URL || DEFAULT_MEDIA_SERVER_URL;
+    const cleanPath = relPath.replace(/\\/g, '/');
+    const redirectTarget = `${serverUrl}/api/stream?path=${encodeURIComponent(cleanPath)}${isDownload ? '&download=1' : ''}`;
+    return Response.redirect(redirectTarget, 302);
   }
 
   const filePath = resolved.filePath;

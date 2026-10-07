@@ -1,9 +1,9 @@
-// src/lib/mediaProvider.ts - Media Source Provider Manager (Server vs Google Drive)
+// src/lib/mediaProvider.ts - Media Source Provider Manager (Streaming Server)
 
-export type MediaSourceMode = 'auto' | 'server' | 'drive';
+export type MediaSourceMode = 'server';
 
 export interface MediaProviderConfig {
-  mode: MediaSourceMode;
+  mode: 'server';
   serverUrl: string;
 }
 
@@ -12,24 +12,17 @@ const STORAGE_KEYS = {
   SERVER_URL: 'mindflix_media_server_url'
 };
 
-export const DEFAULT_MEDIA_SERVER_URL = 'https://par-movie-neighbors-authorized.trycloudflare.com';
+export const DEFAULT_MEDIA_SERVER_URL = 'https://bin-practice-brighton-campaign.trycloudflare.com';
 
 export function getMediaMode(): MediaSourceMode {
-  if (typeof window === 'undefined') return 'auto';
-  try {
-    const val = localStorage.getItem(STORAGE_KEYS.MODE) as MediaSourceMode;
-    if (val === 'server' || val === 'drive' || val === 'auto') return val;
-    return 'auto';
-  } catch {
-    return 'auto';
-  }
+  return 'server';
 }
 
-export function setMediaMode(mode: MediaSourceMode): void {
+export function setMediaMode(_mode?: string): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEYS.MODE, mode);
-    window.dispatchEvent(new CustomEvent('mindflix:media-mode-changed', { detail: { mode } }));
+    localStorage.setItem(STORAGE_KEYS.MODE, 'server');
+    window.dispatchEvent(new CustomEvent('mindflix:media-mode-changed', { detail: { mode: 'server' } }));
   } catch (e) {
     console.warn('Failed setting media mode', e);
   }
@@ -39,7 +32,11 @@ export function getMediaServerUrl(): string {
   if (typeof window === 'undefined') return DEFAULT_MEDIA_SERVER_URL;
   try {
     const val = localStorage.getItem(STORAGE_KEYS.SERVER_URL);
-    return (val && val.trim()) ? val.trim().replace(/\/+$/, '') : DEFAULT_MEDIA_SERVER_URL;
+    if (!val || !val.trim() || val.includes('par-movie') || val.includes('everyone-prototype')) {
+      localStorage.setItem(STORAGE_KEYS.SERVER_URL, DEFAULT_MEDIA_SERVER_URL);
+      return DEFAULT_MEDIA_SERVER_URL;
+    }
+    return val.trim().replace(/\/+$/, '');
   } catch {
     return DEFAULT_MEDIA_SERVER_URL;
   }
@@ -49,10 +46,10 @@ export function setMediaServerUrl(url: string): void {
   if (typeof window === 'undefined') return;
   try {
     const clean = url.trim().replace(/\/+$/, '');
-    localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean);
+    localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean || DEFAULT_MEDIA_SERVER_URL);
     // Invalidate cached health status
     healthCache = null;
-    window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean } }));
+    window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean || DEFAULT_MEDIA_SERVER_URL } }));
   } catch (e) {
     console.warn('Failed setting media server URL', e);
   }
@@ -73,7 +70,7 @@ export async function checkServerHealth(serverUrl?: string, force = false): Prom
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     const res = await fetch(`${base}/api/catalog`, {
       method: 'GET',
       signal: controller.signal,
@@ -89,14 +86,8 @@ export async function checkServerHealth(serverUrl?: string, force = false): Prom
   }
 }
 
-export async function getActiveMediaProvider(): Promise<'server' | 'drive'> {
-  const mode = getMediaMode();
-  if (mode === 'drive') return 'drive';
-  if (mode === 'server') return 'server';
-
-  // Mode is 'auto': ping server health
-  const isOnline = await checkServerHealth();
-  return isOnline ? 'server' : 'drive';
+export async function getActiveMediaProvider(): Promise<'server'> {
+  return 'server';
 }
 
 export function buildServerStreamUrl(relativePath: string, serverUrl?: string): string {
@@ -104,3 +95,4 @@ export function buildServerStreamUrl(relativePath: string, serverUrl?: string): 
   const cleanPath = (relativePath || '').replace(/\\/g, '/');
   return `${base}/api/stream?path=${encodeURIComponent(cleanPath)}`;
 }
+

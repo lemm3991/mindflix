@@ -188,10 +188,7 @@ const isLastLessonInModule = Boolean(
                 type: isLink ? 'LINK' : (mat.type || 'ARQUIVO').toUpperCase(),
                 relative_path: mat.relative_path || '',
                 filename: getMatFilename(mat.relative_path || '', mat.title || 'material'),
-                url: targetUrl || (mat.drive_file_id 
-                  ? `https://drive.google.com/uc?export=download&id=${mat.drive_file_id}` 
-                  : (mat.drive_url || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`)),
-                driveId: mat.drive_file_id,
+                url: targetUrl || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`,
                 is_link: isLink
               };
             });
@@ -209,10 +206,7 @@ const isLastLessonInModule = Boolean(
                 type: ext,
                 relative_path: les.relative_path || '',
                 filename: getMatFilename(les.relative_path || '', les.display_title || les.raw_title || 'material'),
-                url: targetUrl || (les.drive_file_id 
-                  ? `https://drive.google.com/uc?export=download&id=${les.drive_file_id}` 
-                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`)),
-                driveId: les.drive_file_id,
+                url: targetUrl || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`,
                 is_link: isLink
               };
             });
@@ -231,10 +225,7 @@ const isLastLessonInModule = Boolean(
                 type: ext,
                 relative_path: les.relative_path || '',
                 filename: getMatFilename(les.relative_path || '', les.display_title || les.raw_title || 'material'),
-                url: targetUrl || (les.drive_file_id 
-                  ? `https://drive.google.com/uc?export=download&id=${les.drive_file_id}` 
-                  : (les.drive_url || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`)),
-                driveId: les.drive_file_id,
+                url: targetUrl || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`,
                 is_link: isLink
               };
             }) : [];
