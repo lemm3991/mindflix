@@ -133,6 +133,23 @@ import { BACKGROUND_PRESETS } from '../lib/backgrounds';
 
         <div class="setting-row">
           <div class="setting-text">
+            <span class="setting-name">Velocidade Padrão de Reprodução</span>
+            <span class="setting-hint">Define a velocidade inicial com que todos os vídeos da plataforma serão reproduzidos para a sua conta.</span>
+          </div>
+          <div class="setting-control" style="width: 130px;">
+            <select id="pref-playback-speed" class="form-input" style="padding: 0.35rem 0.65rem; font-size: 0.85rem; font-weight: 600;">
+              <option value="0.75">0.75x</option>
+              <option value="1" selected>1.0x (Normal)</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="1.75">1.75x</option>
+              <option value="2">2.0x</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-text">
             <span class="setting-name">Prévia Automática nos Cards</span>
             <span class="setting-hint">Permite reproduzir prévia de introdução ao passar o mouse sobre o card.</span>
           </div>
@@ -334,6 +351,7 @@ import { BACKGROUND_PRESETS } from '../lib/backgrounds';
   const autoplay = document.getElementById('pref-autoplay') as HTMLInputElement | null;
   const autoResume = document.getElementById('pref-auto-resume') as HTMLInputElement | null;
   const autoPreview = document.getElementById('pref-auto-preview') as HTMLInputElement | null;
+  const playbackSpeed = document.getElementById('pref-playback-speed') as HTMLSelectElement | null;
   const parallax = document.getElementById('pref-parallax') as HTMLInputElement | null;
   const interactiveBg = document.getElementById('pref-interactive-bg') as HTMLInputElement | null;
   const reduceMotion = document.getElementById('pref-reduce-motion') as HTMLInputElement | null;
@@ -400,6 +418,7 @@ import { BACKGROUND_PRESETS } from '../lib/backgrounds';
     if (autoplay) autoplay.checked = prefs.autoplay_next;
     if (autoResume) autoResume.checked = prefs.auto_resume;
     if (autoPreview) autoPreview.checked = prefs.auto_preview;
+    if (playbackSpeed) playbackSpeed.value = String(prefs.playback_speed || 1.0);
     if (parallax) parallax.checked = prefs.parallax_enabled;
     if (interactiveBg) interactiveBg.checked = prefs.interactive_bg_enabled;
     if (reduceMotion) reduceMotion.checked = prefs.reduce_motion;
@@ -425,6 +444,7 @@ import { BACKGROUND_PRESETS } from '../lib/backgrounds';
       autoplay_next: autoplay?.checked ?? true,
       auto_resume: autoResume?.checked ?? true,
       auto_preview: autoPreview?.checked ?? false,
+      playback_speed: playbackSpeed ? parseFloat(playbackSpeed.value) || 1.0 : 1.0,
       parallax_enabled: parallax?.checked ?? false,
       interactive_bg_enabled: interactiveBg?.checked ?? true,
       reduce_motion: reduceMotion?.checked ?? false,
@@ -438,6 +458,7 @@ import { BACKGROUND_PRESETS } from '../lib/backgrounds';
   autoplay?.addEventListener('change', handleUpdate);
   autoResume?.addEventListener('change', handleUpdate);
   autoPreview?.addEventListener('change', handleUpdate);
+  playbackSpeed?.addEventListener('change', handleUpdate);
   parallax?.addEventListener('change', handleUpdate);
   interactiveBg?.addEventListener('change', handleUpdate);
   reduceMotion?.addEventListener('change', handleUpdate);

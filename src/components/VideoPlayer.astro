@@ -180,6 +180,25 @@ const isVideo = !isPdf && !isDoc;
     </div>
 
     <div class="nav-right">
+      <!-- Playback Speed Control -->
+      <div class="speed-popover-container" id="player-speed-container">
+        <button type="button" class="btn btn-ghost btn-sm btn-speed-trigger" id="btn-player-speed" title="Velocidade do vídeo">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="speed-icon">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span id="player-speed-label">1.0x</span>
+        </button>
+        <div class="speed-menu" id="player-speed-menu" style="display: none;">
+          <button type="button" class="speed-option" data-speed="0.5">0.5x</button>
+          <button type="button" class="speed-option" data-speed="0.75">0.75x</button>
+          <button type="button" class="speed-option" data-speed="1">1.0x</button>
+          <button type="button" class="speed-option" data-speed="1.25">1.25x</button>
+          <button type="button" class="speed-option" data-speed="1.5">1.5x</button>
+          <button type="button" class="speed-option" data-speed="1.75">1.75x</button>
+          <button type="button" class="speed-option" data-speed="2">2.0x</button>
+        </div>
+      </div>
+
       <button type="button" class="btn btn-ghost btn-sm btn-mode" id="btn-focus-mode" title="Modo Foco Zen (C)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
@@ -230,6 +249,10 @@ const isVideo = !isPdf && !isDoc;
   const btnErrorConfigServer = document.getElementById('btn-error-config-server');
   const serverDot = document.getElementById('player-server-dot');
   const serverLabel = document.getElementById('player-server-label');
+  const speedContainer = document.getElementById('player-speed-container');
+  const btnSpeed = document.getElementById('btn-player-speed');
+  const speedLabel = document.getElementById('player-speed-label');
+  const speedMenu = document.getElementById('player-speed-menu');
 
   const courseId = wrapper?.getAttribute('data-course-id') || '';
   const lessonId = wrapper?.getAttribute('data-lesson-id') || '';
@@ -238,6 +261,7 @@ const isVideo = !isPdf && !isDoc;
 
   if (courseId && lessonId) {
     const prefs = getUserPreferences();
+    let currentSpeed = prefs.playback_speed || 1.0;
 
     async function promptConfigServer() {
       const currentUrl = getMediaServerUrl();
@@ -272,10 +296,38 @@ const isVideo = !isPdf && !isDoc;
 
     let countdownInterval: any = null;
 
+    function applyPlaybackSpeed(speed: number) {
+      currentSpeed = speed;
+      const vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      if (vid) {
+        vid.playbackRate = speed;
+      }
+      if (speedLabel) {
+        speedLabel.textContent = `${speed}x`;
+      }
+      if (speedMenu) {
+        speedMenu.querySelectorAll<HTMLButtonElement>('.speed-option').forEach(opt => {
+          const optSpeed = parseFloat(opt.getAttribute('data-speed') || '1');
+          opt.classList.toggle('active', Math.abs(optSpeed - speed) < 0.01);
+        });
+      }
+    }
+
     // Attach complete playback and progression hooks to streaming server HTML5 video
     function setupHtml5Video(vid: HTMLVideoElement) {
       if ((vid as any).__mindflix_setup_done) return;
       (vid as any).__mindflix_setup_done = true;
+
+      // Apply initial speed (from user preferences)
+      vid.playbackRate = currentSpeed;
+      applyPlaybackSpeed(currentSpeed);
+
+      vid.addEventListener('loadedmetadata', () => {
+        vid.playbackRate = currentSpeed;
+      });
+      vid.addEventListener('play', () => {
+        vid.playbackRate = currentSpeed;
+      });
 
       // 1. Resume saved position or URL timestamp parameter (?t=X or ?time=X)
       const urlParams = new URLSearchParams(window.location.search);
@@ -505,6 +557,32 @@ const isVideo = !isPdf && !isDoc;
       clearInterval(countdownInterval);
       if (overlay) overlay.style.display = 'none';
       showToast('Avanço automático cancelado', 'info', 2000);
+    });
+
+    // Playback Speed Selector Popover Handlers
+    btnSpeed?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (speedMenu) {
+        const isHidden = speedMenu.style.display === 'none';
+        speedMenu.style.display = isHidden ? 'flex' : 'none';
+      }
+    });
+
+    speedMenu?.querySelectorAll<HTMLButtonElement>('.speed-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const selectedSpeed = parseFloat(opt.getAttribute('data-speed') || '1');
+        applyPlaybackSpeed(selectedSpeed);
+        if (speedMenu) speedMenu.style.display = 'none';
+        showToast(`Velocidade alterada para ${selectedSpeed}x`, 'info', 1500);
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!speedContainer?.contains(target)) {
+        if (speedMenu) speedMenu.style.display = 'none';
+      }
     });
 
     btnPlayNextNow?.addEventListener('click', () => {
@@ -1068,6 +1146,32 @@ const isVideo = !isPdf && !isDoc;
   .btn-mode.active {
     color: var(--accent-cyan);
     background: rgba(var(--accent-primary-rgb), 0.12);
+  }
+
+  .btn-speed-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-primary, #f1f5f9);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    height: 26px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-speed-trigger:hover {
+    border-color: var(--accent-cyan, #00f2fe);
+    background: rgba(0, 242, 254, 0.08);
+    color: var(--accent-cyan, #00f2fe);
+  }
+
+  .btn-speed-trigger .speed-icon {
+    color: var(--accent-cyan, #00f2fe);
   }
 
   /* Media Server Status Pill */
