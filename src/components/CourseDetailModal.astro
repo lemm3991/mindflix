@@ -5,6 +5,9 @@ import { getAllCourses } from '../lib/catalog';
 const courses = getAllCourses();
 ---
 
+<!-- Course Catalog Data Payload for Client Script -->
+<script type="application/json" id="mindflix-courses-json" set:html={JSON.stringify(courses)}></script>
+
 <!-- Global Course Detail Glassmorphism Modal -->
 <div id="course-detail-modal-backdrop" class="course-modal-backdrop" style="display: none;" aria-hidden="true">
   <div class="course-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-course-title">
@@ -572,11 +575,20 @@ const courses = getAllCourses();
 </style>
 
 <script>
-  import { getAllCourses, getCourseById } from '../lib/catalog';
   import { getCourseCompletionStats, getNextLessonToWatch, isCourseFavorite, toggleFavorite } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
-  const allCourses = getAllCourses();
+  function getLoadedCourses(): any[] {
+    try {
+      const payload = document.getElementById('mindflix-courses-json');
+      if (payload && payload.textContent) {
+        return JSON.parse(payload.textContent);
+      }
+    } catch {}
+    return [];
+  }
+
+  let allCourses = getLoadedCourses();
   const backdrop = document.getElementById('course-detail-modal-backdrop');
   const closeBtn = document.getElementById('modal-close-btn');
   const favBtn = document.getElementById('modal-fav-btn');
@@ -614,6 +626,9 @@ const courses = getAllCourses();
   ];
 
   function openModal(courseId: string) {
+    if (!allCourses || allCourses.length === 0) {
+      allCourses = getLoadedCourses();
+    }
     const course = allCourses.find(c => c.id === courseId || c.slug === courseId);
     if (!course || !backdrop) return;
 
