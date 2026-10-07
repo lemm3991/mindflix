@@ -293,7 +293,7 @@ const nextInPathCourses = allCourses.filter(c =>
       const cardsToClone: HTMLElement[] = [];
       favIds.forEach(id => {
         const courseCard = document.querySelector(`.course-card-wrapper[data-course-id="${id}"]`);
-        const trilhaCard = document.querySelector(`.trilha-card[data-trilha-id="${id}"]`);
+        const trilhaCard = document.querySelector(`.trilha-card-wrapper[data-trilha-id="${id}"], .trilha-card[data-trilha-id="${id}"]`);
         const target = courseCard || trilhaCard;
         if (target) {
           const cardSource = target.getAttribute('data-source') || target.closest('[data-source]')?.getAttribute('data-source') || '';
