@@ -194,6 +194,33 @@ import Layout from '../layouts/Layout.astro';
     color: var(--accent-cyan);
   }
 
+  :global(.note-card-top-row) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  :global(.note-card-timestamp) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    font-family: monospace;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-full);
+    background: rgba(0, 242, 254, 0.12);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    color: var(--accent-cyan);
+    letter-spacing: 0.02em;
+  }
+
+  :global(.note-card-timestamp svg) {
+    color: var(--accent-cyan);
+  }
+
   :global(.note-card-lesson) {
     font-size: 1.05rem;
     font-weight: 700;
@@ -416,37 +443,71 @@ import Layout from '../layouts/Layout.astro';
       return;
     }
 
-    gridContainer.innerHTML = filtered.map(note => `
-      <div class="note-card" data-lesson-id="${note.lessonId}">
-        <div class="note-card-header">
-          <span class="note-card-course">${note.courseTitle}</span>
-          <h3 class="note-card-lesson">${note.lessonTitle}</h3>
-          ${note.moduleTitle ? `<span class="note-card-module">${note.moduleTitle}</span>` : ''}
-        </div>
+    function formatSeconds(secs: number): string {
+      if (isNaN(secs) || secs < 0) return '00:00';
+      const s = Math.floor(secs % 60);
+      const m = Math.floor((secs / 60) % 60);
+      const h = Math.floor(secs / 3600);
+      if (h > 0) {
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
 
-        <div class="note-card-body">
-          ${note.content}
-        </div>
+    gridContainer.innerHTML = filtered.map(note => {
+      const hasTime = Boolean(note.hasTimestamp && typeof note.timestampSeconds === 'number' && note.timestampSeconds >= 0);
+      const timeFormatted = hasTime ? formatSeconds(note.timestampSeconds!) : '';
+      
+      // Constrói URL com parâmetro de tempo (?t=X) para saltar direto para o vídeo
+      let targetHref = note.watchUrl;
+      if (hasTime) {
+        const separator = targetHref.includes('?') ? '&' : '?';
+        targetHref = `${targetHref}${separator}t=${note.timestampSeconds}`;
+      }
 
-        <div class="note-card-footer">
-          <span class="note-card-date">${formatDate(note.updatedAt)}</span>
-          <div class="note-card-actions">
-            <button type="button" class="btn-delete-card-note" data-delete-id="${note.lessonId}" title="Excluir esta anotação">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
-            <a href="${note.watchUrl}" class="btn btn-primary btn-sm btn-go-lesson">
-              <span>Ir para aula</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </a>
+      return `
+        <div class="note-card" data-lesson-id="${note.lessonId}">
+          <div class="note-card-header">
+            <div class="note-card-top-row">
+              <span class="note-card-course">${note.courseTitle}</span>
+              ${hasTime ? `
+                <a href="${targetHref}" class="note-card-timestamp" title="Ir para o minuto ${timeFormatted} desta aula">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>${timeFormatted}</span>
+                </a>
+              ` : ''}
+            </div>
+            <h3 class="note-card-lesson">${note.lessonTitle}</h3>
+            ${note.moduleTitle ? `<span class="note-card-module">${note.moduleTitle}</span>` : ''}
+          </div>
+
+          <div class="note-card-body">
+            ${note.content}
+          </div>
+
+          <div class="note-card-footer">
+            <span class="note-card-date">${formatDate(note.updatedAt)}</span>
+            <div class="note-card-actions">
+              <button type="button" class="btn-delete-card-note" data-delete-id="${note.lessonId}" title="Excluir esta anotação">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+              <a href="${targetHref}" class="btn btn-primary btn-sm btn-go-lesson" title="${hasTime ? `Assistir a partir de ${timeFormatted}` : 'Ir para aula'}">
+                <span>${hasTime ? `Ir aos ${timeFormatted}` : 'Ir para aula'}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     // Attach delete handlers
     gridContainer.querySelectorAll<HTMLButtonElement>('.btn-delete-card-note').forEach(btn => {

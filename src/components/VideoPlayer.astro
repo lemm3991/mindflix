@@ -277,20 +277,40 @@ const isVideo = !isPdf && !isDoc;
       if ((vid as any).__mindflix_setup_done) return;
       (vid as any).__mindflix_setup_done = true;
 
-      // 1. Resume saved position if available
-      const saved = getLessonProgress(lessonId);
-      if (prefs.auto_resume !== false && saved && saved.position_seconds > 5 && !saved.completed) {
-        const setResumeTime = () => {
-          if (!isNaN(vid.duration) && saved.position_seconds < vid.duration - 2) {
-            vid.currentTime = saved.position_seconds;
+      // 1. Resume saved position or URL timestamp parameter (?t=X or ?time=X)
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlTimeParam = urlParams.get('t') || urlParams.get('time');
+      const targetTimeFromUrl = urlTimeParam ? parseFloat(urlTimeParam) : null;
+
+      if (targetTimeFromUrl !== null && !isNaN(targetTimeFromUrl) && targetTimeFromUrl >= 0) {
+        const setUrlTime = () => {
+          if (!isNaN(vid.duration) && targetTimeFromUrl <= vid.duration) {
+            vid.currentTime = targetTimeFromUrl;
+          } else if (targetTimeFromUrl > 0) {
+            vid.currentTime = targetTimeFromUrl;
           }
         };
-        vid.addEventListener('loadedmetadata', setResumeTime, { once: true });
-        if (vid.readyState >= 1) setResumeTime();
+        vid.addEventListener('loadedmetadata', setUrlTime, { once: true });
+        if (vid.readyState >= 1) setUrlTime();
 
-        const mins = Math.floor(saved.position_seconds / 60);
-        const secs = Math.floor(saved.position_seconds % 60);
-        showToast(`Continuando de ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 2500);
+        const mins = Math.floor(targetTimeFromUrl / 60);
+        const secs = Math.floor(targetTimeFromUrl % 60);
+        showToast(`Iniciando no tempo da anotação: ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 3000);
+      } else {
+        const saved = getLessonProgress(lessonId);
+        if (prefs.auto_resume !== false && saved && saved.position_seconds > 5 && !saved.completed) {
+          const setResumeTime = () => {
+            if (!isNaN(vid.duration) && saved.position_seconds < vid.duration - 2) {
+              vid.currentTime = saved.position_seconds;
+            }
+          };
+          vid.addEventListener('loadedmetadata', setResumeTime, { once: true });
+          if (vid.readyState >= 1) setResumeTime();
+
+          const mins = Math.floor(saved.position_seconds / 60);
+          const secs = Math.floor(saved.position_seconds % 60);
+          showToast(`Continuando de ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`, 'info', 2500);
+        }
       }
 
       // 2. Throttled progress save
