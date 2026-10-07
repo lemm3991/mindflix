@@ -314,7 +314,8 @@ const nextInPathCourses = allCourses.filter(c =>
       if (!myListGrid.dataset.bound) {
         myListGrid.dataset.bound = 'true';
         myListGrid.addEventListener('click', async (e) => {
-          const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action="favorite"], .card-fav-btn, .trilha-fav-btn');
+          const target = e.target as HTMLElement;
+          const btn = target.closest<HTMLButtonElement>('[data-action="favorite"], .card-fav-btn, .trilha-fav-btn');
           if (btn) {
             e.preventDefault();
             e.stopPropagation();
@@ -325,6 +326,28 @@ const nextInPathCourses = allCourses.filter(c =>
               const isFav = await toggleFavorite(id);
               showToast(isFav ? 'Adicionado à Minha Lista' : 'Removido da Minha Lista', isFav ? 'success' : 'info');
               renderDynamicHomeGrids();
+            }
+            return;
+          }
+
+          // Card click: open modal
+          const trilhaCard = target.closest<HTMLElement>('.trilha-card-wrapper');
+          if (trilhaCard) {
+            const trilhaId = trilhaCard.getAttribute('data-trilha-id');
+            if (trilhaId && (window as any).openTrilhaModal) {
+              e.preventDefault();
+              (window as any).openTrilhaModal(trilhaId);
+              return;
+            }
+          }
+
+          const courseCard = target.closest<HTMLElement>('.course-card-wrapper');
+          if (courseCard) {
+            const courseId = courseCard.getAttribute('data-course-id');
+            if (courseId && (window as any).openCourseModal) {
+              e.preventDefault();
+              (window as any).openCourseModal(courseId);
+              return;
             }
           }
         });

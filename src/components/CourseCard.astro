@@ -358,7 +358,23 @@ const sourceId = getCourseSourceId(course);
   import { isCourseFavorite, toggleFavorite, getCourseCompletionStats } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
+  function syncCardFavorite(wrapper: HTMLElement) {
+    const courseId = wrapper.getAttribute('data-course-id');
+    const favBtn = wrapper.querySelector<HTMLButtonElement>('.card-fav-btn');
+    if (!courseId || !favBtn) return;
+
+    if (isCourseFavorite(courseId)) {
+      favBtn.classList.add('active');
+      favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+    } else {
+      favBtn.classList.remove('active');
+      favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+    }
+  }
+
   function setupCleanCard(wrapper: HTMLElement) {
+    syncCardFavorite(wrapper);
+
     if (wrapper.dataset.cleanCardInit === 'true') return;
     wrapper.dataset.cleanCardInit = 'true';
 
@@ -377,13 +393,8 @@ const sourceId = getCourseSourceId(course);
       progressBar.classList.add('visible');
     }
 
-    // 2. Sync Favorite Button
+    // 2. Favorite Button Click Handler
     if (favBtn) {
-      if (isCourseFavorite(courseId)) {
-        favBtn.classList.add('active');
-        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      }
-
       favBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -433,8 +444,12 @@ const sourceId = getCourseSourceId(course);
     document.querySelectorAll<HTMLElement>('.course-card-wrapper').forEach(setupCleanCard);
   }
 
+  function syncAllCards() {
+    document.querySelectorAll<HTMLElement>('.course-card-wrapper').forEach(syncCardFavorite);
+  }
+
   document.addEventListener('astro:page-load', initAllCards);
-  window.addEventListener('mindflix:favorites-changed', initAllCards);
+  window.addEventListener('mindflix:favorites-changed', syncAllCards);
 
   initAllCards();
 </script>

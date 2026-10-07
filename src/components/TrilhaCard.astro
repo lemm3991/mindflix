@@ -390,7 +390,23 @@ const coverGradient = hues[Math.abs(hash) % hues.length];
   import { isTrilhaFavorite, toggleTrilhaFavorite } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
+  function syncTrilhaCardFavorite(wrapper: HTMLElement) {
+    const trilhaId = wrapper.getAttribute('data-trilha-id');
+    const favBtn = wrapper.querySelector<HTMLButtonElement>('.trilha-fav-btn');
+    if (!trilhaId || !favBtn) return;
+
+    if (isTrilhaFavorite(trilhaId)) {
+      favBtn.classList.add('active');
+      favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+    } else {
+      favBtn.classList.remove('active');
+      favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+    }
+  }
+
   function setupCleanTrilhaCard(wrapper: HTMLElement) {
+    syncTrilhaCardFavorite(wrapper);
+
     if (wrapper.dataset.cleanTrilhaInit === 'true') return;
     wrapper.dataset.cleanTrilhaInit = 'true';
 
@@ -400,13 +416,8 @@ const coverGradient = hues[Math.abs(hash) % hues.length];
 
     if (!trilhaId || !card) return;
 
-    // 1. Sync Favorite Button
+    // 1. Favorite Button Click Handler
     if (favBtn) {
-      if (isTrilhaFavorite(trilhaId)) {
-        favBtn.classList.add('active');
-        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      }
-
       favBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -455,8 +466,12 @@ const coverGradient = hues[Math.abs(hash) % hues.length];
     document.querySelectorAll<HTMLElement>('.trilha-card-wrapper').forEach(setupCleanTrilhaCard);
   }
 
+  function syncAllTrilhaCards() {
+    document.querySelectorAll<HTMLElement>('.trilha-card-wrapper').forEach(syncTrilhaCardFavorite);
+  }
+
   document.addEventListener('astro:page-load', initAllTrilhaCards);
-  window.addEventListener('mindflix:favorites-changed', initAllTrilhaCards);
+  window.addEventListener('mindflix:favorites-changed', syncAllTrilhaCards);
 
   initAllTrilhaCards();
 </script>
