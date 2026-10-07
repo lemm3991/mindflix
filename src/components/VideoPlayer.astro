@@ -580,9 +580,6 @@ const isVideo = !isPdf && !isDoc;
       if (e.key === 'c' || e.key === 'C') {
         e.preventDefault();
         btnFocus?.click();
-      } else if (e.key === 'Escape' && document.body.classList.contains('focus-mode-active')) {
-        e.preventDefault();
-        btnFocus?.click();
       }
     });
   }

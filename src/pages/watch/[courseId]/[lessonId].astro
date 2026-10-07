@@ -398,110 +398,7 @@ const isLastLessonInModule = Boolean(
     box-shadow: 0 6px 24px rgba(168, 85, 247, 0.55) !important;
     transform: translateY(-1px) !important;
   }
-  /* Focus Mode Backdrop (60% dark overlay) */
-  .focus-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 10;
-    transition: opacity 0.35s ease;
-  }
-
-  :global(body.focus-mode-active) .focus-backdrop {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  /* Floating Focus Bar */
-  .focus-mode-bar {
-    position: fixed;
-    top: 1.25rem;
-    left: 50%;
-    transform: translate(-50%, -120%);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 60;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.45rem 1rem;
-    background: rgba(18, 22, 32, 0.88);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: var(--radius-full);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
-  }
-
-  :global(body.focus-mode-active) .focus-mode-bar {
-    transform: translate(-50%, 0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .focus-pill {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #f8fafc;
-    letter-spacing: -0.01em;
-  }
-
-  .focus-pulse-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent-cyan);
-    box-shadow: 0 0 10px var(--accent-cyan);
-    animation: pulse-dot 2s infinite ease-in-out;
-  }
-
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.85); }
-  }
-
-  .focus-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
-    padding-left: 0.75rem;
-  }
-
-  .focus-action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-full);
-    padding: 0.35rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .focus-action-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
-    color: #fff;
-  }
-
-  .focus-action-exit:hover {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.4);
-    color: #f87171;
-  }
-
+  /* Watch Layout */
   .watch-layout {
     display: flex;
     padding-top: 72px;
@@ -527,7 +424,7 @@ const isLastLessonInModule = Boolean(
     margin: 0 auto;
     position: relative;
     z-index: 20;
-    transition: max-width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: max-width 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
   }
 
   .lesson-details-section {
@@ -543,60 +440,68 @@ const isLastLessonInModule = Boolean(
   }
 
   /* === MODO FOCO ATIVO === */
+  :global(body.focus-mode-active) {
+    overflow: hidden !important;
+  }
+
   :global(body.focus-mode-active) .watch-layout {
-    padding-top: 4.5rem;
+    padding-top: 0 !important;
+    min-height: 100vh !important;
+    overflow: hidden !important;
   }
 
   :global(body.focus-mode-active) .watch-main-column {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-    align-items: center;
-    padding: 0.5rem 1.5rem 5rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    padding: 4.5rem 2rem 2rem !important;
   }
 
-  /* Centralizar o vídeo horizontalmente na tela e aumentar levemente a escala do vídeo */
+  /* Vídeo em foco total: grande, perfeitamente centralizado e interativo */
   :global(body.focus-mode-active) .watch-video-section {
-    max-width: 1440px;
-    width: 92vw;
-    margin: 0 auto;
-    box-shadow: 0 25px 75px -10px rgba(0, 0, 0, 0.95);
+    position: relative !important;
+    z-index: 50 !important;
+    pointer-events: auto !important;
+    width: min(94vw, 1480px) !important;
+    max-width: min(94vw, 1480px, calc((100vh - 130px) * 16 / 9)) !important;
+    margin: 0 auto !important;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.98), 0 30px 80px rgba(0, 0, 0, 0.95) !important;
   }
 
-  /* Detalhes da aula com opacidade reduzida no foco, restaurando ao hover */
+  /* Detalhes, comentários e interações fora do vídeo desabilitados/ocultados no foco */
   :global(body.focus-mode-active) .lesson-details-section {
-    max-width: 1440px;
-    width: 92vw;
-    margin: 0 auto;
-    opacity: 0.35;
+    display: none !important;
+    pointer-events: none !important;
   }
 
-  :global(body.focus-mode-active) .lesson-details-section:hover {
-    opacity: 1;
+  /* Recolher a playlist lateral para fora da tela pela direita */
+  :global(body.focus-mode-active) :global(.playlist-study-sidebar),
+  :global(body.focus-mode-active) :global(#playlist-study-sidebar) {
+    transform: translateX(100%) !important;
+    margin-right: -420px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, margin-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
-  /* Recolher a playlist para a direita */
-  :global(body.focus-mode-active) :global(.course-study-sidebar) {
-    transform: translateX(100%);
-    margin-right: -420px;
-    opacity: 0;
-    pointer-events: none;
-    visibility: hidden;
-  }
-
-  /* Caso o aluno abra a playlist durante o modo foco */
-  :global(body.focus-mode-active.focus-sidebar-open) :global(.course-study-sidebar) {
-    transform: translateX(0);
-    margin-right: 0;
-    opacity: 1;
-    pointer-events: auto;
-    visibility: visible;
-    position: fixed;
-    top: 0;
-    right: 0;
-    height: 100vh;
-    z-index: 50;
-    box-shadow: -20px 0 50px rgba(0, 0, 0, 0.85);
+  /* Gaveta lateral da playlist caso aberta pelo botão no topo */
+  :global(body.focus-mode-active.focus-sidebar-open) :global(.playlist-study-sidebar),
+  :global(body.focus-mode-active.focus-sidebar-open) :global(#playlist-study-sidebar) {
+    transform: translateX(0) !important;
+    margin-right: 0 !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    height: 100vh !important;
+    z-index: 55 !important;
+    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.95) !important;
   }
 
   .lesson-header-row {

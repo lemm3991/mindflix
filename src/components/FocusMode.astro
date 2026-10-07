@@ -54,7 +54,7 @@
 
     if (newState) {
       document.body.classList.add('focus-mode-active');
-      showToast('Modo Foco Zen ativado. Pressione C ou ESC para sair.', 'info', 3000);
+      showToast('Modo Foco ativado. Pressione ESC para sair.', 'info', 2500);
     } else {
       document.body.classList.remove('focus-mode-active');
       document.body.classList.remove('focus-sidebar-open');
@@ -71,6 +71,10 @@
   function exitFocusMode(): void {
     toggleFocusMode(false);
   }
+
+  // Export functions to window for unified access
+  (window as any).__toggleFocusMode = toggleFocusMode;
+  (window as any).__exitFocusMode = exitFocusMode;
 
   // Ensure focus mode is disabled if window is resized to mobile
   window.addEventListener('resize', () => {
@@ -111,23 +115,22 @@
     }
   });
 
-  // Global keyboard shortcuts (C = Toggle, ESC = Exit)
-  document.addEventListener('keydown', (e) => {
+  // Global keyboard shortcuts (ESC = Exit, C = Toggle)
+  window.addEventListener('keydown', (e) => {
     const activeEl = document.activeElement;
     if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as HTMLElement).isContentEditable)) {
       return;
     }
 
-    if (isMobileView()) return;
-
-    if (e.key === 'c' || e.key === 'C') {
+    if (e.key === 'Escape' && document.body.classList.contains('focus-mode-active')) {
+      e.preventDefault();
+      e.stopPropagation();
+      exitFocusMode();
+    } else if ((e.key === 'c' || e.key === 'C') && !document.fullscreenElement && !isMobileView()) {
       e.preventDefault();
       toggleFocusMode();
-    } else if (e.key === 'Escape' && document.body.classList.contains('focus-mode-active')) {
-      e.preventDefault();
-      exitFocusMode();
     }
-  });
+  }, true);
 </script>
 
 <style>
@@ -143,16 +146,16 @@
     }
   }
 
-  /* Focus Backdrop */
+  /* Focus Backdrop - Pure Dark Cinematic Background */
   .focus-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: rgba(3, 5, 10, 0.95);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     opacity: 0;
     pointer-events: none;
-    z-index: 45;
+    z-index: 40; /* Placed behind the video (z-index: 50) and floating bar (z-index: 60) */
     transition: opacity 0.35s ease;
   }
 
