@@ -628,6 +628,14 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 
     updateServerStatusUI();
 
+      // Sincroniza em background com a URL salva na nuvem
+      syncMediaServerUrlWithCloud().then((cloudUrl) => {
+        if (mediaServerUrlInput && cloudUrl) {
+          mediaServerUrlInput.value = cloudUrl;
+          updateServerStatusUI();
+        }
+      });
+
     btnSaveServerUrl?.addEventListener('click', async () => {
       const val = mediaServerUrlInput?.value?.trim() || '';
       if (val) {

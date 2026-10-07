@@ -19,6 +19,10 @@ const PUBLIC_ROUTES = [
   '/register',
   '/api/auth/login',
   '/api/auth/logout',
+  '/api/catalog.json',
+  '/api/search/index.json',
+  '/api/library-overrides.json',
+  '/api/media-server-url',
   '/favicon.svg'
 ];
 

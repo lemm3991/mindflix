@@ -31,6 +31,15 @@ export function setMediaMode(mode: MediaSourceMode): void {
 export function getMediaServerUrl(): string {
   if (typeof window === 'undefined') return DEFAULT_MEDIA_SERVER_URL;
   try {
+    // 1. Verifica parâmetro na URL (?serverUrl=... ou ?mediaServerUrl=...)
+    const params = new URLSearchParams(window.location.search);
+    const paramUrl = params.get('serverUrl') || params.get('mediaServerUrl');
+    if (paramUrl && paramUrl.trim()) {
+      const clean = paramUrl.trim().replace(/\/+$/, '');
+      localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean);
+      return clean;
+    }
+
     const val = localStorage.getItem(STORAGE_KEYS.SERVER_URL);
     return (val && val.trim()) ? val.trim().replace(/\/+$/, '') : DEFAULT_MEDIA_SERVER_URL;
   } catch {
@@ -38,16 +47,48 @@ export function getMediaServerUrl(): string {
   }
 }
 
-export function setMediaServerUrl(url: string): void {
+export function setMediaServerUrl(url: string, syncCloud = true): void {
   if (typeof window === 'undefined') return;
   try {
     const clean = url.trim().replace(/\/+$/, '');
     localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean);
     healthCache = null;
     window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean } }));
+
+    if (syncCloud) {
+      fetch('/api/media-server-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: clean })
+      }).catch((e) => console.debug('Sync cloud URL error:', e));
+    }
   } catch (e) {
     console.warn('Failed setting media server URL', e);
   }
+}
+
+// Sincroniza a URL do servidor com o Netlify Blobs / API na nuvem
+export async function syncMediaServerUrlWithCloud(): Promise<string> {
+  if (typeof window === 'undefined') return DEFAULT_MEDIA_SERVER_URL;
+  try {
+    const res = await fetch('/api/media-server-url', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.url && typeof data.url === 'string') {
+        const clean = data.url.trim().replace(/\/+$/, '');
+        const current = localStorage.getItem(STORAGE_KEYS.SERVER_URL);
+        if (clean && clean !== current) {
+          localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean);
+          healthCache = null;
+          window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean } }));
+        }
+        return clean;
+      }
+    }
+  } catch (err) {
+    console.debug('Could not sync media server URL with cloud', err);
+  }
+  return getMediaServerUrl();
 }
 
 // In-memory health cache

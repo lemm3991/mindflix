@@ -251,6 +251,7 @@ const isVideo = !isPdf && !isDoc;
         const mode = sourceSelect.value as any;
         setMediaMode(mode);
         initPlayerSource();
+      syncMediaServerUrlWithCloud().then(() => initPlayerSource());
         showToast(`Fonte alterada para: ${sourceSelect.options[sourceSelect.selectedIndex].text}`, 'info', 2000);
       });
     }
@@ -444,6 +445,7 @@ const isVideo = !isPdf && !isDoc;
 
     initPlayerSource();
     window.addEventListener('mindflix:media-mode-changed', initPlayerSource);
+      window.addEventListener('mindflix:media-server-url-changed', initPlayerSource);
 
     // Mark completed toggle (Shared across Video and Drive)
     const saved = getLessonProgress(lessonId);
