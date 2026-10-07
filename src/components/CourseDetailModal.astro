@@ -589,26 +589,29 @@ const courses = getAllCourses();
   }
 
   let allCourses = getLoadedCourses();
-  const backdrop = document.getElementById('course-detail-modal-backdrop');
-  const closeBtn = document.getElementById('modal-close-btn');
-  const favBtn = document.getElementById('modal-fav-btn');
-  const playBtn = document.getElementById('modal-play-btn') as HTMLAnchorElement;
-  const playBtnText = document.getElementById('modal-play-btn-text');
-  const nextLessonHint = document.getElementById('modal-next-lesson-hint');
 
-  const titleEl = document.getElementById('modal-course-title');
-  const descEl = document.getElementById('modal-course-desc');
-  const providerEl = document.getElementById('modal-provider');
-  const modulesCountEl = document.getElementById('modal-modules-count');
-  const lessonsCountEl = document.getElementById('modal-lessons-count');
-  const tagsRow = document.getElementById('modal-tags-row');
-  const coverImg = document.getElementById('modal-cover-img') as HTMLImageElement;
-  const coverGrad = document.getElementById('modal-cover-gradient');
-  const modulesList = document.getElementById('modal-modules-list');
-
-  const progressCard = document.getElementById('modal-progress-card');
-  const progressPct = document.getElementById('modal-progress-pct');
-  const progressFill = document.getElementById('modal-progress-fill');
+  function getModalEls() {
+    return {
+      backdrop: document.getElementById('course-detail-modal-backdrop'),
+      closeBtn: document.getElementById('modal-close-btn'),
+      favBtn: document.getElementById('modal-fav-btn'),
+      playBtn: document.getElementById('modal-play-btn') as HTMLAnchorElement | null,
+      playBtnText: document.getElementById('modal-play-btn-text'),
+      nextLessonHint: document.getElementById('modal-next-lesson-hint'),
+      titleEl: document.getElementById('modal-course-title'),
+      descEl: document.getElementById('modal-course-desc'),
+      providerEl: document.getElementById('modal-provider'),
+      modulesCountEl: document.getElementById('modal-modules-count'),
+      lessonsCountEl: document.getElementById('modal-lessons-count'),
+      tagsRow: document.getElementById('modal-tags-row'),
+      coverImg: document.getElementById('modal-cover-img') as HTMLImageElement | null,
+      coverGrad: document.getElementById('modal-cover-gradient'),
+      modulesList: document.getElementById('modal-modules-list'),
+      progressCard: document.getElementById('modal-progress-card'),
+      progressPct: document.getElementById('modal-progress-pct'),
+      progressFill: document.getElementById('modal-progress-fill')
+    };
+  }
 
   let activeCourseId: string | null = null;
 
@@ -630,86 +633,87 @@ const courses = getAllCourses();
       allCourses = getLoadedCourses();
     }
     const course = allCourses.find(c => c.id === courseId || c.slug === courseId);
-    if (!course || !backdrop) return;
+    const els = getModalEls();
+    if (!course || !els.backdrop) return;
 
     activeCourseId = course.id;
 
     // 1. Populate basic info
-    if (titleEl) titleEl.textContent = course.display_title;
-    if (descEl) descEl.textContent = course.description;
-    if (providerEl) providerEl.textContent = course.provider;
-    if (modulesCountEl) modulesCountEl.textContent = `${course.modules_count} ${course.modules_count === 1 ? 'Módulo' : 'Módulos'}`;
-    if (lessonsCountEl) lessonsCountEl.textContent = `${course.lessons_count} ${course.lessons_count === 1 ? 'Aula' : 'Aulas'}`;
+    if (els.titleEl) els.titleEl.textContent = course.display_title;
+    if (els.descEl) els.descEl.textContent = course.description;
+    if (els.providerEl) els.providerEl.textContent = course.provider;
+    if (els.modulesCountEl) els.modulesCountEl.textContent = `${course.modules_count} ${course.modules_count === 1 ? 'Módulo' : 'Módulos'}`;
+    if (els.lessonsCountEl) els.lessonsCountEl.textContent = `${course.lessons_count} ${course.lessons_count === 1 ? 'Aula' : 'Aulas'}`;
 
     // 2. Cover / Gradient
-    if (course.cover_image && coverImg) {
-      coverImg.src = course.cover_image;
-      coverImg.style.display = 'block';
-      if (coverGrad) coverGrad.style.display = 'none';
+    if (course.cover_image && els.coverImg) {
+      els.coverImg.src = course.cover_image;
+      els.coverImg.style.display = 'block';
+      if (els.coverGrad) els.coverGrad.style.display = 'none';
     } else {
-      if (coverImg) coverImg.style.display = 'none';
-      if (coverGrad) {
+      if (els.coverImg) els.coverImg.style.display = 'none';
+      if (els.coverGrad) {
         let hash = 0;
         for (let i = 0; i < course.id.length; i++) hash = course.id.charCodeAt(i) + ((hash << 5) - hash);
         const gradient = hues[Math.abs(hash) % hues.length];
-        coverGrad.style.background = gradient;
-        coverGrad.style.display = 'block';
+        els.coverGrad.style.background = gradient;
+        els.coverGrad.style.display = 'block';
       }
     }
 
     // 3. Tags
-    if (tagsRow) {
-      tagsRow.innerHTML = '';
+    if (els.tagsRow) {
+      els.tagsRow.innerHTML = '';
       course.tags.forEach(t => {
         const span = document.createElement('span');
         span.className = 'modal-tag-pill';
         span.textContent = `#${t}`;
-        tagsRow.appendChild(span);
+        els.tagsRow.appendChild(span);
       });
     }
 
     // 4. Progress Stats & Smart Resume Calculation
     const stats = getCourseCompletionStats(course.id, course.lessons_count);
     if (stats.percentage > 0) {
-      if (progressCard) progressCard.style.display = 'block';
-      if (progressPct) progressPct.textContent = `${stats.percentage}% concluído (${stats.completedCount}/${course.lessons_count} aulas)`;
-      if (progressFill) progressFill.style.width = `${stats.percentage}%`;
+      if (els.progressCard) els.progressCard.style.display = 'block';
+      if (els.progressPct) els.progressPct.textContent = `${stats.percentage}% concluído (${stats.completedCount}/${course.lessons_count} aulas)`;
+      if (els.progressFill) els.progressFill.style.width = `${stats.percentage}%`;
     } else {
-      if (progressCard) progressCard.style.display = 'none';
+      if (els.progressCard) els.progressCard.style.display = 'none';
     }
 
     // Smart Next/Resume Lesson
     const nextWatch = getNextLessonToWatch(course);
-    if (playBtn) {
-      playBtn.href = nextWatch.watchUrl;
+    if (els.playBtn) {
+      els.playBtn.href = nextWatch.watchUrl;
     }
-    if (playBtnText) {
-      playBtnText.textContent = nextWatch.label;
+    if (els.playBtnText) {
+      els.playBtnText.textContent = nextWatch.label;
     }
-    if (nextLessonHint) {
+    if (els.nextLessonHint) {
       if (nextWatch.isResume && nextWatch.lesson) {
-        nextLessonHint.textContent = `Próximo: ${nextWatch.lesson.display_title}`;
+        els.nextLessonHint.textContent = `Próximo: ${nextWatch.lesson.display_title}`;
       } else {
-        nextLessonHint.textContent = '';
+        els.nextLessonHint.textContent = '';
       }
     }
 
     // 5. Favorite button state
-    if (favBtn) {
+    if (els.favBtn) {
       const isFav = isCourseFavorite(course.id);
       if (isFav) {
-        favBtn.classList.add('active');
-        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+        els.favBtn.classList.add('active');
+        els.favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
       } else {
-        favBtn.classList.remove('active');
-        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+        els.favBtn.classList.remove('active');
+        els.favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
       }
     }
 
     // 6. Populate Curriculum Modules & Lessons
-    if (modulesList) {
-      modulesList.innerHTML = '';
-      const allLocalProg = JSON.parse(localStorage.getItem('mindflix_progress') || '{}');
+    if (els.modulesList) {
+      els.modulesList.innerHTML = '';
+      const allLocalProg = getAllLocalProgress();
 
       course.modules.forEach((mod, modIdx) => {
         const modCard = document.createElement('div');
@@ -763,23 +767,24 @@ const courses = getAllCourses();
           modCard.classList.toggle('open');
         });
 
-        modulesList.appendChild(modCard);
+        els.modulesList.appendChild(modCard);
       });
     }
 
     // 7. Open modal and lock scroll
-    backdrop.style.display = 'flex';
+    els.backdrop.style.display = 'flex';
     requestAnimationFrame(() => {
-      backdrop.classList.add('active');
+      if (els.backdrop) els.backdrop.classList.add('active');
       document.body.style.overflow = 'hidden';
     });
   }
 
   function closeModal() {
-    if (!backdrop) return;
-    backdrop.classList.remove('active');
+    const els = getModalEls();
+    if (!els.backdrop) return;
+    els.backdrop.classList.remove('active');
     setTimeout(() => {
-      backdrop.style.display = 'none';
+      if (els.backdrop) els.backdrop.style.display = 'none';
       document.body.style.overflow = '';
       activeCourseId = null;
     }, 250);
@@ -793,44 +798,53 @@ const courses = getAllCourses();
     if (e.detail?.courseId) openModal(e.detail.courseId);
   });
 
-  // Event handlers for closing
-  closeBtn?.addEventListener('click', closeModal);
+  function bindCourseModalEvents() {
+    const els = getModalEls();
+    els.closeBtn?.removeEventListener('click', closeModal);
+    els.closeBtn?.addEventListener('click', closeModal);
 
-  backdrop?.addEventListener('click', (e) => {
-    if (e.target === backdrop) closeModal();
-  });
+    if (els.backdrop) {
+      els.backdrop.onclick = (e) => {
+        if (e.target === els.backdrop) closeModal();
+      };
+    }
+
+    if (els.favBtn) {
+      els.favBtn.onclick = async (e) => {
+        e.preventDefault();
+        if (!activeCourseId) return;
+        const isFav = await toggleFavorite(activeCourseId);
+        if (isFav) {
+          els.favBtn?.classList.add('active');
+          els.favBtn?.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+          showToast('Curso adicionado à Minha Lista', 'success');
+        } else {
+          els.favBtn?.classList.remove('active');
+          els.favBtn?.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+          showToast('Curso removido da Minha Lista', 'info');
+        }
+
+        const pageCardFav = document.querySelector(`[data-fav-id="${activeCourseId}"]`);
+        if (pageCardFav) {
+          if (isFav) {
+            pageCardFav.classList.add('active');
+            pageCardFav.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+          } else {
+            pageCardFav.classList.remove('active');
+            pageCardFav.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+          }
+        }
+      };
+    }
+  }
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && backdrop?.classList.contains('active')) {
+    const els = getModalEls();
+    if (e.key === 'Escape' && els.backdrop?.classList.contains('active')) {
       closeModal();
     }
   });
 
-  // Favorite button handler
-  favBtn?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    if (!activeCourseId) return;
-    const isFav = await toggleFavorite(activeCourseId);
-    if (isFav) {
-      favBtn.classList.add('active');
-      favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      showToast('Curso adicionado à Minha Lista', 'success');
-    } else {
-      favBtn.classList.remove('active');
-      favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
-      showToast('Curso removido da Minha Lista', 'info');
-    }
-
-    // Also update any favorite button on the page for this course
-    const pageCardFav = document.querySelector(`[data-fav-id="${activeCourseId}"]`);
-    if (pageCardFav) {
-      if (isFav) {
-        pageCardFav.classList.add('active');
-        pageCardFav.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      } else {
-        pageCardFav.classList.remove('active');
-        pageCardFav.querySelector('.heart-icon')?.setAttribute('fill', 'none');
-      }
-    }
-  });
+  document.addEventListener('astro:page-load', bindCourseModalEvents);
+  bindCourseModalEvents();
 </script>

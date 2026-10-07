@@ -1,12 +1,19 @@
 ---
 // TrilhaDetailModal.astro - Glassmorphism Modal de Detalhes da Trilha com Sequência Completa de Cursos
-import { getAllTrilhas, getFirstPlayableLessonInTrilha } from '../lib/trilhas';
+import { getAllTrilhas, getTrilhaFullStructure } from '../lib/trilhas';
 
 const trilhas = getAllTrilhas();
+const trilhasWithStructure = trilhas.map(t => {
+  const struct = getTrilhaFullStructure(t.id);
+  return {
+    ...t,
+    allLessons: struct?.allLessons || []
+  };
+});
 ---
 
 <!-- JSON Payload for safe client script execution -->
-<script type="application/json" id="mindflix-trilhas-json" set:html={JSON.stringify(trilhas)}></script>
+<script type="application/json" id="mindflix-trilhas-json" set:html={JSON.stringify(trilhasWithStructure)}></script>
 
 <!-- Global Trilha Detail Glassmorphism Modal -->
 <div id="trilha-detail-modal-backdrop" class="trilha-modal-backdrop" style="display: none;" aria-hidden="true">
@@ -528,7 +535,7 @@ const trilhas = getAllTrilhas();
 </style>
 
 <script>
-  import { isTrilhaFavorite, toggleTrilhaFavorite } from '../lib/progress';
+  import { isTrilhaFavorite, toggleTrilhaFavorite, getNextLessonToWatchForTrilha, getAllLocalProgress } from '../lib/progress';
   import { showToast } from '../lib/toast';
 
   function getLoadedTrilhas(): any[] {
@@ -614,10 +621,36 @@ const trilhas = getAllTrilhas();
       }
     }
 
-    // 3. Play button URL
+    // 3. Smart Next/Resume Lesson and Progress calculation
+    const allProgress = getAllLocalProgress();
+    const allLessons = trilha.allLessons || [];
+    const nextWatch = getNextLessonToWatchForTrilha(trilha.id, allLessons);
+
     if (els.playBtn) {
-      const watchUrl = `/watch/trilha/${trilha.id}/first`;
-      els.playBtn.href = watchUrl;
+      els.playBtn.href = nextWatch.watchUrl;
+    }
+    if (els.playBtnText) {
+      els.playBtnText.textContent = nextWatch.label;
+    }
+    if (els.nextHint) {
+      if (nextWatch.isResume && nextWatch.lesson) {
+        els.nextHint.textContent = `Próximo: ${nextWatch.lesson.display_title}`;
+      } else {
+        els.nextHint.textContent = '';
+      }
+    }
+
+    // Progress bar for trilha
+    const totalLessons = trilha.total_lessons_count || allLessons.length;
+    const completedCount = allLessons.filter((l: any) => allProgress[l.lesson?.id]?.completed).length;
+    const pct = totalLessons > 0 ? Math.min(100, Math.round((completedCount / totalLessons) * 100)) : 0;
+
+    if (pct > 0 && els.progressCard) {
+      els.progressCard.style.display = 'block';
+      if (els.progressPct) els.progressPct.textContent = `${pct}% concluído (${completedCount}/${totalLessons} aulas)`;
+      if (els.progressFill) els.progressFill.style.width = `${pct}%`;
+    } else if (els.progressCard) {
+      els.progressCard.style.display = 'none';
     }
 
     // 4. Favorite button state
@@ -639,7 +672,17 @@ const trilhas = getAllTrilhas();
         trilha.courses.forEach((c: any) => {
           const item = document.createElement('a');
           item.className = 'trilha-stage-item';
-          item.href = `/watch/trilha/${trilha.id}/first`;
+
+          // Find first uncompleted lesson of this specific course in the trilha
+          const courseLessons = allLessons.filter((l: any) => l.courseId === c.course_id || (l.courseOrder === c.ordem));
+          const uncompletedCourseLesson = courseLessons.find((l: any) => !allProgress[l.lesson?.id]?.completed);
+          const targetLesson = uncompletedCourseLesson || courseLessons[0];
+          const stageUrl = targetLesson ? `/watch/trilha/${trilha.id}/${targetLesson.lesson.id}` : `/watch/trilha/${trilha.id}/first`;
+          
+          item.href = stageUrl;
+
+          const completedLessonsCount = courseLessons.filter((l: any) => allProgress[l.lesson?.id]?.completed).length;
+          const isCourseDone = courseLessons.length > 0 && completedLessonsCount === courseLessons.length;
 
           item.innerHTML = `
             <span class="trilha-stage-num">${c.ordem}</span>
@@ -649,10 +692,10 @@ const trilhas = getAllTrilhas();
                 <span class="trilha-stage-badge">${c.tipo || 'Etapa'}</span>
                 <h4 class="trilha-stage-title">${c.course_title || c.nome_trilha}</h4>
               </div>
-              <span class="trilha-stage-meta">${c.modules_count || 1} módulos • ${c.lessons_count || 0} aulas ${c.total_duration_formatted ? `(${c.total_duration_formatted})` : ''}</span>
+              <span class="trilha-stage-meta">${completedLessonsCount > 0 ? `${completedLessonsCount}/${courseLessons.length} concluídas • ` : ''}${c.modules_count || 1} módulos • ${c.lessons_count || 0} aulas ${c.total_duration_formatted ? `(${c.total_duration_formatted})` : ''}</span>
             </div>
             <div class="trilha-stage-action">
-              <span>Acessar</span>
+              <span>${isCourseDone ? 'Rever' : completedLessonsCount > 0 ? 'Continuar' : 'Acessar'}</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>

@@ -41,6 +41,9 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
 ---
 
 <Layout title={`${currentLesson.display_title} — Trilha: ${trilha.title}`} hideNavbar={false}>
+  <!-- Trilha Structure Payload -->
+  <script type="application/json" id="mindflix-trilhas-json" set:html={JSON.stringify([{ ...trilha, allLessons }])}></script>
+
   <!-- Standardized Focus Mode Component -->
   <FocusMode />
 
@@ -684,6 +687,28 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
       font-size: 0.78rem;
       padding: 0.5rem 0.5rem;
       justify-content: center;
+</style>
+
+<script>
+  import { getNextLessonToWatchForTrilha } from '../../../../lib/progress';
+
+  // If the user navigates directly to /watch/trilha/:id/first, automatically redirect on client to first uncompleted lesson
+  const currentPath = window.location.pathname;
+  if (currentPath.endsWith('/first')) {
+    const parts = currentPath.split('/');
+    const trilhaId = parts[parts.indexOf('trilha') + 1];
+    const payload = document.getElementById('mindflix-trilhas-json');
+    if (trilhaId && payload && payload.textContent) {
+      try {
+        const allTrilhas = JSON.parse(payload.textContent);
+        const trilha = allTrilhas.find((t: any) => t.id === trilhaId);
+        if (trilha && trilha.allLessons) {
+          const nextWatch = getNextLessonToWatchForTrilha(trilha.id, trilha.allLessons);
+          if (nextWatch.watchUrl && nextWatch.watchUrl !== currentPath) {
+            window.location.replace(nextWatch.watchUrl);
+          }
+        }
+      } catch {}
     }
   }
-</style>
+</script>
