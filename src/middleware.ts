@@ -164,7 +164,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // 5. Allow public login routes
-  if (PUBLIC_ROUTES.includes(pathname)) {
+  if (
+    PUBLIC_ROUTES.includes(pathname) ||
+    PUBLIC_ROUTES.includes(pathname.replace(/\/+$/, '')) ||
+    pathname.startsWith('/api/media-server-url') ||
+    Boolean(request.headers.get('x-api-key'))
+  ) {
     // If already authenticated and trying to access /login, redirect to home
     if (pathname === '/login' && session) {
       return redirect('/');
