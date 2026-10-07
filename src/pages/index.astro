@@ -16,21 +16,22 @@ const asimovCourses = allCourses.filter(c => !isComecePorAqui(c) && !isProjectCo
 const hashtagCourses = allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c) && (getCourseSourceId(c) === 'hashtag' || getCourseSourceId(c) === 'hashtag-soft-skills'));
 const diversosCourses = allCourses.filter(c => !isComecePorAqui(c) && !isProjectCourse(c) && getCourseSourceId(c) === 'outros');
 
-// Course slices by main categories (getCoursesByCategory already excludes comece por aqui and projects)
-const iaCourses = getCoursesByCategory('ia');
-const automacaoCourses = getCoursesByCategory('automacao-agentes');
-const devCourses = getCoursesByCategory('programacao-dev');
-const webCourses = getCoursesByCategory('web-vibe-coding');
+// Course slices by the 10 new official categories
+const iaCourses = getCoursesByCategory('ia-llms');
+const automacaoCourses = getCoursesByCategory('agentes-automacao');
+const webCourses = getCoursesByCategory('web-apps');
+const pythonCourses = getCoursesByCategory('programacao-python');
+const dadosCourses = getCoursesByCategory('dados-ml');
 const backendCourses = getCoursesByCategory('backend-infra');
-const dataCourses = getCoursesByCategory('dados-datascience');
-const pythonCourses = getCoursesByCategory('python');
-const tradingCourses = getCoursesByCategory('trading');
-const personalCourses = getCoursesByCategory('desenvolvimento-pessoal');
+const designCourses = getCoursesByCategory('design-artes');
+const carreiraCourses = getCoursesByCategory('carreira-pessoal');
+const saudeCourses = getCoursesByCategory('saude-bem-estar');
+const negociosCourses = getCoursesByCategory('negocios-financas');
 
 // Recommended path courses (Section 65: "Próximo da sua Trilha")
 const nextInPathCourses = allCourses.filter(c => 
   !isComecePorAqui(c) && !isProjectCourse(c) &&
-  (c.categories.includes('ia') || c.categories.includes('automacao-agentes') || c.categories.includes('web-vibe-coding'))
+  (c.categories.includes('ia-llms') || c.categories.includes('agentes-automacao') || c.categories.includes('web-apps'))
 ).slice(0, 8);
 ---
 
@@ -177,67 +178,91 @@ const nextInPathCourses = allCourses.filter(c =>
     <CourseRow
       title="Próximo da sua Trilha — Especialização em IA & NoCode"
       courses={nextInPathCourses}
-      viewAllHref="/courses?category=ia"
+      viewAllHref="/courses?category=ia-llms"
       eagerCount={4}
     />
 
-    <!-- Categorized Streaming Carousels (All Categories) -->
-    <CourseRow
-      title="Inteligência Artificial & LLMs"
-      courses={iaCourses}
-      viewAllHref="/courses?category=ia"
-      eagerCount={2}
-    />
-
-    <CourseRow
-      title="Automação & Agentes Autônomos"
-      courses={automacaoCourses}
-      viewAllHref="/courses?category=automacao-agentes"
-    />
-
-    <CourseRow
-      title="Web, Apps & Vibe Coding"
-      courses={webCourses}
-      viewAllHref="/courses?category=web-vibe-coding"
-    />
-
-    <CourseRow
-      title="Programação & Desenvolvimento"
-      courses={devCourses}
-      viewAllHref="/courses?category=programacao-dev"
-    />
-
-    <CourseRow
-      title="Backend, Bancos de Dados & Infraestrutura"
-      courses={backendCourses}
-      viewAllHref="/courses?category=backend-infra"
-    />
-
-    <CourseRow
-      title="Dados & Data Science"
-      courses={dataCourses}
-      viewAllHref="/courses?category=dados-datascience"
-    />
-
-    {pythonCourses.length > 0 && (
+    <!-- Categorized Streaming Carousels (10 Official Categories) -->
+    {iaCourses.length > 0 && (
       <CourseRow
-        title="Ecossistema Python Aplicado"
-        courses={pythonCourses}
-        viewAllHref="/courses?category=python"
+        title="IA Generativa e LLMs"
+        courses={iaCourses}
+        viewAllHref="/courses?category=ia-llms"
+        eagerCount={2}
       />
     )}
 
-    <CourseRow
-      title="Trading & Mercado Financeiro"
-      courses={tradingCourses}
-      viewAllHref="/courses?category=trading"
-    />
+    {automacaoCourses.length > 0 && (
+      <CourseRow
+        title="Agentes e Automação"
+        courses={automacaoCourses}
+        viewAllHref="/courses?category=agentes-automacao"
+      />
+    )}
 
-    <CourseRow
-      title="Desenvolvimento Pessoal & Soft Skills"
-      courses={personalCourses}
-      viewAllHref="/courses?category=desenvolvimento-pessoal"
-    />
+    {webCourses.length > 0 && (
+      <CourseRow
+        title="Desenvolvimento Web e Apps"
+        courses={webCourses}
+        viewAllHref="/courses?category=web-apps"
+      />
+    )}
+
+    {pythonCourses.length > 0 && (
+      <CourseRow
+        title="Programação e Python"
+        courses={pythonCourses}
+        viewAllHref="/courses?category=programacao-python"
+      />
+    )}
+
+    {dadosCourses.length > 0 && (
+      <CourseRow
+        title="Dados, BI e Machine Learning"
+        courses={dadosCourses}
+        viewAllHref="/courses?category=dados-ml"
+      />
+    )}
+
+    {backendCourses.length > 0 && (
+      <CourseRow
+        title="Backend, Bancos de Dados e Infraestrutura"
+        courses={backendCourses}
+        viewAllHref="/courses?category=backend-infra"
+      />
+    )}
+
+    {designCourses.length > 0 && (
+      <CourseRow
+        title="Design, Audiovisual e Artes"
+        courses={designCourses}
+        viewAllHref="/courses?category=design-artes"
+      />
+    )}
+
+    {carreiraCourses.length > 0 && (
+      <CourseRow
+        title="Carreira, Comunicação e Desenvolvimento Pessoal"
+        courses={carreiraCourses}
+        viewAllHref="/courses?category=carreira-pessoal"
+      />
+    )}
+
+    {saudeCourses.length > 0 && (
+      <CourseRow
+        title="Saúde, Alimentação e Bem-Estar"
+        courses={saudeCourses}
+        viewAllHref="/courses?category=saude-bem-estar"
+      />
+    )}
+
+    {negociosCourses.length > 0 && (
+      <CourseRow
+        title="Negócios e Mercado Financeiro"
+        courses={negociosCourses}
+        viewAllHref="/courses?category=negocios-financas"
+      />
+    )}
   </div>
 </Layout>
 

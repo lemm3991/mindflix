@@ -4,7 +4,7 @@
     "description": "Curso completo de Claude com prompts avançados, artifacts e integrações práticas.",
     "provider": "Hashtag Treinamentos",
     "categories": [
-      "ia"
+      "ia-llms"
     ],
     "tags": [
       "Claude",
@@ -47,7 +47,9 @@
   },
   "course-aplicacoes-ia-comece-por-aqui": {
     "categories": [
-      "ia"
+      "ia-llms",
+      "agentes-automacao",
+      "programacao-python"
     ]
   },
   "course-backtesting-avaliando-estrategias-de-trading-com-dados-historicos": {
@@ -57,8 +59,7 @@
   },
   "course-como-migrar-de-carreira-para-analise-de-dados": {
     "categories": [
-      "dados-datascience",
-      "negocios"
+      "carreira-pessoal"
     ]
   },
   "course-construindo-base-de-dados-para-trading": {
@@ -69,8 +70,8 @@
   },
   "course-construindo-sites-estaticos-de-alto-nivel-com-ia": {
     "categories": [
-      "web-vibe-coding",
-      "ia"
+      "web-apps",
+      "ia-llms"
     ]
   },
   "course-construindo-sites-profissionais-com-ia": {
@@ -91,7 +92,8 @@
   },
   "course-criando-nosso-primeiro-agente-com-chatgpt": {
     "categories": [
-      "automacao-agentes"
+      "agentes-automacao",
+      "ia-llms"
     ]
   },
   "course-dashboards-interativos-com-python": {
@@ -140,8 +142,7 @@
   },
   "course-onboarding-engenheiro-de-agentes-de-ia": {
     "categories": [
-      "automacao-agentes",
-      "ia"
+      "agentes-automacao"
     ]
   },
   "course-web-apps-de-dados-com-python": {
@@ -153,8 +154,8 @@
   },
   "course-agentes-de-ia-e-n8n-impressionador": {
     "categories": [
-      "automacao-agentes",
-      "ia"
+      "agentes-automacao",
+      "ia-llms"
     ]
   },
   "course-carros-de-leilao-expert-2023": {
@@ -175,13 +176,13 @@
   },
   "course-inteligencia-artificial-impressionador": {
     "categories": [
-      "ia"
+      "ia-llms"
     ]
   },
   "course-lovable-impressionador-apps-com-ia": {
     "categories": [
-      "web-vibe-coding",
-      "ia"
+      "web-apps",
+      "ia-llms"
     ]
   },
   "course-marmitas-fit-congeladas-pratica-e-sabor": {
@@ -204,7 +205,7 @@
     "description": "Curso prático sobre Projeto 60 Dias — Transformação Completa, ministrado por Especialista Mindflix. Contém 25 módulos e 154 aulas (12h 24m).",
     "provider": "Especialista Mindflix",
     "categories": [
-      "saude-lifestyle"
+      "saude-bem-estar"
     ],
     "tags": [
       "IA"
@@ -242,7 +243,8 @@
   },
   "course-aplicacoes-ia": {
     "categories": [
-      "ia"
+      "ia-llms",
+      "programacao-python"
     ]
   },
   "course-ia-na-pratica-fundamentos": {
@@ -276,5 +278,872 @@
       "programacao-dev"
     ],
     "is_hidden": true
+  },
+  "course-criando-influencer-digital": {
+    "categories": [
+      "design-artes",
+      "ia-llms"
+    ]
+  },
+  "course-oratoria-e-a-arte-da-transmissao": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-produtividade-nao-e-sobre-fazer-mais": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-como-vender-seu-codigo-comunique-seu-valor-e-atraia-oportunidades": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-cv-linkedin-e-entrevista-guia-completo-para-processos-seletivos": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-abre-a-camera": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-cnv-comunicacao-nao-violenta": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-como-estudar-e-pensar-de-forma-inteligente": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-ingles-para-desenvolvedores": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-leitura-e-memoria": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-gestao-de-tempo-o-minimo-para-nao-viver-no-caos": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-bullet-journal-sistema-de-organizacao-no-papel": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-python-starter": {
+    "categories": [
+      "programacao-python"
+    ]
+  },
+  "course-matematica-para-analise-de-dados": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-dashboards-com-dash": {
+    "categories": [
+      "dados-ml",
+      "web-apps"
+    ]
+  },
+  "course-arvores-de-decisao-e-ensemble-learning": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-sql-na-pratica-domine-bancos-de-dados-postgresql-e-pgadmin": {
+    "categories": [
+      "backend-infra",
+      "dados-ml"
+    ]
+  },
+  "course-python-para-usuarios-de-excel": {
+    "categories": [
+      "programacao-python",
+      "dados-ml",
+      "agentes-automacao"
+    ]
+  },
+  "course-python-para-dados-do-zero-a-analise-completa": {
+    "categories": [
+      "dados-ml",
+      "programacao-python"
+    ]
+  },
+  "course-n8n-open-source-use-a-ferramenta-de-forma-gratuita": {
+    "categories": [
+      "agentes-automacao"
+    ]
+  },
+  "course-modelos-nao-supervisionados": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-modelos-de-classificacao-e-regressao": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-linux-na-pratica-so-mais-utilizado-nao-mercado": {
+    "categories": [
+      "backend-infra",
+      "programacao-python"
+    ]
+  },
+  "course-masterclass-claude-design": {
+    "categories": [
+      "design-artes",
+      "ia-llms",
+      "web-apps"
+    ]
+  },
+  "course-lendo-e-escrevendo-arquivos": {
+    "categories": [
+      "programacao-python"
+    ]
+  },
+  "course-introducao-a-logica-de-programacao": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-graficos-interativos-com-plotly": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-git-e-github-controle-de-versao-e-colaboracao": {
+    "categories": [
+      "programacao-python"
+    ]
+  },
+  "course-fundamentos-do-vibe-design": {
+    "categories": [
+      "design-artes",
+      "web-apps"
+    ]
+  },
+  "course-gerando-imagens-profissionais-com-ia": {
+    "categories": [
+      "design-artes",
+      "ia-llms"
+    ]
+  },
+  "course-fundamentos-de-ai-e-machine-learning": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-dominando-o-openclaw": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-fundamentos-da-ia-generativa": {
+    "categories": [
+      "ia-llms"
+    ]
+  },
+  "course-dominando-o-antigravity": {
+    "categories": [
+      "programacao-python",
+      "ia-llms"
+    ]
+  },
+  "course-dominando-automacoes-com-n8n": {
+    "categories": [
+      "agentes-automacao"
+    ]
+  },
+  "course-docker-do-zero-como-usar-e-criar-containers-rodando-python": {
+    "categories": [
+      "backend-infra",
+      "programacao-python"
+    ]
+  },
+  "course-cursorai-ganhe-10x-mais-produtividade-com-a-ide-de-ia": {
+    "categories": [
+      "programacao-python",
+      "ia-llms"
+    ]
+  },
+  "course-cursor-3-desenvolvimento-assistido-por-ia": {
+    "categories": [
+      "programacao-python",
+      "ia-llms"
+    ]
+  },
+  "course-criando-aplicativos-web-com-streamlit": {
+    "categories": [
+      "web-apps",
+      "programacao-python"
+    ]
+  },
+  "course-criando-agentes-de-atendimento-profissionais-nao-whatsapp": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-consumindo-apis-com-n8n": {
+    "categories": [
+      "agentes-automacao",
+      "backend-infra"
+    ]
+  },
+  "course-construindo-sites-profissionais-com-astro": {
+    "categories": [
+      "web-apps",
+      "programacao-python"
+    ]
+  },
+  "course-comece-por-aqui-dominando-o-ecossistema-claude": {
+    "categories": [
+      "ia-llms"
+    ]
+  },
+  "course-conceitos-de-engenharia-de-dados": {
+    "categories": [
+      "backend-infra",
+      "dados-ml"
+    ]
+  },
+  "course-comece-por-aqui-trilha-sites-profissionais-com-ia": {
+    "categories": [
+      "web-apps",
+      "ia-llms"
+    ]
+  },
+  "course-claude-desktop-e-cowork": {
+    "categories": [
+      "ia-llms",
+      "agentes-automacao"
+    ]
+  },
+  "course-comece-por-aqui-ferramentas-de-ai-para-desenvolvedores": {
+    "categories": [
+      "programacao-python",
+      "ia-llms"
+    ]
+  },
+  "course-comece-por-aqui-criando-agentes-pessoais-com-hermes-agent": {
+    "categories": [
+      "agentes-automacao"
+    ]
+  },
+  "course-comece-por-aqui-agentes-com-gpt": {
+    "categories": [
+      "agentes-automacao"
+    ]
+  },
+  "course-comece-aqui-nivel-intermediario-engenheiros-de-agentes-de-ia": {
+    "categories": [
+      "agentes-automacao",
+      "programacao-python"
+    ]
+  },
+  "course-banco-de-integracoes-conectando-n8n-com-qualquer-ferramenta": {
+    "categories": [
+      "agentes-automacao",
+      "backend-infra"
+    ]
+  },
+  "course-automatizando-excel": {
+    "categories": [
+      "programacao-python",
+      "agentes-automacao"
+    ]
+  },
+  "course-apis-para-iniciantes-http-requests-e-apis-com-python": {
+    "categories": [
+      "backend-infra",
+      "programacao-python"
+    ]
+  },
+  "course-aprendendo-python-conceitos-basicos": {
+    "categories": [
+      "programacao-python"
+    ]
+  },
+  "course-analisando-dados-com-pandas-sql": {
+    "categories": [
+      "dados-ml",
+      "programacao-python"
+    ]
+  },
+  "course-airflow-na-pratica-etl-profissional-com-containers-nao-docker-compose": {
+    "categories": [
+      "backend-infra",
+      "dados-ml"
+    ]
+  },
+  "course-criando-seu-setup-para-programacao-python": {
+    "categories": [
+      "programacao-python"
+    ]
+  },
+  "course-criando-agentes-com-agno": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms",
+      "programacao-python"
+    ]
+  },
+  "course-engenharia-de-prompt-para-analistas": {
+    "categories": [
+      "dados-ml",
+      "ia-llms"
+    ]
+  },
+  "course-engenharia-de-prompts": {
+    "categories": [
+      "ia-llms"
+    ]
+  },
+  "course-introducao-a-python-para-web": {
+    "categories": [
+      "web-apps",
+      "programacao-python"
+    ]
+  },
+  "course-introducao-a-python-para-empresas": {
+    "categories": [
+      "programacao-python"
+    ]
+  },
+  "course-introducao-a-programacao-orientada-a-objetos-com-python": {
+    "categories": [
+      "programacao-python"
+    ]
+  },
+  "course-introducao-a-biblioteca-numpy": {
+    "categories": [
+      "dados-ml",
+      "programacao-python"
+    ]
+  },
+  "course-introducao-a-automacoes-com-python": {
+    "categories": [
+      "agentes-automacao",
+      "programacao-python"
+    ]
+  },
+  "course-automacoes-com-n8n-introducao-pratica": {
+    "categories": [
+      "agentes-automacao"
+    ]
+  },
+  "course-visualizacao-de-dados-com-matplotlib": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-por-dentro-das-llms": {
+    "categories": [
+      "ia-llms"
+    ]
+  },
+  "course-modernizando-sites-antigos-com-design-systems": {
+    "categories": [
+      "web-apps",
+      "design-artes"
+    ]
+  },
+  "course-masterclass-claude-code": {
+    "categories": [
+      "programacao-python",
+      "ia-llms"
+    ]
+  },
+  "course-fundamentos-de-analise-de-dados-com-ia": {
+    "categories": [
+      "dados-ml",
+      "ia-llms"
+    ]
+  },
+  "course-estatistica-para-iniciantes-aprenda-a-pensar-como-um-analista": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-analise-exploratoria-de-dados": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-analise-de-dados-em-10-minutos-com-claude-code": {
+    "categories": [
+      "dados-ml",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-planejador-alimentar": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-ugc-factory-videos-ugc-no-n8n": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-videos-360-de-produtos-com-ia": {
+    "categories": [
+      "design-artes",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-site-3d-do-redbull-com-threejs-e-gsap": {
+    "categories": [
+      "web-apps",
+      "design-artes"
+    ]
+  },
+  "course-projeto-stocks-monitor-monitorando-carteiras-de-investimento-com-dash": {
+    "categories": [
+      "dados-ml",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-sales-analysis-dashboard-de-vendas-de-call-center": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-lista-de-compras-inteligente": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-gerador-de-slides-com-claude": {
+    "categories": [
+      "ia-llms"
+    ]
+  },
+  "course-projeto-rclone-e-cron-backup-automatico-dos-seus-arquivos": {
+    "categories": [
+      "backend-infra"
+    ]
+  },
+  "course-projeto-portfolio-com-vibe-design": {
+    "categories": [
+      "design-artes",
+      "web-apps"
+    ]
+  },
+  "course-projeto-ia-para-faq-atendimento-automatico-no-whatsapp": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-mybudget-web-app-de-gestao-financeira": {
+    "categories": [
+      "web-apps",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-gerando-relatorios-pdf-via-excel": {
+    "categories": [
+      "programacao-python",
+      "agentes-automacao"
+    ]
+  },
+  "course-projeto-lendo-boletos-com-python": {
+    "categories": [
+      "programacao-python",
+      "agentes-automacao"
+    ]
+  },
+  "course-projeto-gerador-de-plano-de-aula-com-claude": {
+    "categories": [
+      "ia-llms"
+    ]
+  },
+  "course-projeto-gerador-de-cv": {
+    "categories": [
+      "ia-llms",
+      "carreira-pessoal"
+    ]
+  },
+  "course-projeto-funil-de-captacao-com-clone-de-voz-elevenlabs-whatsapp": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-gerador-de-avaliacoes-com-claude": {
+    "categories": [
+      "ia-llms"
+    ]
+  },
+  "course-projeto-extraindo-dados-de-mercado-financeiro-com-metatriader": {
+    "categories": [
+      "negocios-financas",
+      "dados-ml"
+    ]
+  },
+  "course-projeto-game-analysis-dashboard-de-vendas-de-videogames": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-etl-basico-acessando-api-de-aeroporto-com-python-e-postman": {
+    "categories": [
+      "backend-infra",
+      "dados-ml"
+    ]
+  },
+  "course-projeto-dashboard-para-gestao-de-hospitais": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-deploy-na-google-cloud-platform-gcp-usando-cloud-run": {
+    "categories": [
+      "backend-infra"
+    ]
+  },
+  "course-projeto-docstoteles-rag-web-scraping": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-criacao-de-folhetos-educativos": {
+    "categories": [
+      "ia-llms",
+      "design-artes"
+    ]
+  },
+  "course-projeto-dashboard-de-analise-de-vendas-em-supermercados": {
+    "categories": [
+      "dados-ml",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-deploy-com-streamlit-cloud": {
+    "categories": [
+      "web-apps",
+      "backend-infra"
+    ]
+  },
+  "course-projeto-criando-um-planner-editavel-em-pdf-com-python": {
+    "categories": [
+      "programacao-python",
+      "agentes-automacao"
+    ]
+  },
+  "course-projeto-dashboard-de-desempenho-esportivo": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-criando-um-assistente-pessoal-com-openclaw": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-como-rodar-codigos-automaticamente-utilizando-cron": {
+    "categories": [
+      "backend-infra"
+    ]
+  },
+  "course-projeto-criando-base-de-dados-com-sqlalchemy-um-crud-completo": {
+    "categories": [
+      "backend-infra",
+      "programacao-python"
+    ]
+  },
+  "course-projeto-criador-de-roteiro-de-entrevista": {
+    "categories": [
+      "ia-llms",
+      "carreira-pessoal"
+    ]
+  },
+  "course-projeto-criando-tela-de-registro-e-login-em-dash": {
+    "categories": [
+      "web-apps",
+      "backend-infra"
+    ]
+  },
+  "course-projeto-claude-code-na-pratica-evoluindo-um-projeto-com-ia": {
+    "categories": [
+      "programacao-python",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-construa-sua-pagina-web-com-n8n": {
+    "categories": [
+      "web-apps",
+      "agentes-automacao"
+    ]
+  },
+  "course-projeto-browser-use-na-pratica-webscraping-com-agentes": {
+    "categories": [
+      "agentes-automacao"
+    ]
+  },
+  "course-projeto-calendar-app-criando-um-calendario-com-dash": {
+    "categories": [
+      "web-apps"
+    ]
+  },
+  "course-projeto-avaliador-de-curriculos": {
+    "categories": [
+      "ia-llms",
+      "carreira-pessoal"
+    ]
+  },
+  "course-projeto-assistente-financeiro-no-telegram-com-n8n": {
+    "categories": [
+      "agentes-automacao",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-assistente-de-agendamento-online-com-n8n-calcom-e-ia": {
+    "categories": [
+      "agentes-automacao",
+      "negocios-financas",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-asimovgpt-recriando-o-chatgpt-em-streamlit": {
+    "categories": [
+      "web-apps",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-asimov-transcripts-transcrevendo-aaudios-com-chatgpt": {
+    "categories": [
+      "ia-llms",
+      "agentes-automacao"
+    ]
+  },
+  "course-projeto-appferias-webapp-para-gestao-de-ferias-de-funcionarios": {
+    "categories": [
+      "web-apps"
+    ]
+  },
+  "course-projeto-asimessenger-desenvolvendo-um-sistema-de-chat-com-streamlit": {
+    "categories": [
+      "web-apps",
+      "backend-infra"
+    ]
+  },
+  "course-projeto-asimov-associates-webapp-para-gestao-de-escritorio-de-advocacia": {
+    "categories": [
+      "web-apps"
+    ]
+  },
+  "course-projeto-analisando-dados-de-facebook-ads-com-dashboards": {
+    "categories": [
+      "dados-ml",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-agente-de-ia-para-criacao-de-conteudo": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-montando-seu-primeiro-relatorio-profissional-em-dados": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-extraindo-e-analisando-dados-do-brasileirao": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-agente-de-curadoria-de-noticias": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-filmpro-agente-para-recomendacao-de-filmes": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-auto-retoucher-criando-uma-ai-para-fotografos": {
+    "categories": [
+      "design-artes",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-newsletter-financeira-com-agno": {
+    "categories": [
+      "agentes-automacao",
+      "ia-llms",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-tela-de-login-autenticacao-com-streamlit": {
+    "categories": [
+      "web-apps",
+      "backend-infra"
+    ]
+  },
+  "course-projeto-salesapp-webapp-para-controle-e-analise-de-vendas": {
+    "categories": [
+      "web-apps",
+      "dados-ml"
+    ]
+  },
+  "course-projeto-regressao-logistica-em-dados-de-publicidade": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-pdftools-webapp-para-manipulacao-de-pdfs": {
+    "categories": [
+      "web-apps",
+      "programacao-python"
+    ]
+  },
+  "course-projeto-chat-deepseek-rodando-localmente": {
+    "categories": [
+      "ia-llms"
+    ]
+  },
+  "course-projeto-analise-dos-precos-da-gasolina-nao-brasil": {
+    "categories": [
+      "dados-ml",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-analise-de-dados-da-fifa-com-streamlit": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-analise-de-dados-de-obesidade-e-pib": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-projeto-stocksgpt-criando-um-consultor-financeiro-com-chatgpt": {
+    "categories": [
+      "negocios-financas",
+      "ia-llms"
+    ]
+  },
+  "course-projeto-nyc-sales-dashboard-de-vendas-de-imoveis": {
+    "categories": [
+      "dados-ml",
+      "negocios-financas"
+    ]
+  },
+  "course-projeto-dash-covid-analise-de-dados-da-covid-19": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-lideranca-e-inteligencia-emocional": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-comunicacao-com-impacto-e-seguranca": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-autoconhecimento-e-conexao-com-o-outro": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-fundamentos-de-alta-performance-pessoal": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-10-marmitas-fit-e-funcionais": {
+    "categories": [
+      "saude-bem-estar"
+    ]
+  },
+  "course-carros-de-leilao": {
+    "categories": [
+      "negocios-financas"
+    ]
+  },
+  "course-marmitas-fit-congelada": {
+    "categories": [
+      "saude-bem-estar"
+    ]
+  },
+  "course-massagem-anti-stress": {
+    "categories": [
+      "saude-bem-estar"
+    ]
+  },
+  "course-metodo-triade-mais-que-musica": {
+    "categories": [
+      "design-artes"
+    ]
+  },
+  "course-pao-sem-gluten-panificacao-saudavel": {
+    "categories": [
+      "saude-bem-estar"
+    ]
+  },
+  "course-practitioner-em-pnl": {
+    "categories": [
+      "carreira-pessoal"
+    ]
+  },
+  "course-introducao": {
+    "categories": [
+      "dados-ml"
+    ]
+  },
+  "course-color-grading-cinematografico": {
+    "categories": [
+      "design-artes"
+    ]
+  },
+  "course-photoshop-starter": {
+    "categories": [
+      "design-artes"
+    ]
+  },
+  "course-pos-producao-de-cgi": {
+    "categories": [
+      "design-artes"
+    ]
+  },
+  "course-retoque-de-produto": {
+    "categories": [
+      "design-artes"
+    ]
+  },
+  "course-retoque-fotografico": {
+    "categories": [
+      "design-artes"
+    ]
   }
 }
