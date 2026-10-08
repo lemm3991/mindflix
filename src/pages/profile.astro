@@ -229,7 +229,7 @@ for (const course of allCourses) {
   </div>
 
   <!-- Embedded Catalog lookup for client JS -->
-  <script id="mindflix-courses-data" type="application/json" set:html={JSON.stringify(courseMap)}></script>
+  <script is:inline id="mindflix-courses-data" type="application/json" set:html={JSON.stringify(courseMap).replace(/</g, '\\u003c')}></script>
 </Layout>
 
 <script>

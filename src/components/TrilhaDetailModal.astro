@@ -10,95 +10,96 @@ const trilhasWithStructure = trilhas.map(t => {
     allLessons: struct?.allLessons || []
   };
 });
+const trilhasJsonSafe = JSON.stringify(trilhasWithStructure).replace(/</g, '\\u003c');
 ---
 
 <!-- JSON Payload for safe client script execution -->
-<script type="application/json" id="mindflix-trilhas-json" set:html={JSON.stringify(trilhasWithStructure)}></script>
+<script is:inline type="application/json" id="mindflix-trilhas-json" set:html={trilhasJsonSafe}></script>
 
 <!-- Global Trilha Detail Glassmorphism Modal -->
 <div id="trilha-detail-modal-backdrop" class="trilha-modal-backdrop" style="display: none;" aria-hidden="true">
-  <div class="trilha-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-trilha-title">
-    
-    <!-- Top Close Button -->
-    <button type="button" class="modal-close-btn" id="trilha-modal-close-btn" aria-label="Fechar modal">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-
-    <!-- Scrollable Modal Content -->
-    <div class="modal-scroll-body" id="trilha-modal-scroll-body">
+    <div class="trilha-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-trilha-title">
       
-      <!-- Hero Header Section -->
-      <div class="modal-hero">
-        <div class="modal-hero-cover-wrap">
-          <img id="modal-trilha-cover-img" class="modal-cover-img" src="" alt="" style="display: none;" />
-          <div class="modal-cover-gradient" id="modal-trilha-cover-gradient"></div>
-          <div class="modal-cover-overlay"></div>
-        </div>
+      <!-- Top Close Button -->
+      <button type="button" class="modal-close-btn" id="trilha-modal-close-btn" aria-label="Fechar modal">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
 
-        <div class="modal-hero-content">
-          <div class="modal-badges-row">
-            <span class="provider-pill" id="modal-trilha-provider">AI LAB</span>
-            <span class="badge badge-cyan">Trilha de Formação</span>
-            <span class="badge" id="modal-trilha-courses-count">0 Cursos</span>
-            <span class="badge" id="modal-trilha-lessons-count">0 Aulas</span>
-            <span class="badge" id="modal-trilha-duration">0h</span>
-            <button type="button" class="modal-fav-btn" id="modal-trilha-fav-btn" aria-label="Favoritar trilha">
-              <svg class="heart-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-            </button>
+      <!-- Scrollable Modal Content -->
+      <div class="modal-scroll-body" id="trilha-modal-scroll-body">
+        
+        <!-- Hero Header Section -->
+        <div class="modal-hero">
+          <div class="modal-hero-cover-wrap">
+            <img id="modal-trilha-cover-img" class="modal-cover-img" src="" alt="" style="display: none;" />
+            <div class="modal-cover-gradient" id="modal-trilha-cover-gradient"></div>
+            <div class="modal-cover-overlay"></div>
           </div>
 
-          <h2 class="modal-trilha-title" id="modal-trilha-title">Título da Trilha</h2>
-          
-          <p class="modal-trilha-desc" id="modal-trilha-desc">Descrição completa da trilha de formação...</p>
-
-          <!-- Progress Bar Section -->
-          <div class="modal-progress-card" id="modal-trilha-progress-card" style="display: none;">
-            <div class="modal-progress-info">
-              <span class="progress-label">Seu Progresso na Trilha:</span>
-              <strong class="progress-pct" id="modal-trilha-progress-pct">0% concluído</strong>
+          <div class="modal-hero-content">
+            <div class="modal-badges-row">
+              <span class="provider-pill" id="modal-trilha-provider">AI LAB</span>
+              <span class="badge badge-cyan">Trilha de Formação</span>
+              <span class="badge" id="modal-trilha-courses-count">0 Cursos</span>
+              <span class="badge" id="modal-trilha-lessons-count">0 Aulas</span>
+              <span class="badge" id="modal-trilha-duration">0h</span>
+              <button type="button" class="modal-fav-btn" id="modal-trilha-fav-btn" aria-label="Favoritar trilha">
+                <svg class="heart-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
             </div>
-            <div class="modal-progress-track">
-              <div class="modal-progress-fill" id="modal-trilha-progress-fill" style="width: 0%;"></div>
+
+            <h2 class="modal-trilha-title" id="modal-trilha-title">Título da Trilha</h2>
+            
+            <p class="modal-trilha-desc" id="modal-trilha-desc">Descrição completa da trilha de formação...</p>
+
+            <!-- Progress Bar Section -->
+            <div class="modal-progress-card" id="modal-trilha-progress-card" style="display: none;">
+              <div class="modal-progress-info">
+                <span class="progress-label">Seu Progresso na Trilha:</span>
+                <strong class="progress-pct" id="modal-trilha-progress-pct">0% concluído</strong>
+              </div>
+              <div class="modal-progress-track">
+                <div class="modal-progress-fill" id="modal-trilha-progress-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- CTA Watch Row -->
+            <div class="modal-cta-row">
+              <a href="#" class="btn btn-primary modal-play-btn" id="modal-trilha-play-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="modal-trilha-play-btn-text">Iniciar Trilha</span>
+              </a>
+              <span class="modal-next-lesson-hint" id="modal-trilha-next-hint"></span>
             </div>
           </div>
+        </div>
 
-          <!-- CTA Watch Row -->
-          <div class="modal-cta-row">
-            <a href="#" class="btn btn-primary modal-play-btn" id="modal-trilha-play-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        <!-- Curriculum / Sequência Completa de Cursos -->
+        <div class="modal-curriculum-section">
+          <div class="curriculum-header">
+            <div class="curriculum-title-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
-              <span id="modal-trilha-play-btn-text">Iniciar Trilha</span>
-            </a>
-            <span class="modal-next-lesson-hint" id="modal-trilha-next-hint"></span>
+              <h3>Sequência Cronológica da Trilha</h3>
+            </div>
+            <span class="curriculum-meta" id="modal-trilha-meta">Etapas estruturadas do básico ao avançado</span>
           </div>
-        </div>
-      </div>
 
-      <!-- Curriculum / Sequência Completa de Cursos -->
-      <div class="modal-curriculum-section">
-        <div class="curriculum-header">
-          <div class="curriculum-title-wrap">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <h3>Sequência Cronológica da Trilha</h3>
-          </div>
-          <span class="curriculum-meta" id="modal-trilha-meta">Etapas estruturadas do básico ao avançado</span>
+          <!-- Courses Sequence List -->
+          <div class="trilha-courses-list" id="modal-trilha-courses-list"></div>
         </div>
 
-        <!-- Courses Sequence List -->
-        <div class="trilha-courses-list" id="modal-trilha-courses-list"></div>
       </div>
-
     </div>
   </div>
-</div>
 
 <style>
   /* --- Backdrop with background blur --- */
@@ -534,252 +535,322 @@ const trilhasWithStructure = trilhas.map(t => {
   }
 </style>
 
-<script>
-  import { isTrilhaFavorite, toggleTrilhaFavorite, getNextLessonToWatchForTrilha, getAllLocalProgress } from '../lib/progress';
-  import { showToast } from '../lib/toast';
-
-  function getLoadedTrilhas(): any[] {
-    try {
-      const payload = document.getElementById('mindflix-trilhas-json');
-      if (payload && payload.textContent) {
-        return JSON.parse(payload.textContent);
-      }
-    } catch {}
-    return [];
-  }
-
-  let allTrilhas: any[] = [];
-
-  function getModalEls() {
-    return {
-      backdrop: document.getElementById('trilha-detail-modal-backdrop'),
-      closeBtn: document.getElementById('trilha-modal-close-btn'),
-      favBtn: document.getElementById('modal-trilha-fav-btn'),
-      playBtn: document.getElementById('modal-trilha-play-btn') as HTMLAnchorElement | null,
-      playBtnText: document.getElementById('modal-trilha-play-btn-text'),
-      nextHint: document.getElementById('modal-trilha-next-hint'),
-      titleEl: document.getElementById('modal-trilha-title'),
-      descEl: document.getElementById('modal-trilha-desc'),
-      providerEl: document.getElementById('modal-trilha-provider'),
-      coursesCountEl: document.getElementById('modal-trilha-courses-count'),
-      lessonsCountEl: document.getElementById('modal-trilha-lessons-count'),
-      durationEl: document.getElementById('modal-trilha-duration'),
-      coverImg: document.getElementById('modal-trilha-cover-img') as HTMLImageElement | null,
-      coverGrad: document.getElementById('modal-trilha-cover-gradient'),
-      coursesList: document.getElementById('modal-trilha-courses-list'),
-      progressCard: document.getElementById('modal-trilha-progress-card'),
-      progressPct: document.getElementById('modal-trilha-progress-pct'),
-      progressFill: document.getElementById('modal-trilha-progress-fill')
-    };
-  }
-
-  let activeTrilhaId: string | null = null;
-
-  const hues = [
-    'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
-    'linear-gradient(135deg, #1f1c2c, #4a475a)',
-    'linear-gradient(135deg, #141e30, #243b55)',
-    'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
-    'linear-gradient(135deg, #16222f, #1a365d)',
-    'linear-gradient(135deg, #1a1c29, #2d3748)',
-    'linear-gradient(135deg, #1e1b4b, #312e81)',
-    'linear-gradient(135deg, #064e3b, #047857)',
-    'linear-gradient(135deg, #4a0e2e, #831843)'
-  ];
-
-  function openTrilhaModal(trilhaId: string) {
-    if (!allTrilhas || allTrilhas.length === 0) {
-      allTrilhas = getLoadedTrilhas();
+<script is:inline>
+  (function() {
+    function getLoadedTrilhas() {
+      try {
+        var el = document.getElementById('mindflix-trilhas-json');
+        if (el && el.textContent) {
+          return JSON.parse(el.textContent);
+        }
+      } catch (e) {}
+      return [];
     }
 
-    const els = getModalEls();
-    const trilha = allTrilhas.find(t => t.id === trilhaId);
-    if (!trilha || !els.backdrop) return;
+    var allTrilhas = [];
 
-    activeTrilhaId = trilha.id;
-
-    // 1. Text & metadata
-    if (els.titleEl) els.titleEl.textContent = trilha.title;
-    if (els.descEl) els.descEl.textContent = trilha.description;
-    if (els.providerEl) els.providerEl.textContent = trilha.provider || 'Formação Oficial';
-    if (els.coursesCountEl) els.coursesCountEl.textContent = `${trilha.total_cursos} ${trilha.total_cursos === 1 ? 'Curso' : 'Cursos/Projetos'}`;
-    if (els.lessonsCountEl) els.lessonsCountEl.textContent = `${trilha.total_lessons_count} Aulas`;
-    if (els.durationEl) els.durationEl.textContent = trilha.total_duration_formatted || '';
-
-    // 2. Cover / Gradient
-    if (trilha.cover_image && els.coverImg) {
-      els.coverImg.src = trilha.cover_image;
-      els.coverImg.style.display = 'block';
-      if (els.coverGrad) els.coverGrad.style.display = 'none';
-    } else {
-      if (els.coverImg) els.coverImg.style.display = 'none';
-      if (els.coverGrad) {
-        let hash = 0;
-        for (let i = 0; i < trilha.id.length; i++) hash = trilha.id.charCodeAt(i) + ((hash << 5) - hash);
-        els.coverGrad.style.background = hues[Math.abs(hash) % hues.length];
-        els.coverGrad.style.display = 'block';
+    function getAllProgress() {
+      try {
+        var user = localStorage.getItem('mindflix_user');
+        var uId = user ? JSON.parse(user).id : null;
+        var key = uId ? 'mindflix_progress_' + uId : 'mindflix_progress';
+        var userProg = JSON.parse(localStorage.getItem(key) || '{}');
+        var globalProg = JSON.parse(localStorage.getItem('mindflix_progress') || '{}');
+        var permProg = JSON.parse(localStorage.getItem('mindflix_progress_permanent') || '{}');
+        var merged = Object.assign({}, permProg, globalProg, userProg);
+        for (var k in permProg) { if (permProg[k] && permProg[k].completed && merged[k]) merged[k].completed = true; }
+        for (var g in globalProg) { if (globalProg[g] && globalProg[g].completed && merged[g]) merged[g].completed = true; }
+        return merged;
+      } catch (e) {
+        return {};
       }
     }
 
-    // 3. Smart Next/Resume Lesson and Progress calculation
-    const allProgress = getAllLocalProgress();
-    const allLessons = trilha.allLessons || [];
-    const nextWatch = getNextLessonToWatchForTrilha(trilha.id, allLessons);
+    function getFavorites() {
+      try {
+        var user = localStorage.getItem('mindflix_user');
+        var uId = user ? JSON.parse(user).id : null;
+        var key = uId ? 'mindflix_favorites_' + uId : 'mindflix_favorites';
+        var list = JSON.parse(localStorage.getItem(key) || localStorage.getItem('mindflix_favorites') || '[]');
+        return Array.isArray(list) ? list : [];
+      } catch (e) {
+        return [];
+      }
+    }
 
-    if (els.playBtn) {
-      els.playBtn.href = nextWatch.watchUrl;
+    function saveFavorites(list) {
+      try {
+        var user = localStorage.getItem('mindflix_user');
+        var uId = user ? JSON.parse(user).id : null;
+        var key = uId ? 'mindflix_favorites_' + uId : 'mindflix_favorites';
+        var json = JSON.stringify(list);
+        localStorage.setItem(key, json);
+        localStorage.setItem('mindflix_favorites', json);
+      } catch (e) {}
     }
-    if (els.playBtnText) {
-      els.playBtnText.textContent = nextWatch.label;
-    }
-    if (els.nextHint) {
-      if (nextWatch.isResume && nextWatch.lesson) {
-        els.nextHint.textContent = `Próximo: ${nextWatch.lesson.display_title}`;
+
+    var activeTrilhaId = null;
+
+    var hues = [
+      'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
+      'linear-gradient(135deg, #1f1c2c, #4a475a)',
+      'linear-gradient(135deg, #141e30, #243b55)',
+      'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
+      'linear-gradient(135deg, #16222f, #1a365d)',
+      'linear-gradient(135deg, #1a1c29, #2d3748)',
+      'linear-gradient(135deg, #1e1b4b, #312e81)',
+      'linear-gradient(135deg, #064e3b, #047857)',
+      'linear-gradient(135deg, #4a0e2e, #831843)'
+    ];
+
+    function openModal(trilhaId) {
+      if (!allTrilhas || allTrilhas.length === 0) {
+        allTrilhas = getLoadedTrilhas();
+      }
+      var trilha = allTrilhas.find(function(t) { return t.id === trilhaId || t.slug === trilhaId; });
+      if (!trilha) {
+        allTrilhas = getLoadedTrilhas();
+        trilha = allTrilhas.find(function(t) { return t.id === trilhaId || t.slug === trilhaId; });
+      }
+      var backdrop = document.getElementById('trilha-detail-modal-backdrop');
+      if (!trilha || !backdrop) return;
+
+      activeTrilhaId = trilha.id;
+
+      // 1. Metadata
+      var titleEl = document.getElementById('modal-trilha-title');
+      var descEl = document.getElementById('modal-trilha-desc');
+      var providerEl = document.getElementById('modal-trilha-provider');
+      var coursesCountEl = document.getElementById('modal-trilha-courses-count');
+      var lessonsCountEl = document.getElementById('modal-trilha-lessons-count');
+      var durationEl = document.getElementById('modal-trilha-duration');
+      var coverImg = document.getElementById('modal-trilha-cover-img');
+      var coverGrad = document.getElementById('modal-trilha-cover-gradient');
+      var favBtn = document.getElementById('modal-trilha-fav-btn');
+      var playBtn = document.getElementById('modal-trilha-play-btn');
+      var playBtnText = document.getElementById('modal-trilha-play-btn-text');
+      var nextHint = document.getElementById('modal-trilha-next-hint');
+      var progressCard = document.getElementById('modal-trilha-progress-card');
+      var progressPct = document.getElementById('modal-trilha-progress-pct');
+      var progressFill = document.getElementById('modal-trilha-progress-fill');
+      var coursesList = document.getElementById('modal-trilha-courses-list');
+
+      if (titleEl) titleEl.textContent = trilha.title;
+      if (descEl) descEl.textContent = trilha.description || '';
+      if (providerEl) providerEl.textContent = trilha.provider || trilha.target_audience || 'AI LAB';
+      if (coursesCountEl) coursesCountEl.textContent = (trilha.total_cursos || (trilha.courses ? trilha.courses.length : 0)) + ' Cursos';
+      if (lessonsCountEl) lessonsCountEl.textContent = (trilha.total_lessons_count || trilha.total_lessons || (trilha.allLessons ? trilha.allLessons.length : 0)) + ' Aulas';
+      if (durationEl) durationEl.textContent = trilha.total_duration_formatted || trilha.total_hours_formatted || (trilha.estimated_hours ? trilha.estimated_hours + 'h' : '10h');
+
+      // 2. Cover / Gradient
+      if (trilha.cover_image && coverImg) {
+        coverImg.src = trilha.cover_image;
+        coverImg.style.display = 'block';
+        if (coverGrad) coverGrad.style.display = 'none';
       } else {
-        els.nextHint.textContent = '';
+        if (coverImg) coverImg.style.display = 'none';
+        if (coverGrad) {
+          var hash = 0;
+          for (var i = 0; i < trilha.id.length; i++) hash = trilha.id.charCodeAt(i) + ((hash << 5) - hash);
+          coverGrad.style.background = hues[Math.abs(hash) % hues.length];
+          coverGrad.style.display = 'block';
+        }
       }
-    }
 
-    // Progress bar for trilha
-    const totalLessons = trilha.total_lessons_count || allLessons.length;
-    const completedCount = allLessons.filter((l: any) => allProgress[l.lesson?.id]?.completed).length;
-    const pct = totalLessons > 0 ? Math.min(100, Math.round((completedCount / totalLessons) * 100)) : 0;
+      // 3. Progress & Smart Resume
+      var allProg = getAllProgress();
+      var allLessons = trilha.allLessons || [];
+      var completedCount = allLessons.filter(function(l) { return allProg[l.id] && allProg[l.id].completed; }).length;
+      var hasStarted = allLessons.some(function(l) {
+        var p = allProg[l.id];
+        return p && (p.completed || p.percentage > 0 || p.position_seconds > 0);
+      });
 
-    if (pct > 0 && els.progressCard) {
-      els.progressCard.style.display = 'block';
-      if (els.progressPct) els.progressPct.textContent = `${pct}% concluído (${completedCount}/${totalLessons} aulas)`;
-      if (els.progressFill) els.progressFill.style.width = `${pct}%`;
-    } else if (els.progressCard) {
-      els.progressCard.style.display = 'none';
-    }
+      var totalLessons = allLessons.length || trilha.total_lessons_count || trilha.total_lessons || 1;
+      var pct = Math.min(100, Math.round((completedCount / totalLessons) * 100));
 
-    // 4. Favorite button state
-    if (els.favBtn) {
-      const isFav = isTrilhaFavorite(trilha.id);
-      if (isFav) {
-        els.favBtn.classList.add('active');
-        els.favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      } else {
-        els.favBtn.classList.remove('active');
-        els.favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+      if (pct > 0 && progressCard) {
+        progressCard.style.display = 'block';
+        if (progressPct) progressPct.textContent = pct + '% concluído (' + completedCount + '/' + totalLessons + ' aulas)';
+        if (progressFill) progressFill.style.width = pct + '%';
+      } else if (progressCard) {
+        progressCard.style.display = 'none';
       }
-    }
 
-    // 5. Build Chronological Courses List
-    if (els.coursesList) {
-      els.coursesList.innerHTML = '';
-      if (Array.isArray(trilha.courses)) {
-        trilha.courses.forEach((c: any) => {
-          const item = document.createElement('a');
-          item.className = 'trilha-stage-item';
+      // Next uncompleted lesson
+      var nextLesson = allLessons.find(function(l) { return !allProg[l.id] || !allProg[l.id].completed; }) || allLessons[0];
+      if (playBtn && nextLesson) {
+        playBtn.href = '/watch/' + nextLesson.course_id + '/' + nextLesson.id + '?trilha=' + trilha.id;
+      }
+      if (playBtnText) {
+        playBtnText.textContent = hasStarted ? 'Continuar assistindo' : 'Iniciar Trilha';
+      }
+      if (nextHint) {
+        nextHint.textContent = (hasStarted && nextLesson) ? ('Próximo: ' + (nextLesson.title || '')) : '';
+      }
 
-          // Find first uncompleted lesson of this specific course in the trilha
-          const courseLessons = allLessons.filter((l: any) => l.courseId === c.course_id || (l.courseOrder === c.ordem));
-          const uncompletedCourseLesson = courseLessons.find((l: any) => !allProgress[l.lesson?.id]?.completed);
-          const targetLesson = uncompletedCourseLesson || courseLessons[0];
-          const stageUrl = targetLesson ? `/watch/trilha/${trilha.id}/${targetLesson.lesson.id}` : `/watch/trilha/${trilha.id}/first`;
-          
+      // 4. Favorite State
+      var favs = getFavorites();
+      var isFav = favs.indexOf(trilha.id) !== -1;
+      if (favBtn) {
+        if (isFav) {
+          favBtn.classList.add('active');
+          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+        } else {
+          favBtn.classList.remove('active');
+          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+        }
+      }
+
+      // 5. Render Courses List
+      if (coursesList) {
+        coursesList.innerHTML = '';
+        var stages = trilha.courses || trilha.stages || [];
+        // If stages not provided, create from course_ids or allLessons
+        if (stages.length === 0 && trilha.course_ids) {
+          stages = trilha.course_ids.map(function(cid, idx) {
+            return {
+              step: idx + 1,
+              title: cid,
+              course_id: cid
+            };
+          });
+        }
+
+        stages.forEach(function(stg, sIdx) {
+          var stageCourseId = stg.course_id || stg.id || '';
+          var stageTitle = stg.course_title || stg.title || stageCourseId;
+          var stageLessons = allLessons.filter(function(l) { return l.course_id === stageCourseId; });
+          var stageComp = stageLessons.filter(function(l) { return allProg[l.id] && allProg[l.id].completed; }).length;
+          var nextStageLesson = stageLessons.find(function(l) { return !allProg[l.id] || !allProg[l.id].completed; }) || stageLessons[0];
+          var stageUrl = nextStageLesson ? ('/watch/' + stageCourseId + '/' + nextStageLesson.id + '?trilha=' + trilha.id) : ('/courses#' + stageCourseId);
+          var stageCover = stg.cover_image ? ('<img src="' + stg.cover_image + '" class="trilha-stage-thumb" alt="" />') : '';
+
+          var item = document.createElement('a');
           item.href = stageUrl;
+          item.className = 'trilha-stage-item';
+          item.innerHTML = '<div class="trilha-stage-num">' + (stg.ordem || stg.step || (sIdx + 1)) + '</div>' +
+            stageCover +
+            '<div class="trilha-stage-info">' +
+              '<div class="trilha-stage-top">' +
+                '<span class="trilha-stage-badge">Etapa ' + (stg.ordem || stg.step || (sIdx + 1)) + '</span>' +
+                (stg.tipo ? ('<span class="trilha-stage-badge">' + stg.tipo + '</span>') : '') +
+                (stageComp > 0 ? ('<span class="trilha-stage-badge" style="color:var(--accent-emerald,#10b981);">' + stageComp + '/' + (stg.lessons_count || stageLessons.length) + ' concluídas</span>') : '') +
+              '</div>' +
+              '<div class="trilha-stage-title">' + stageTitle + '</div>' +
+              '<div class="trilha-stage-meta">' + (stg.lessons_count || stageLessons.length) + ' aulas' + (stg.total_duration_formatted ? (' • ' + stg.total_duration_formatted) : '') + '</div>' +
+            '</div>' +
+            '<div class="trilha-stage-action">' +
+              '<span>Acessar</span>' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+            '</div>';
 
-          const completedLessonsCount = courseLessons.filter((l: any) => allProgress[l.lesson?.id]?.completed).length;
-          const isCourseDone = courseLessons.length > 0 && completedLessonsCount === courseLessons.length;
-
-          item.innerHTML = `
-            <span class="trilha-stage-num">${c.ordem}</span>
-            ${c.cover_image ? `<img src="${c.cover_image}" alt="" class="trilha-stage-thumb" onerror="this.style.display='none'" />` : ''}
-            <div class="trilha-stage-info">
-              <div class="trilha-stage-top">
-                <span class="trilha-stage-badge">${c.tipo || 'Etapa'}</span>
-                <h4 class="trilha-stage-title">${c.course_title || c.nome_trilha}</h4>
-              </div>
-              <span class="trilha-stage-meta">${completedLessonsCount > 0 ? `${completedLessonsCount}/${courseLessons.length} concluídas • ` : ''}${c.modules_count || 1} módulos • ${c.lessons_count || 0} aulas ${c.total_duration_formatted ? `(${c.total_duration_formatted})` : ''}</span>
-            </div>
-            <div class="trilha-stage-action">
-              <span>${isCourseDone ? 'Rever' : completedLessonsCount > 0 ? 'Continuar' : 'Acessar'}</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </div>
-          `;
-
-          els.coursesList.appendChild(item);
+          coursesList.appendChild(item);
         });
       }
+
+      // 6. Show modal
+      backdrop.style.display = 'flex';
+      requestAnimationFrame(function() {
+        backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
     }
 
-    // 6. Open dialog
-    els.backdrop.style.display = 'flex';
-    requestAnimationFrame(() => {
-      els.backdrop.classList.add('active');
-      document.body.style.overflow = 'hidden';
+    function closeModal() {
+      var backdrop = document.getElementById('trilha-detail-modal-backdrop');
+      if (!backdrop) return;
+      backdrop.classList.remove('active');
+      setTimeout(function() {
+        backdrop.style.display = 'none';
+        document.body.style.overflow = '';
+        activeTrilhaId = null;
+      }, 250);
+    }
+
+    window.openTrilhaModal = openModal;
+    window.closeTrilhaModal = closeModal;
+
+    document.addEventListener('open-trilha-modal', function(e) {
+      if (e.detail && e.detail.trilhaId) openModal(e.detail.trilhaId);
     });
-  }
 
-  function closeTrilhaModal() {
-    const els = getModalEls();
-    if (!els.backdrop) return;
-    els.backdrop.classList.remove('active');
-    setTimeout(() => {
-      if (els.backdrop) els.backdrop.style.display = 'none';
-      document.body.style.overflow = '';
-      activeTrilhaId = null;
-    }, 250);
-  }
+    function bindEvents() {
+      var closeBtn = document.getElementById('trilha-modal-close-btn');
+      var backdrop = document.getElementById('trilha-detail-modal-backdrop');
+      var favBtn = document.getElementById('modal-trilha-fav-btn');
 
-  (window as any).openTrilhaModal = openTrilhaModal;
-  (window as any).closeTrilhaModal = closeTrilhaModal;
-
-  document.addEventListener('open-trilha-modal', (e: any) => {
-    if (e.detail?.trilhaId) openTrilhaModal(e.detail.trilhaId);
-  });
-
-  function bindTrilhaModalEvents() {
-    const els = getModalEls();
-    els.closeBtn?.removeEventListener('click', closeTrilhaModal);
-    els.closeBtn?.addEventListener('click', closeTrilhaModal);
-
-    if (els.backdrop) {
-      els.backdrop.onclick = (e) => {
-        if (e.target === els.backdrop) closeTrilhaModal();
-      };
-    }
-
-    if (els.favBtn) {
-      els.favBtn.onclick = async (e) => {
-        e.preventDefault();
-        if (!activeTrilhaId) return;
-        const isFav = await toggleTrilhaFavorite(activeTrilhaId);
-        if (isFav) {
-          els.favBtn?.classList.add('active');
-          els.favBtn?.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-          showToast('Trilha adicionada à Minha Lista', 'success');
-        } else {
-          els.favBtn?.classList.remove('active');
-          els.favBtn?.querySelector('.heart-icon')?.setAttribute('fill', 'none');
-          showToast('Trilha removida da Minha Lista', 'info');
-        }
-
-        const pageCardFav = document.querySelector(`[data-fav-id="${activeTrilhaId}"]`);
-        if (pageCardFav) {
-          if (isFav) {
-            pageCardFav.classList.add('active');
-            pageCardFav.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+      if (closeBtn) {
+        closeBtn.onclick = closeModal;
+      }
+      if (backdrop) {
+        backdrop.onclick = function(e) {
+          if (e.target === backdrop) closeModal();
+        };
+      }
+      if (favBtn) {
+        favBtn.onclick = function(e) {
+          e.preventDefault();
+          if (!activeTrilhaId) return;
+          var favs = getFavorites();
+          var idx = favs.indexOf(activeTrilhaId);
+          var isFav = false;
+          if (idx === -1) {
+            favs.push(activeTrilhaId);
+            isFav = true;
           } else {
-            pageCardFav.classList.remove('active');
-            pageCardFav.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+            favs.splice(idx, 1);
+            isFav = false;
           }
+          saveFavorites(favs);
+          if (isFav) {
+            favBtn.classList.add('active');
+            favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+          } else {
+            favBtn.classList.remove('active');
+            favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+          }
+          var pageFav = document.querySelector('[data-fav-id="' + activeTrilhaId + '"]');
+          if (pageFav) {
+            if (isFav) {
+              pageFav.classList.add('active');
+              pageFav.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+            } else {
+              pageFav.classList.remove('active');
+              pageFav.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+            }
+          }
+          window.dispatchEvent(new CustomEvent('mindflix:favorites-changed'));
+        };
+      }
+    }
+
+    document.addEventListener('keydown', function(e) {
+      var backdrop = document.getElementById('trilha-detail-modal-backdrop');
+      if (e.key === 'Escape' && backdrop && backdrop.classList.contains('active')) {
+        closeModal();
+      }
+    });
+
+    // Delegated click listener for trilha cards
+    document.addEventListener('click', function(e) {
+      var target = e.target;
+      if (!target) return;
+      if (target.closest('[data-action="favorite"]')) return;
+      if (target.closest('.modal-close-btn') || target.closest('#trilha-modal-close-btn')) return;
+      if (target.closest('.modal-scroll-body')) return;
+
+      var card = target.closest('.trilha-card, .trilha-card-wrapper');
+      if (card) {
+        var trilhaId = card.getAttribute('data-trilha-id') || (card.closest('[data-trilha-id]') ? card.closest('[data-trilha-id]').getAttribute('data-trilha-id') : null);
+        if (trilhaId) {
+          e.preventDefault();
+          openModal(trilhaId);
         }
-      };
-    }
-  }
+      }
+    });
 
-  document.addEventListener('keydown', (e) => {
-    const els = getModalEls();
-    if (e.key === 'Escape' && els.backdrop?.classList.contains('active')) {
-      closeTrilhaModal();
-    }
-  });
-
-  document.addEventListener('astro:page-load', bindTrilhaModalEvents);
-  bindTrilhaModalEvents();
+    document.addEventListener('astro:page-load', bindEvents);
+    bindEvents();
+  })();
 </script>

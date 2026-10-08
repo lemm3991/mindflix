@@ -42,7 +42,7 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
 
 <Layout title={`${currentLesson.display_title} — Trilha: ${trilha.title}`} hideNavbar={false}>
   <!-- Trilha Structure Payload -->
-  <script type="application/json" id="mindflix-trilhas-json" set:html={JSON.stringify([{ ...trilha, allLessons }])}></script>
+  <script is:inline type="application/json" id="mindflix-trilhas-json" set:html={JSON.stringify([{ ...trilha, allLessons }]).replace(/</g, '\\u003c')}></script>
 
   <!-- Standardized Focus Mode Component -->
   <FocusMode />
