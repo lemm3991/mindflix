@@ -18,7 +18,7 @@ const getAdapter = () => {
 export default defineConfig({
   output: 'server',
   adapter: getAdapter(),
-  integrations: [astroGrab()],
+  integrations: [astroGrab({ toolbar: false })],
   vite: {
     server: {
       fs: {
