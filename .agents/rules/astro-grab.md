@@ -6,9 +6,10 @@ Sempre que trabalhar em um projeto Astro (identificado pela presença de `astro.
    - Verificar se `astro-grab` está presente em `devDependencies` ou `dependencies` no `package.json`.
    - Se não estiver, instalar com:
      `npm i -D astro-grab --legacy-peer-deps` (ou equivalente no gerenciador do projeto).
+   - Garantir a presença de `.npmrc` com `legacy-peer-deps=true` para deploys em CI/Vercel.
 
 2. **Verificação de Configuração:**
-   - Verificar se `astro.config.*` importa e inclui `astroGrab({ toolbar: false })` no array `integrations`.
-   - Utilizar import nomeado: `import { astroGrab } from 'astro-grab';`
-   - Configurar com `{ toolbar: false }` para evitar incompatibilidade de caminhos URL no Windows:
-     `integrations: [astroGrab({ toolbar: false })]`
+   - No `astro.config.*`, importar `import { astroGrab } from 'astro-grab';`
+   - Configurar `astroGrab({ toolbar: false, holdDuration: 0 })` e o helper de escuta para tecla `Alt`:
+     - `toolbar: false` evita erro de resolução de URLs internas no Windows.
+     - `holdDuration: 0` permite ativação instantânea com `Ctrl+G` ou segurando `Alt`.
