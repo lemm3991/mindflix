@@ -161,6 +161,8 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
         </div>
       </footer>
     )}
+
+    {import.meta.env.DEV && <script src="../scripts/astro-grab-bridge.ts"></script>}
   </body>
 </html>
 
