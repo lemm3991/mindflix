@@ -9,4 +9,5 @@ Sempre que trabalhar em um projeto Astro (identificado pela presença de `astro.
 
 2. **Verificação de Configuração:**
    - Verificar se `astro.config.*` importa e inclui `astroGrab()` no array `integrations: [astroGrab()]`.
-   - Se não estiver configurado, adicionar o import `import astroGrab from 'astro-grab';` e incluir `astroGrab()` nas `integrations` preservando os demais adapters e opções existentes.
+   - Utilizar import nomeado: `import { astroGrab } from 'astro-grab';`
+   - Incluir `astroGrab()` nas `integrations` preservando os demais adapters e opções existentes.
