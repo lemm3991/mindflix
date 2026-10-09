@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import netlify from '@astrojs/netlify';
 import vercel from '@astrojs/vercel';
 import node from '@astrojs/node';
+import astroGrab from 'astro-grab';
 
 const getAdapter = () => {
   if (process.env.VERCEL) {
@@ -17,6 +18,7 @@ const getAdapter = () => {
 export default defineConfig({
   output: 'server',
   adapter: getAdapter(),
+  integrations: [astroGrab()],
   vite: {
     server: {
       fs: {
