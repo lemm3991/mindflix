@@ -3,91 +3,94 @@
 import { getAllCourses } from '../lib/catalog';
 
 const courses = getAllCourses();
+const coursesJsonSafe = JSON.stringify(courses).replace(/</g, '\\u003c');
 ---
+
+<!-- Course Catalog Data Payload for Client Script -->
+<script is:inline type="application/json" id="mindflix-courses-json" set:html={coursesJsonSafe}></script>
 
 <!-- Global Course Detail Glassmorphism Modal -->
 <div id="course-detail-modal-backdrop" class="course-modal-backdrop" style="display: none;" aria-hidden="true">
-  <div class="course-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-course-title">
-    
-    <!-- Top Close Button (Desktop & Mobile) -->
-    <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Fechar modal">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-
-    <!-- Scrollable Modal Content -->
-    <div class="modal-scroll-body" id="modal-scroll-body">
+    <div class="course-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-course-title">
       
-      <!-- Hero Header Section -->
-      <div class="modal-hero" id="modal-hero">
-        <div class="modal-hero-cover-wrap" id="modal-hero-cover-wrap">
-          <img id="modal-cover-img" class="modal-cover-img" src="" alt="" style="display: none;" />
-          <div class="modal-cover-gradient" id="modal-cover-gradient"></div>
-          <div class="modal-cover-overlay"></div>
-        </div>
+      <!-- Top Close Button (Desktop & Mobile) -->
+      <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Fechar modal">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
 
-        <div class="modal-hero-content">
-          <div class="modal-badges-row">
-            <span class="provider-pill" id="modal-provider">Provider</span>
-            <span class="badge badge-cyan" id="modal-modules-count">0 Módulos</span>
-            <span class="badge" id="modal-lessons-count">0 Aulas</span>
-            <button type="button" class="modal-fav-btn" id="modal-fav-btn" aria-label="Favoritar">
-              <svg class="heart-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-            </button>
+      <!-- Scrollable Modal Content -->
+      <div class="modal-scroll-body" id="modal-scroll-body">
+        
+        <!-- Hero Header Section -->
+        <div class="modal-hero" id="modal-hero">
+          <div class="modal-hero-cover-wrap" id="modal-hero-cover-wrap">
+            <img id="modal-cover-img" class="modal-cover-img" src="" alt="" style="display: none;" />
+            <div class="modal-cover-gradient" id="modal-cover-gradient"></div>
+            <div class="modal-cover-overlay"></div>
           </div>
 
-          <h2 class="modal-course-title" id="modal-course-title">Título do Curso</h2>
-          
-          <p class="modal-course-desc" id="modal-course-desc">Descrição completa do curso...</p>
-
-          <div class="modal-tags-row" id="modal-tags-row"></div>
-
-          <!-- Progress Bar Section -->
-          <div class="modal-progress-card" id="modal-progress-card" style="display: none;">
-            <div class="modal-progress-info">
-              <span class="progress-label">Seu Progresso:</span>
-              <strong class="progress-pct" id="modal-progress-pct">0% concluído</strong>
+          <div class="modal-hero-content">
+            <div class="modal-badges-row">
+              <span class="provider-pill" id="modal-provider">Provider</span>
+              <span class="badge badge-cyan" id="modal-modules-count">0 Módulos</span>
+              <span class="badge" id="modal-lessons-count">0 Aulas</span>
+              <button type="button" class="modal-fav-btn" id="modal-fav-btn" aria-label="Favoritar">
+                <svg class="heart-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
             </div>
-            <div class="modal-progress-track">
-              <div class="modal-progress-fill" id="modal-progress-fill" style="width: 0%;"></div>
+
+            <h2 class="modal-course-title" id="modal-course-title">Título do Curso</h2>
+            
+            <p class="modal-course-desc" id="modal-course-desc">Descrição completa do curso...</p>
+
+            <div class="modal-tags-row" id="modal-tags-row"></div>
+
+            <!-- Progress Bar Section -->
+            <div class="modal-progress-card" id="modal-progress-card" style="display: none;">
+              <div class="modal-progress-info">
+                <span class="progress-label">Seu Progresso:</span>
+                <strong class="progress-pct" id="modal-progress-pct">0% concluído</strong>
+              </div>
+              <div class="modal-progress-track">
+                <div class="modal-progress-fill" id="modal-progress-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- CTA Watch Row -->
+            <div class="modal-cta-row">
+              <a href="#" class="btn btn-primary modal-play-btn" id="modal-play-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="modal-play-btn-text">Assistir Agora</span>
+              </a>
+              <span class="modal-next-lesson-hint" id="modal-next-lesson-hint"></span>
             </div>
           </div>
+        </div>
 
-          <!-- CTA Watch Row -->
-          <div class="modal-cta-row">
-            <a href="#" class="btn btn-primary modal-play-btn" id="modal-play-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        <!-- Curriculum / Grade de Aulas Section -->
+        <div class="modal-curriculum-section">
+          <div class="curriculum-header">
+            <div class="curriculum-title-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
               </svg>
-              <span id="modal-play-btn-text">Assistir Agora</span>
-            </a>
-            <span class="modal-next-lesson-hint" id="modal-next-lesson-hint"></span>
+              <h3>Grade Completa de Aulas</h3>
+            </div>
+            <span class="curriculum-meta" id="modal-curriculum-meta">Aulas estruturadas passo a passo</span>
           </div>
-        </div>
+
+          <!-- Modules List Accordion Container -->
+          <div class="modal-modules-accordion" id="modal-modules-list"></div>
       </div>
-
-      <!-- Curriculum / Grade de Aulas Section -->
-      <div class="modal-curriculum-section">
-        <div class="curriculum-header">
-          <div class="curriculum-title-wrap">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
-            <h3>Grade Completa de Aulas</h3>
-          </div>
-          <span class="curriculum-meta" id="modal-curriculum-meta">Aulas estruturadas passo a passo</span>
-        </div>
-
-        <!-- Modules List Accordion Container -->
-        <div class="modal-modules-accordion" id="modal-modules-list"></div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -571,251 +574,350 @@ const courses = getAllCourses();
   }
 </style>
 
-<script>
-  import { getAllCourses, getCourseById } from '../lib/catalog';
-  import { getCourseCompletionStats, getNextLessonToWatch, isCourseFavorite, toggleFavorite } from '../lib/progress';
-  import { showToast } from '../lib/toast';
+<script is:inline>
+  (function() {
+    function getLoadedCourses() {
+      try {
+        var el = document.getElementById('mindflix-courses-json');
+        if (el && el.textContent) {
+          return JSON.parse(el.textContent);
+        }
+      } catch (e) {}
+      return [];
+    }
 
-  const allCourses = getAllCourses();
-  const backdrop = document.getElementById('course-detail-modal-backdrop');
-  const closeBtn = document.getElementById('modal-close-btn');
-  const favBtn = document.getElementById('modal-fav-btn');
-  const playBtn = document.getElementById('modal-play-btn') as HTMLAnchorElement;
-  const playBtnText = document.getElementById('modal-play-btn-text');
-  const nextLessonHint = document.getElementById('modal-next-lesson-hint');
+    var allCourses = [];
 
-  const titleEl = document.getElementById('modal-course-title');
-  const descEl = document.getElementById('modal-course-desc');
-  const providerEl = document.getElementById('modal-provider');
-  const modulesCountEl = document.getElementById('modal-modules-count');
-  const lessonsCountEl = document.getElementById('modal-lessons-count');
-  const tagsRow = document.getElementById('modal-tags-row');
-  const coverImg = document.getElementById('modal-cover-img') as HTMLImageElement;
-  const coverGrad = document.getElementById('modal-cover-gradient');
-  const modulesList = document.getElementById('modal-modules-list');
-
-  const progressCard = document.getElementById('modal-progress-card');
-  const progressPct = document.getElementById('modal-progress-pct');
-  const progressFill = document.getElementById('modal-progress-fill');
-
-  let activeCourseId: string | null = null;
-
-  // Hues for deterministic gradient
-  const hues = [
-    'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
-    'linear-gradient(135deg, #1f1c2c, #4a475a)',
-    'linear-gradient(135deg, #141e30, #243b55)',
-    'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
-    'linear-gradient(135deg, #16222f, #1a365d)',
-    'linear-gradient(135deg, #1a1c29, #2d3748)',
-    'linear-gradient(135deg, #1e1b4b, #312e81)',
-    'linear-gradient(135deg, #064e3b, #047857)',
-    'linear-gradient(135deg, #4a0e2e, #831843)'
-  ];
-
-  function openModal(courseId: string) {
-    const course = allCourses.find(c => c.id === courseId || c.slug === courseId);
-    if (!course || !backdrop) return;
-
-    activeCourseId = course.id;
-
-    // 1. Populate basic info
-    if (titleEl) titleEl.textContent = course.display_title;
-    if (descEl) descEl.textContent = course.description;
-    if (providerEl) providerEl.textContent = course.provider;
-    if (modulesCountEl) modulesCountEl.textContent = `${course.modules_count} ${course.modules_count === 1 ? 'Módulo' : 'Módulos'}`;
-    if (lessonsCountEl) lessonsCountEl.textContent = `${course.lessons_count} ${course.lessons_count === 1 ? 'Aula' : 'Aulas'}`;
-
-    // 2. Cover / Gradient
-    if (course.cover_image && coverImg) {
-      coverImg.src = course.cover_image;
-      coverImg.style.display = 'block';
-      if (coverGrad) coverGrad.style.display = 'none';
-    } else {
-      if (coverImg) coverImg.style.display = 'none';
-      if (coverGrad) {
-        let hash = 0;
-        for (let i = 0; i < course.id.length; i++) hash = course.id.charCodeAt(i) + ((hash << 5) - hash);
-        const gradient = hues[Math.abs(hash) % hues.length];
-        coverGrad.style.background = gradient;
-        coverGrad.style.display = 'block';
+    function getAllProgress() {
+      try {
+        var user = localStorage.getItem('mindflix_user');
+        var uId = user ? JSON.parse(user).id : null;
+        var key = uId ? 'mindflix_progress_' + uId : 'mindflix_progress';
+        var userProg = JSON.parse(localStorage.getItem(key) || '{}');
+        var globalProg = JSON.parse(localStorage.getItem('mindflix_progress') || '{}');
+        var permProg = JSON.parse(localStorage.getItem('mindflix_progress_permanent') || '{}');
+        var merged = Object.assign({}, permProg, globalProg, userProg);
+        for (var k in permProg) { if (permProg[k] && permProg[k].completed && merged[k]) merged[k].completed = true; }
+        for (var g in globalProg) { if (globalProg[g] && globalProg[g].completed && merged[g]) merged[g].completed = true; }
+        return merged;
+      } catch (e) {
+        return {};
       }
     }
 
-    // 3. Tags
-    if (tagsRow) {
-      tagsRow.innerHTML = '';
-      course.tags.forEach(t => {
-        const span = document.createElement('span');
-        span.className = 'modal-tag-pill';
-        span.textContent = `#${t}`;
-        tagsRow.appendChild(span);
-      });
+    function getFavorites() {
+      try {
+        var user = localStorage.getItem('mindflix_user');
+        var uId = user ? JSON.parse(user).id : null;
+        var key = uId ? 'mindflix_favorites_' + uId : 'mindflix_favorites';
+        var list = JSON.parse(localStorage.getItem(key) || localStorage.getItem('mindflix_favorites') || '[]');
+        return Array.isArray(list) ? list : [];
+      } catch (e) {
+        return [];
+      }
     }
 
-    // 4. Progress Stats & Smart Resume Calculation
-    const stats = getCourseCompletionStats(course.id, course.lessons_count);
-    if (stats.percentage > 0) {
-      if (progressCard) progressCard.style.display = 'block';
-      if (progressPct) progressPct.textContent = `${stats.percentage}% concluído (${stats.completedCount}/${course.lessons_count} aulas)`;
-      if (progressFill) progressFill.style.width = `${stats.percentage}%`;
-    } else {
-      if (progressCard) progressCard.style.display = 'none';
+    function saveFavorites(list) {
+      try {
+        var user = localStorage.getItem('mindflix_user');
+        var uId = user ? JSON.parse(user).id : null;
+        var key = uId ? 'mindflix_favorites_' + uId : 'mindflix_favorites';
+        var json = JSON.stringify(list);
+        localStorage.setItem(key, json);
+        localStorage.setItem('mindflix_favorites', json);
+      } catch (e) {}
     }
 
-    // Smart Next/Resume Lesson
-    const nextWatch = getNextLessonToWatch(course);
-    if (playBtn) {
-      playBtn.href = nextWatch.watchUrl;
-    }
-    if (playBtnText) {
-      playBtnText.textContent = nextWatch.label;
-    }
-    if (nextLessonHint) {
-      if (nextWatch.isResume && nextWatch.lesson) {
-        nextLessonHint.textContent = `Próximo: ${nextWatch.lesson.display_title}`;
+    var activeCourseId = null;
+
+    var hues = [
+      'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
+      'linear-gradient(135deg, #1f1c2c, #4a475a)',
+      'linear-gradient(135deg, #141e30, #243b55)',
+      'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
+      'linear-gradient(135deg, #16222f, #1a365d)',
+      'linear-gradient(135deg, #1a1c29, #2d3748)',
+      'linear-gradient(135deg, #1e1b4b, #312e81)',
+      'linear-gradient(135deg, #064e3b, #047857)',
+      'linear-gradient(135deg, #4a0e2e, #831843)'
+    ];
+
+    function openModal(courseId) {
+      if (!allCourses || allCourses.length === 0) {
+        allCourses = getLoadedCourses();
+      }
+      var course = allCourses.find(function(c) { return c.id === courseId || c.slug === courseId; });
+      if (!course) {
+        allCourses = getLoadedCourses();
+        course = allCourses.find(function(c) { return c.id === courseId || c.slug === courseId; });
+      }
+      var backdrop = document.getElementById('course-detail-modal-backdrop');
+      if (!course || !backdrop) return;
+
+      activeCourseId = course.id;
+
+      // 1. Text & metadata
+      var titleEl = document.getElementById('modal-course-title');
+      var descEl = document.getElementById('modal-course-desc');
+      var providerEl = document.getElementById('modal-provider');
+      var modulesCountEl = document.getElementById('modal-modules-count');
+      var lessonsCountEl = document.getElementById('modal-lessons-count');
+      var tagsRow = document.getElementById('modal-tags-row');
+      var coverImg = document.getElementById('modal-cover-img');
+      var coverGrad = document.getElementById('modal-cover-gradient');
+      var favBtn = document.getElementById('modal-fav-btn');
+      var playBtn = document.getElementById('modal-play-btn');
+      var playBtnText = document.getElementById('modal-play-btn-text');
+      var nextLessonHint = document.getElementById('modal-next-lesson-hint');
+      var progressCard = document.getElementById('modal-progress-card');
+      var progressPct = document.getElementById('modal-progress-pct');
+      var progressFill = document.getElementById('modal-progress-fill');
+      var modulesList = document.getElementById('modal-modules-list');
+
+      if (titleEl) titleEl.textContent = course.display_title || course.title;
+      if (descEl) descEl.textContent = course.description || '';
+      if (providerEl) providerEl.textContent = course.provider || 'Mindflix';
+      if (modulesCountEl) modulesCountEl.textContent = (course.modules_count || (course.modules ? course.modules.length : 1)) + ' Módulos';
+      if (lessonsCountEl) lessonsCountEl.textContent = (course.lessons_count || 0) + ' Aulas';
+
+      // 2. Cover / Gradient
+      if (course.cover_image && coverImg) {
+        coverImg.src = course.cover_image;
+        coverImg.style.display = 'block';
+        if (coverGrad) coverGrad.style.display = 'none';
       } else {
-        nextLessonHint.textContent = '';
+        if (coverImg) coverImg.style.display = 'none';
+        if (coverGrad) {
+          var hash = 0;
+          for (var i = 0; i < course.id.length; i++) hash = course.id.charCodeAt(i) + ((hash << 5) - hash);
+          coverGrad.style.background = hues[Math.abs(hash) % hues.length];
+          coverGrad.style.display = 'block';
+        }
       }
-    }
 
-    // 5. Favorite button state
-    if (favBtn) {
-      const isFav = isCourseFavorite(course.id);
-      if (isFav) {
-        favBtn.classList.add('active');
-        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      } else {
-        favBtn.classList.remove('active');
-        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
-      }
-    }
-
-    // 6. Populate Curriculum Modules & Lessons
-    if (modulesList) {
-      modulesList.innerHTML = '';
-      const allLocalProg = JSON.parse(localStorage.getItem('mindflix_progress') || '{}');
-
-      course.modules.forEach((mod, modIdx) => {
-        const modCard = document.createElement('div');
-        modCard.className = `modal-module-card ${modIdx === 0 ? 'open' : ''}`;
-
-        const completedLessonsInMod = mod.lessons.filter(l => allLocalProg[l.id]?.completed).length;
-
-        modCard.innerHTML = `
-          <div class="modal-module-header">
-            <div class="modal-module-title-group">
-              <span class="modal-module-num">${modIdx + 1}</span>
-              <h4 class="modal-module-title">${mod.display_title}</h4>
-            </div>
-            <div class="modal-module-right">
-              <span class="modal-module-count">${completedLessonsInMod > 0 ? `${completedLessonsInMod}/` : ''}${mod.lessons.length} aulas</span>
-              <svg class="modal-module-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
-          </div>
-          <div class="modal-lessons-list">
-            ${mod.lessons.map(lesson => {
-              const isCompleted = Boolean(allLocalProg[lesson.id]?.completed);
-              const lessonUrl = `/watch/${course.id}/${lesson.id}`;
-              return `
-                <a href="${lessonUrl}" class="modal-lesson-item ${isCompleted ? 'completed' : ''}">
-                  <div class="modal-lesson-left">
-                    <svg class="modal-lesson-icon" width="16" height="16" viewBox="0 0 24 24" fill="${isCompleted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
-                      ${isCompleted 
-                        ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
-                        : '<polygon points="5 3 19 12 5 21 5 3"></polygon>'
-                      }
-                    </svg>
-                    <span class="modal-lesson-title">${lesson.display_title}</span>
-                  </div>
-                  <div class="modal-lesson-right">
-                    ${lesson.duration_formatted ? `<span class="modal-lesson-duration">${lesson.duration_formatted}</span>` : ''}
-                    <svg class="modal-lesson-play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                  </div>
-                </a>
-              `;
-            }).join('')}
-          </div>
-        `;
-
-        // Toggle module accordion
-        const header = modCard.querySelector('.modal-module-header');
-        header?.addEventListener('click', () => {
-          modCard.classList.toggle('open');
+      // 3. Tags
+      if (tagsRow) {
+        tagsRow.innerHTML = '';
+        (course.tags || []).forEach(function(t) {
+          var span = document.createElement('span');
+          span.className = 'modal-tag-pill';
+          span.textContent = '#' + t;
+          tagsRow.appendChild(span);
         });
+      }
 
-        modulesList.appendChild(modCard);
+      // 4. Progress & Smart Resume
+      var allProg = getAllProgress();
+      var flatLessons = [];
+      (course.modules || []).forEach(function(m) {
+        (m.lessons || []).forEach(function(l) {
+          flatLessons.push(l);
+        });
+      });
+
+      var completedCount = flatLessons.filter(function(l) { return allProg[l.id] && allProg[l.id].completed; }).length;
+      var hasStarted = flatLessons.some(function(l) {
+        var p = allProg[l.id];
+        return p && (p.completed || p.percentage > 0 || p.position_seconds > 0);
+      });
+
+      var totalLessons = course.lessons_count || flatLessons.length || 1;
+      var pct = Math.min(100, Math.round((completedCount / totalLessons) * 100));
+
+      if (pct > 0 && progressCard) {
+        progressCard.style.display = 'block';
+        if (progressPct) progressPct.textContent = pct + '% concluído (' + completedCount + '/' + totalLessons + ' aulas)';
+        if (progressFill) progressFill.style.width = pct + '%';
+      } else if (progressCard) {
+        progressCard.style.display = 'none';
+      }
+
+      // Find first uncompleted lesson
+      var nextLesson = flatLessons.find(function(l) { return !allProg[l.id] || !allProg[l.id].completed; }) || flatLessons[0];
+      if (playBtn && nextLesson) {
+        playBtn.href = '/watch/' + course.id + '/' + nextLesson.id;
+      }
+      if (playBtnText) {
+        playBtnText.textContent = hasStarted ? 'Continuar assistindo' : 'Assistir Agora';
+      }
+      if (nextLessonHint) {
+        nextLessonHint.textContent = (hasStarted && nextLesson) ? ('Próximo: ' + (nextLesson.display_title || nextLesson.title)) : '';
+      }
+
+      // 5. Favorite state
+      var favs = getFavorites();
+      var isFav = favs.indexOf(course.id) !== -1;
+      if (favBtn) {
+        if (isFav) {
+          favBtn.classList.add('active');
+          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+        } else {
+          favBtn.classList.remove('active');
+          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+        }
+      }
+
+      // 6. Curriculum Modules List
+      if (modulesList) {
+        modulesList.innerHTML = '';
+        (course.modules || []).forEach(function(mod, modIdx) {
+          var modCard = document.createElement('div');
+          modCard.className = 'modal-module-card ' + (modIdx === 0 ? 'open' : '');
+
+          var modLessons = mod.lessons || [];
+          var compInMod = modLessons.filter(function(l) { return allProg[l.id] && allProg[l.id].completed; }).length;
+
+          var lessonsHtml = modLessons.map(function(lesson) {
+            var isComp = Boolean(allProg[lesson.id] && allProg[lesson.id].completed);
+            var lessonUrl = '/watch/' + course.id + '/' + lesson.id;
+            var dur = lesson.duration_formatted ? '<span class="modal-lesson-duration">' + lesson.duration_formatted + '</span>' : '';
+            var iconHtml = isComp
+              ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
+              : '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+
+            return '<a href="' + lessonUrl + '" class="modal-lesson-item ' + (isComp ? 'completed' : '') + '">' +
+              '<div class="modal-lesson-left">' +
+                '<svg class="modal-lesson-icon" width="16" height="16" viewBox="0 0 24 24" fill="' + (isComp ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2">' +
+                  iconHtml +
+                '</svg>' +
+                '<span class="modal-lesson-title">' + (lesson.display_title || lesson.title) + '</span>' +
+              '</div>' +
+              '<div class="modal-lesson-right">' +
+                dur +
+                '<svg class="modal-lesson-play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">' +
+                  '<polygon points="5 3 19 12 5 21 5 3"></polygon>' +
+                '</svg>' +
+              '</div>' +
+            '</a>';
+          }).join('');
+
+          modCard.innerHTML = '<div class="modal-module-header">' +
+            '<div class="modal-module-title-group">' +
+              '<span class="modal-module-num">' + (modIdx + 1) + '</span>' +
+              '<h4 class="modal-module-title">' + (mod.display_title || mod.title) + '</h4>' +
+            '</div>' +
+            '<div class="modal-module-right">' +
+              '<span class="modal-module-count">' + (compInMod > 0 ? (compInMod + '/') : '') + modLessons.length + ' aulas</span>' +
+              '<svg class="modal-module-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                '<polyline points="6 9 12 15 18 9"></polyline>' +
+              '</svg>' +
+            '</div>' +
+          '</div>' +
+          '<div class="modal-lessons-list">' + lessonsHtml + '</div>';
+
+          var header = modCard.querySelector('.modal-module-header');
+          if (header) {
+            header.addEventListener('click', function() {
+              modCard.classList.toggle('open');
+            });
+          }
+
+          modulesList.appendChild(modCard);
+        });
+      }
+
+      // 7. Show backdrop
+      backdrop.style.display = 'flex';
+      requestAnimationFrame(function() {
+        backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
       });
     }
 
-    // 7. Open modal and lock scroll
-    backdrop.style.display = 'flex';
-    requestAnimationFrame(() => {
-      backdrop.classList.add('active');
-      document.body.style.overflow = 'hidden';
+    function closeModal() {
+      var backdrop = document.getElementById('course-detail-modal-backdrop');
+      if (!backdrop) return;
+      backdrop.classList.remove('active');
+      setTimeout(function() {
+        backdrop.style.display = 'none';
+        document.body.style.overflow = '';
+        activeCourseId = null;
+      }, 250);
+    }
+
+    window.openCourseModal = openModal;
+    window.closeCourseModal = closeModal;
+
+    document.addEventListener('open-course-modal', function(e) {
+      if (e.detail && e.detail.courseId) openModal(e.detail.courseId);
     });
-  }
 
-  function closeModal() {
-    if (!backdrop) return;
-    backdrop.classList.remove('active');
-    setTimeout(() => {
-      backdrop.style.display = 'none';
-      document.body.style.overflow = '';
-      activeCourseId = null;
-    }, 250);
-  }
+    function bindEvents() {
+      var closeBtn = document.getElementById('modal-close-btn');
+      var backdrop = document.getElementById('course-detail-modal-backdrop');
+      var favBtn = document.getElementById('modal-fav-btn');
 
-  // Global listener and function
-  (window as any).openCourseModal = openModal;
-  (window as any).closeCourseModal = closeModal;
-
-  document.addEventListener('open-course-modal', (e: any) => {
-    if (e.detail?.courseId) openModal(e.detail.courseId);
-  });
-
-  // Event handlers for closing
-  closeBtn?.addEventListener('click', closeModal);
-
-  backdrop?.addEventListener('click', (e) => {
-    if (e.target === backdrop) closeModal();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && backdrop?.classList.contains('active')) {
-      closeModal();
-    }
-  });
-
-  // Favorite button handler
-  favBtn?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    if (!activeCourseId) return;
-    const isFav = await toggleFavorite(activeCourseId);
-    if (isFav) {
-      favBtn.classList.add('active');
-      favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      showToast('Curso adicionado à Minha Lista', 'success');
-    } else {
-      favBtn.classList.remove('active');
-      favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
-      showToast('Curso removido da Minha Lista', 'info');
-    }
-
-    // Also update any favorite button on the page for this course
-    const pageCardFav = document.querySelector(`[data-fav-id="${activeCourseId}"]`);
-    if (pageCardFav) {
-      if (isFav) {
-        pageCardFav.classList.add('active');
-        pageCardFav.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      } else {
-        pageCardFav.classList.remove('active');
-        pageCardFav.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+      if (closeBtn) {
+        closeBtn.onclick = closeModal;
+      }
+      if (backdrop) {
+        backdrop.onclick = function(e) {
+          if (e.target === backdrop) closeModal();
+        };
+      }
+      if (favBtn) {
+        favBtn.onclick = function(e) {
+          e.preventDefault();
+          if (!activeCourseId) return;
+          var favs = getFavorites();
+          var idx = favs.indexOf(activeCourseId);
+          var isFav = false;
+          if (idx === -1) {
+            favs.push(activeCourseId);
+            isFav = true;
+          } else {
+            favs.splice(idx, 1);
+            isFav = false;
+          }
+          saveFavorites(favs);
+          if (isFav) {
+            favBtn.classList.add('active');
+            favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+          } else {
+            favBtn.classList.remove('active');
+            favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+          }
+          var pageFav = document.querySelector('[data-fav-id="' + activeCourseId + '"]');
+          if (pageFav) {
+            if (isFav) {
+              pageFav.classList.add('active');
+              pageFav.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+            } else {
+              pageFav.classList.remove('active');
+              pageFav.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+            }
+          }
+          window.dispatchEvent(new CustomEvent('mindflix:favorites-changed'));
+        };
       }
     }
-  });
+
+    document.addEventListener('keydown', function(e) {
+      var backdrop = document.getElementById('course-detail-modal-backdrop');
+      if (e.key === 'Escape' && backdrop && backdrop.classList.contains('active')) {
+        closeModal();
+      }
+    });
+
+    // Delegated click listener for all course cards
+    document.addEventListener('click', function(e) {
+      var target = e.target;
+      if (!target) return;
+      if (target.closest('[data-action="favorite"]')) return;
+      if (target.closest('.modal-close-btn') || target.closest('#modal-close-btn')) return;
+      if (target.closest('.modal-scroll-body')) return;
+
+      var card = target.closest('.course-card, .course-card-wrapper');
+      if (card) {
+        var courseId = card.getAttribute('data-course-id') || (card.closest('[data-course-id]') ? card.closest('[data-course-id]').getAttribute('data-course-id') : null);
+        if (courseId) {
+          e.preventDefault();
+          openModal(courseId);
+        }
+      }
+    });
+
+    document.addEventListener('astro:page-load', bindEvents);
+    bindEvents();
+  })();
 </script>

@@ -136,11 +136,11 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
   // Horizontal scroll buttons
   if (carousel && prevBtn && nextBtn) {
     prevBtn.addEventListener('click', () => {
-      carousel.scrollBy({ left: -370, behavior: 'smooth' });
+      carousel.scrollBy({ left: -carousel.clientWidth * 0.75, behavior: 'smooth' });
       setTimeout(requestPerspectiveUpdate, 250);
     });
     nextBtn.addEventListener('click', () => {
-      carousel.scrollBy({ left: 370, behavior: 'smooth' });
+      carousel.scrollBy({ left: carousel.clientWidth * 0.75, behavior: 'smooth' });
       setTimeout(requestPerspectiveUpdate, 250);
     });
   }
@@ -152,16 +152,16 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
 
     if (section.dataset.fixedSource) return;
 
-    const cards = document.querySelectorAll<HTMLElement>('.trilha-card');
+    const wrappers = section.querySelectorAll<HTMLElement>('.trilha-card-wrapper');
     let visibleCount = 0;
-    cards.forEach(card => {
-      const src = card.getAttribute('data-source') || 'asimov';
+    wrappers.forEach(wrapper => {
+      const src = wrapper.getAttribute('data-source') || 'asimov';
       const isMatch = active === 'all' || src === active || (active === 'hashtag' && src.startsWith('hashtag')) || (active === 'ailab' && (src === 'ailab' || src === 'ai-lab')) || (active === 'sctec' && src === 'sctec');
       if (isMatch) {
-        card.style.display = 'flex';
+        wrapper.style.display = 'block';
         visibleCount++;
       } else {
-        card.style.display = 'none';
+        wrapper.style.display = 'none';
       }
     });
 
@@ -219,8 +219,8 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
 <style>
   .trilhas-section {
     position: relative;
-    padding: 2.5rem 0 1.5rem;
-    margin-bottom: 2rem;
+    padding: 1.75rem 0 1rem;
+    margin-bottom: 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     overflow: hidden;
   }
@@ -298,20 +298,17 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
   /* 3D Skewed Carousel Track & Wrapper */
   .trilhas-carousel-wrapper {
     position: relative;
-    perspective: 1200px;
-    transform-style: preserve-3d;
-    padding: 1.5rem 0 2rem;
+    padding: 0.5rem 0 1rem;
     margin: 0 -0.5rem;
     overflow: visible;
   }
 
   .trilhas-carousel-track {
     display: flex;
-    gap: 1.5rem;
+    gap: 1.15rem;
     overflow-x: auto;
     scroll-behavior: smooth;
-    padding: 1.5rem 1rem 2.5rem;
-    transform-style: preserve-3d;
+    padding: 0.5rem 0.25rem 0.75rem 0.25rem;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     cursor: grab;

@@ -125,12 +125,12 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
       </div>
     </div>
 
-    <!-- Media Server Configuration Card -->
+    <!-- Media Server & Provider Configuration Card -->
     <div class="media-provider-config-card">
       <div class="card-header-row">
         <div class="card-header-info">
-          <h3 class="card-title">🌐 Fonte de Reprodução dos Vídeos</h3>
-          <p class="card-desc">Todos os vídeos são reproduzidos exclusivamente via Servidor Local de Streaming (Cloudflare Tunnel).</p>
+          <h3 class="card-title">🌐 Servidor de Streaming dos Vídeos</h3>
+          <p class="card-desc">Todos os cursos e vídeos são reproduzidos diretamente do Servidor de Streaming configurado abaixo.</p>
         </div>
         <div class="server-status-pill" id="server-status-pill">
           <span class="pulse-dot-indicator" id="status-dot"></span>
@@ -139,26 +139,19 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
       </div>
 
       <div class="provider-controls-row">
-        <div class="form-group flex-2">
-          <label for="input-media-server-url">URL do Servidor de Streaming (HTTP / Cloudflare Tunnel)</label>
+        <div class="form-group flex-1">
+          <label for="input-media-server-url">URL do Servidor de Streaming (Cloudflare Tunnel / HTTP)</label>
           <div class="input-with-btn">
             <input
               type="url"
               id="input-media-server-url"
               class="form-input mono"
-              placeholder="https://semester-lover-legs-metal.trycloudflare.com"
+              placeholder="https://bin-practice-brighton-campaign.trycloudflare.com"
             />
             <button type="button" class="btn btn-secondary btn-sm" id="btn-save-server-url">
               <span>Testar e Salvar</span>
             </button>
           </div>
-        </div>
-
-        <div class="form-group flex-1">
-          <label for="select-media-mode">Modo de Operação</label>
-          <select id="select-media-mode" class="form-select" disabled>
-            <option value="server" selected>🟢 Apenas Servidor Local / Cloudflare</option>
-          </select>
         </div>
       </div>
     </div>
@@ -510,104 +503,21 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 <script>
   import { showToast } from '../lib/toast';
   import {
-    getMediaMode,
-    setMediaMode,
     getMediaServerUrl,
     setMediaServerUrl,
     checkServerHealth
   } from '../lib/mediaProvider';
-  import {
-    getLocalCourseOverrides,
-    saveLocalCourseOverride,
-    getLocalCategoryOverrides,
-    saveLocalCategoryOverrides,
-    syncOverridesFromServer
-  } from '../lib/clientOverrides';
-
-  function applyOverridesToDOM(overrides: Record<string, any>) {
-    if (!overrides || typeof overrides !== 'object') return;
-    const courseRows = document.querySelectorAll<HTMLElement>('.course-row-item');
-    const catCountMap: Record<string, number> = {};
-
-    courseRows.forEach(row => {
-      const id = row.getAttribute('data-id');
-      if (!id) return;
-      const ov = overrides[id];
-      const editBtn = row.querySelector<HTMLButtonElement>('.btn-edit-course');
-      let currentCourseData = editBtn ? JSON.parse(editBtn.getAttribute('data-course') || '{}') : null;
-
-      if (ov && currentCourseData) {
-        currentCourseData = { ...currentCourseData, ...ov };
-        if (editBtn) editBtn.setAttribute('data-course', JSON.stringify(currentCourseData));
-
-        if (ov.display_title) {
-          const titleEl = row.querySelector('.course-display-name');
-          if (titleEl) titleEl.textContent = ov.display_title;
-          row.setAttribute('data-title', ov.display_title.toLowerCase());
-        }
-
-        if (ov.provider) {
-          const provBadge = row.querySelector('.badge-provider');
-          if (provBadge) provBadge.textContent = ov.provider;
-          row.setAttribute('data-provider', ov.provider);
-        }
-
-        if (Array.isArray(ov.categories)) {
-          const tagsCell = row.querySelector('.cats-tags-cell');
-          if (tagsCell) {
-            tagsCell.innerHTML = ov.categories.map((c: string) => `<span class="mini-chip">${c}</span>`).join('');
-          }
-        }
-
-        if (ov.is_hidden !== undefined) {
-          const statusBadge = row.querySelector('.badge-warning, .badge-success');
-          if (statusBadge) {
-            statusBadge.className = ov.is_hidden ? 'badge badge-warning' : 'badge badge-success';
-            statusBadge.textContent = ov.is_hidden ? 'Oculto' : 'Ativo';
-          }
-        }
-      }
-
-      // Count categories
-      const effectiveCats = currentCourseData?.categories || [];
-      effectiveCats.forEach((catId: string) => {
-        catCountMap[catId] = (catCountMap[catId] || 0) + 1;
-      });
-    });
-
-    // Update category table rows
-    document.querySelectorAll<HTMLElement>('.cat-row-item').forEach(catRow => {
-      const catId = catRow.getAttribute('data-id');
-      if (!catId) return;
-      const count = catCountMap[catId] || 0;
-      const badge = catRow.querySelector('.badge-provider');
-      if (badge) badge.textContent = `${count} cursos`;
-      const delBtn = catRow.querySelector('.btn-delete-category');
-      if (delBtn) delBtn.setAttribute('data-count', String(count));
-    });
-  }
 
   function initLibraryAdmin() {
     const pageContainer = document.querySelector('.library-admin-page');
     if (!pageContainer) return;
 
-    // Apply cached overrides immediately to the DOM
-    const initialCourseOverrides = getLocalCourseOverrides();
-    applyOverridesToDOM(initialCourseOverrides);
-
-    // Sync in background with Netlify Blobs / server
-    syncOverridesFromServer().then(({ courses }) => {
-      applyOverridesToDOM(courses);
-    });
-
     const mediaServerUrlInput = document.getElementById('input-media-server-url') as HTMLInputElement | null;
-    const mediaModeSelect = document.getElementById('select-media-mode') as HTMLSelectElement | null;
     const btnSaveServerUrl = document.getElementById('btn-save-server-url');
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
 
     if (mediaServerUrlInput) mediaServerUrlInput.value = getMediaServerUrl();
-    if (mediaModeSelect) mediaModeSelect.value = getMediaMode();
 
     async function updateServerStatusUI() {
       if (!statusText || !statusDot) return;
@@ -628,14 +538,6 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 
     updateServerStatusUI();
 
-      // Sincroniza em background com a URL salva na nuvem
-      syncMediaServerUrlWithCloud().then((cloudUrl) => {
-        if (mediaServerUrlInput && cloudUrl) {
-          mediaServerUrlInput.value = cloudUrl;
-          updateServerStatusUI();
-        }
-      });
-
     btnSaveServerUrl?.addEventListener('click', async () => {
       const val = mediaServerUrlInput?.value?.trim() || '';
       if (val) {
@@ -643,13 +545,6 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
         showToast('URL do Servidor salva!', 'success', 2000);
         await updateServerStatusUI();
       }
-    });
-
-    mediaModeSelect?.addEventListener('change', () => {
-      const mode = mediaModeSelect.value as any;
-      setMediaMode(mode);
-      showToast(`Modo alterado para: ${mediaModeSelect.options[mediaModeSelect.selectedIndex].text}`, 'info', 2000);
-      updateServerStatusUI();
     });
 
     // Navigation Tabs Logic
@@ -855,23 +750,6 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
       const selectedCats = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="edit-cat"]:checked')).map(cb => cb.value);
       const tagsArr = (editTags?.value || '').split(',').map(t => t.trim()).filter(Boolean);
 
-      const patch = {
-        display_title: editTitle?.value || '',
-        provider: editProvider?.value || '',
-        description: editDesc?.value || '',
-        categories: selectedCats,
-        tags: tagsArr,
-        is_hidden: editHidden?.checked,
-        is_featured: editFeatured?.checked
-      };
-
-      // 1. Immediately persist to client storage
-      saveLocalCourseOverride(courseId, patch);
-
-      // 2. Immediately update DOM in-place
-      const currentOverrides = getLocalCourseOverrides();
-      applyOverridesToDOM(currentOverrides);
-
       try {
         btnSaveEdit.textContent = 'Salvando...';
         const res = await fetch('/api/library/update-course', {
@@ -879,21 +757,25 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             courseId,
-            ...patch
+            display_title: editTitle?.value,
+            provider: editProvider?.value,
+            description: editDesc?.value,
+            categories: selectedCats,
+            tags: tagsArr,
+            is_hidden: editHidden?.checked,
+            is_featured: editFeatured?.checked
           })
         });
 
         const data = await res.json();
         if (data.success) {
-          showToast('Metadados e categorias salvos com sucesso!', 'success');
-          if (editModal) editModal.style.display = 'none';
-          setTimeout(() => window.location.reload(), 800);
+          showToast('Metadados salvos com sucesso!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
         } else {
-          showToast(data.error || 'Erro ao salvar metadados no servidor', 'warning');
+          showToast(data.error || 'Erro ao salvar metadados', 'error');
         }
       } catch (err: any) {
-        showToast('Salvo em cache local!', 'info');
-        if (editModal) editModal.style.display = 'none';
+        showToast(err?.message || 'Erro de conexão', 'error');
       } finally {
         btnSaveEdit.textContent = 'Salvar Metadados';
       }

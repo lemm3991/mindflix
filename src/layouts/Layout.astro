@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar.astro';
 import InteractiveBackground from '../components/InteractiveBackground.astro';
 import CommandPalette from '../components/CommandPalette.astro';
 import CourseDetailModal from '../components/CourseDetailModal.astro';
+import TrilhaDetailModal from '../components/TrilhaDetailModal.astro';
 import Toast from '../components/Toast.astro';
 import WelcomeNoticeModal from '../components/WelcomeNoticeModal.astro';
 
@@ -131,10 +132,13 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
     </main>
 
     <!-- Global Command Palette Modal (Ctrl+K) -->
-    <CommandPalette transition:persist="command-palette" />
+    <CommandPalette />
 
     <!-- Global Course Detail Modal (Glassmorphism & Background Blur) -->
-    <CourseDetailModal transition:persist="course-detail-modal" />
+    <CourseDetailModal />
+
+    <!-- Global Trilha Detail Modal (Glassmorphism & Sequence Grade) -->
+    <TrilhaDetailModal />
 
     <!-- Global Toast Container -->
     <Toast transition:persist="global-toast" />

@@ -81,7 +81,7 @@ const providers = getAllProviders();
             data-type="trilha"
             data-title={trilha.title.toLowerCase()}
             data-provider={trilha.provider}
-            data-categories="trilha"
+            data-categories={`trilha,${(trilha.categories || []).join(',')}`}
             data-tags="trilha,formacao,trilhas"
             data-corpus={corpus}
             data-trilha-id={trilha.id}
@@ -404,9 +404,8 @@ const providers = getAllProviders();
 
   .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
-    perspective: 1200px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.35rem;
   }
 
   .course-grid-item {

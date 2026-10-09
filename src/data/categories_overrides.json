@@ -1,83 +1,65 @@
 {
   "categories": [
     {
-      "id": "ia",
-      "name": "Inteligência Artificial & LLMs",
+      "id": "ia-llms",
+      "name": "IA Generativa e LLMs",
       "icon": "sparkles",
-      "description": "Modelos de linguagem, Claude, ChatGPT, Engenharia de Prompts e IA Generativa na prática."
+      "description": "Fundamentos de IA generativa, modelos de linguagem, prompts e uso de assistentes."
     },
     {
-      "id": "automacao-agentes",
-      "name": "Automação & Agentes de IA",
+      "id": "agentes-automacao",
+      "name": "Agentes e Automação",
       "icon": "cpu",
-      "description": "Agentes autônomos, integrações com n8n, Make, Hermes Agent e automação de processos."
+      "description": "Agentes de IA, n8n, integrações e automação de tarefas e processos."
     },
     {
-      "id": "web-vibe-coding",
-      "name": "Web, Apps & Vibe Coding",
+      "id": "web-apps",
+      "name": "Desenvolvimento Web e Apps",
       "icon": "layers",
-      "description": "Desenvolvimento web moderno, Lovable, front-end rápido e criação de web apps com IA."
+      "description": "Sites, interfaces, aplicativos web, low-code e ferramentas de criação de apps."
     },
     {
-      "id": "programacao-dev",
-      "name": "Programação & Engenharia",
+      "id": "programacao-python",
+      "name": "Programação e Python",
       "icon": "terminal",
-      "description": "Fundamentos de programação, arquitetura de software, desenvolvimento fullstack e ferramentas."
+      "description": "Lógica, linguagem Python, bibliotecas de uso geral e ferramentas de desenvolvimento."
+    },
+    {
+      "id": "dados-ml",
+      "name": "Dados, BI e Machine Learning",
+      "icon": "bar-chart-2",
+      "description": "Análise, visualização, dashboards, estatística, ciência de dados e aprendizado de máquina."
     },
     {
       "id": "backend-infra",
-      "name": "Backend, Bancos de Dados & Infra",
+      "name": "Backend, Bancos de Dados e Infraestrutura",
       "icon": "database",
-      "description": "Supabase, PostgreSQL, APIs, serviços de banco de dados e infraestrutura moderna."
+      "description": "APIs, SQL, engenharia de dados, containers, cloud e operação de sistemas."
     },
     {
-      "id": "dados-datascience",
-      "name": "Dados & Data Science",
-      "icon": "bar-chart-2",
-      "description": "Análise de dados, Machine Learning, estatística, Dashboards interativos e ciência de dados."
+      "id": "design-artes",
+      "name": "Design, Audiovisual e Artes",
+      "icon": "palette",
+      "description": "Design digital, imagem, vídeo, fotografia, CGI e música."
     },
     {
-      "id": "python",
-      "name": "Ecossistema Python",
-      "icon": "code",
-      "description": "Aplicações práticas com Python, integração com Excel, automação e desenvolvimento."
+      "id": "carreira-pessoal",
+      "name": "Carreira, Comunicação e Desenvolvimento Pessoal",
+      "icon": "user-check",
+      "description": "Soft skills, carreira, produtividade, comunicação, liderança e PNL."
     },
     {
-      "id": "trading",
-      "name": "Trading & Algoritmos Financeiros",
-      "icon": "trending-up",
-      "description": "Quantitative Trading, Algotrading, Backtesting e análise de mercado financeiro."
-    },
-    {
-      "id": "desenvolvimento-pessoal",
-      "name": "Desenvolvimento Pessoal & PNL",
-      "icon": "brain",
-      "description": "Programação Neurolinguística (PNL), soft skills, liderança, mindset e inteligência emocional."
-    },
-    {
-      "id": "saude-lifestyle",
-      "name": "Saúde, Fitness & Culinária",
+      "id": "saude-bem-estar",
+      "name": "Saúde, Alimentação e Bem-Estar",
       "icon": "heart",
-      "description": "Nutrição prática, marmitas fit congeladas, massagem anti-stress e transformação de hábitos."
+      "description": "Nutrição, culinária saudável, fitness, massagem e hábitos."
     },
     {
-      "id": "musica",
-      "name": "Música & Artes",
-      "icon": "music",
-      "description": "Violão, teoria musical, prática instrumental e expressão artística."
-    },
-    {
-      "id": "negocios",
-      "name": "Negócios & Oportunidades",
-      "icon": "briefcase",
-      "description": "Estratégias de negócios, leilões, oportunidades de mercado e gestão de carreira."
-    },
-    {
-      "id": "projetos",
-      "name": "Projetos Práticos",
-      "icon": "folder-git-2",
-      "description": "Projetos práticos guiados, soluções completas de ponta a ponta e implementações reais."
+      "id": "negocios-financas",
+      "name": "Negócios e Mercado Financeiro",
+      "icon": "trending-up",
+      "description": "Comércio, oportunidades de negócio, investimentos e aplicações financeiras."
     }
   ],
-  "updated_at": "2026-09-05T12:44:00Z"
+  "updated_at": "2026-10-07T20:51:56.561Z"
 }

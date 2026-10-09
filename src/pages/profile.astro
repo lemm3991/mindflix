@@ -229,7 +229,7 @@ for (const course of allCourses) {
   </div>
 
   <!-- Embedded Catalog lookup for client JS -->
-  <script id="mindflix-courses-data" type="application/json" set:html={JSON.stringify(courseMap)}></script>
+  <script is:inline id="mindflix-courses-data" type="application/json" set:html={JSON.stringify(courseMap).replace(/</g, '\\u003c')}></script>
 </Layout>
 
 <script>
@@ -593,17 +593,17 @@ for (const course of allCourses) {
       return `
         <div class="day-pillar-col ${day.isToday ? 'is-today' : ''} ${isSelected ? 'is-selected' : ''} ${day.goalReached ? 'goal-met' : ''}" 
              data-day-index="${day.index}" 
-             title="${tooltipText}">
+             aria-label="${tooltipText}">
           
           <div class="pillar-slot-track">
             ${day.goalReached ? '<span class="pillar-goal-star" title="Meta atingida! ✨">✨</span>' : ''}
             
-            <div class="pillar-fill-bar" style="height: ${heightPercent}%;">
-              <span class="pillar-hover-tooltip">
-                <strong class="tooltip-time">${timeFormatted}</strong>
-                <span class="tooltip-meta">${activityMeta}</span>
-                ${day.goalReached ? '<span class="tooltip-badge">🎯 Meta Atingida</span>' : ''}
-              </span>
+            <div class="pillar-fill-bar" style="height: ${heightPercent}%;"></div>
+
+            <div class="pillar-hover-tooltip">
+              <strong class="tooltip-time">${timeFormatted}</strong>
+              <span class="tooltip-meta">${activityMeta}</span>
+              ${day.goalReached ? '<span class="tooltip-badge">🎯 Meta Atingida</span>' : ''}
             </div>
           </div>
 
@@ -1177,7 +1177,7 @@ for (const course of allCourses) {
     padding-bottom: 0.5rem;
     width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .weekly-bars-container {
@@ -1192,12 +1192,12 @@ for (const course of allCourses) {
     box-sizing: border-box;
   }
 
-  .weekly-bars-container.is-30-days {
-    gap: 2px;
+  :global(.weekly-bars-container.is-30-days) {
+    gap: 3px;
   }
 
   /* Pillar Column */
-  .day-pillar-col {
+  :global(.day-pillar-col) {
     flex: 1 1 0%;
     min-width: 0;
     display: flex;
@@ -1210,7 +1210,7 @@ for (const course of allCourses) {
     position: relative;
   }
 
-  .pillar-slot-track {
+  :global(.pillar-slot-track) {
     position: relative;
     width: 100%;
     max-width: 44px;
@@ -1226,25 +1226,25 @@ for (const course of allCourses) {
     box-sizing: border-box;
   }
 
-  .weekly-bars-container.is-30-days .pillar-slot-track {
-    max-width: 18px;
+  :global(.weekly-bars-container.is-30-days .pillar-slot-track) {
+    max-width: 16px;
     border-radius: 4px;
     padding: 1px;
   }
 
-  .day-pillar-col:hover .pillar-slot-track {
+  :global(.day-pillar-col:hover .pillar-slot-track) {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(0, 242, 254, 0.4);
     box-shadow: 0 0 16px rgba(0, 242, 254, 0.15);
   }
 
-  .day-pillar-col.is-selected .pillar-slot-track {
+  :global(.day-pillar-col.is-selected .pillar-slot-track) {
     border-color: var(--accent-cyan);
     background: rgba(0, 242, 254, 0.08);
     box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
   }
 
-  .pillar-goal-star {
+  :global(.pillar-goal-star) {
     position: absolute;
     top: -10px;
     font-size: 0.85rem;
@@ -1257,7 +1257,7 @@ for (const course of allCourses) {
     100% { transform: translateY(-3px); }
   }
 
-  .pillar-fill-bar {
+  :global(.pillar-fill-bar) {
     width: 100%;
     background: linear-gradient(180deg, #00f2fe 0%, #4facfe 60%, #6366f1 100%);
     border-radius: var(--radius-xs);
@@ -1266,17 +1266,17 @@ for (const course of allCourses) {
     min-height: 0;
   }
 
-  .day-pillar-col.goal-met .pillar-fill-bar {
+  :global(.day-pillar-col.goal-met .pillar-fill-bar) {
     background: linear-gradient(180deg, #10b981 0%, #059669 50%, #00f2fe 100%);
     box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
   }
 
-  .day-pillar-col:hover .pillar-fill-bar {
+  :global(.day-pillar-col:hover .pillar-fill-bar) {
     box-shadow: 0 0 16px rgba(0, 242, 254, 0.6);
   }
 
   /* Pillar Tooltip */
-  .pillar-hover-tooltip {
+  :global(.pillar-hover-tooltip) {
     position: absolute;
     bottom: calc(100% + 10px);
     left: 50%;
@@ -1300,7 +1300,7 @@ for (const course of allCourses) {
     -webkit-backdrop-filter: blur(12px);
   }
 
-  .pillar-hover-tooltip::after {
+  :global(.pillar-hover-tooltip::after) {
     content: '';
     position: absolute;
     bottom: -5px;
@@ -1313,24 +1313,24 @@ for (const course of allCourses) {
     border-bottom: 1px solid rgba(0, 242, 254, 0.35);
   }
 
-  .day-pillar-col:hover .pillar-hover-tooltip {
+  :global(.day-pillar-col:hover .pillar-hover-tooltip) {
     opacity: 1;
     visibility: visible;
     transform: translateX(-50%) translateY(0);
   }
 
-  .tooltip-time {
+  :global(.tooltip-time) {
     font-size: 0.8125rem;
     font-weight: 800;
     color: #ffffff;
   }
 
-  .tooltip-meta {
+  :global(.tooltip-meta) {
     font-size: 0.6875rem;
     color: var(--text-muted);
   }
 
-  .tooltip-badge {
+  :global(.tooltip-badge) {
     font-size: 0.625rem;
     font-weight: 700;
     color: var(--accent-emerald);
@@ -1338,7 +1338,7 @@ for (const course of allCourses) {
   }
 
   /* Pillar Labels */
-  .pillar-labels {
+  :global(.pillar-labels) {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1349,7 +1349,7 @@ for (const course of allCourses) {
     overflow: hidden;
   }
 
-  .pillar-day-name {
+  :global(.pillar-day-name) {
     font-size: 0.72rem;
     font-weight: 600;
     color: var(--text-secondary);
@@ -1360,7 +1360,7 @@ for (const course of allCourses) {
     text-align: center;
   }
 
-  .pillar-day-date {
+  :global(.pillar-day-date) {
     font-size: 0.62rem;
     color: var(--text-muted);
     white-space: nowrap;
@@ -1370,32 +1370,32 @@ for (const course of allCourses) {
     text-align: center;
   }
 
-  .weekly-bars-container.is-30-days .pillar-day-name {
+  :global(.weekly-bars-container.is-30-days .pillar-day-name) {
     font-size: 0.58rem;
   }
 
-  .weekly-bars-container.is-30-days .pillar-day-date {
+  :global(.weekly-bars-container.is-30-days .pillar-day-date) {
     font-size: 0.56rem;
   }
 
-  .day-pillar-col.is-today .pillar-day-name {
+  :global(.day-pillar-col.is-today .pillar-day-name) {
     color: var(--accent-cyan);
     font-weight: 800;
   }
 
-  .day-pillar-col.is-selected .pillar-day-name {
+  :global(.day-pillar-col.is-selected .pillar-day-name) {
     color: #ffffff;
     font-weight: 800;
   }
 
   /* Day Activity Wrapper & Notes Summary */
-  .day-activity-wrapper {
+  :global(.day-activity-wrapper) {
     display: flex;
     flex-direction: column;
     gap: 1rem;
   }
 
-  .day-notes-summary {
+  :global(.day-notes-summary) {
     background: rgba(0, 242, 254, 0.04);
     border: 1px solid rgba(0, 242, 254, 0.15);
     border-radius: var(--radius-sm);
@@ -1405,7 +1405,7 @@ for (const course of allCourses) {
     gap: 0.6rem;
   }
 
-  .day-notes-header {
+  :global(.day-notes-header) {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -1414,13 +1414,13 @@ for (const course of allCourses) {
     color: var(--accent-cyan);
   }
 
-  .day-notes-list {
+  :global(.day-notes-list) {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
 
-  .day-note-chip {
+  :global(.day-note-chip) {
     display: inline-flex;
     flex-direction: column;
     padding: 0.4rem 0.75rem;
@@ -1431,18 +1431,18 @@ for (const course of allCourses) {
     transition: all 0.15s ease;
   }
 
-  .day-note-chip:hover {
+  :global(.day-note-chip:hover) {
     background: rgba(0, 242, 254, 0.12);
     border-color: rgba(0, 242, 254, 0.3);
   }
 
-  .note-chip-lesson {
+  :global(.note-chip-lesson) {
     font-size: 0.78rem;
     font-weight: 600;
     color: #ffffff;
   }
 
-  .note-chip-course {
+  :global(.note-chip-course) {
     font-size: 0.68rem;
     color: var(--text-muted);
   }
@@ -1503,13 +1503,13 @@ for (const course of allCourses) {
   }
 
   /* Day Lessons List */
-  .day-lessons-list {
+  :global(.day-lessons-list) {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
   }
 
-  .day-lesson-card {
+  :global(.day-lesson-card) {
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: var(--radius-sm);
@@ -1522,12 +1522,12 @@ for (const course of allCourses) {
     transition: all var(--motion-fast) ease;
   }
 
-  .day-lesson-card:hover {
+  :global(.day-lesson-card:hover) {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.15);
   }
 
-  .lesson-card-left {
+  :global(.lesson-card-left) {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -1535,7 +1535,7 @@ for (const course of allCourses) {
     flex: 1;
   }
 
-  .lesson-course-badge {
+  :global(.lesson-course-badge) {
     padding: 0.25rem 0.55rem;
     background: rgba(99, 102, 241, 0.15);
     border: 1px solid rgba(99, 102, 241, 0.3);
@@ -1548,14 +1548,14 @@ for (const course of allCourses) {
     flex-shrink: 0;
   }
 
-  .lesson-titles {
+  :global(.lesson-titles) {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
     min-width: 0;
   }
 
-  .lesson-name {
+  :global(.lesson-name) {
     font-size: 0.9375rem;
     font-weight: 700;
     color: #ffffff;
@@ -1564,7 +1564,7 @@ for (const course of allCourses) {
     text-overflow: ellipsis;
   }
 
-  .lesson-course-name {
+  :global(.lesson-course-name) {
     font-size: 0.75rem;
     color: var(--text-muted);
     white-space: nowrap;
@@ -1572,14 +1572,14 @@ for (const course of allCourses) {
     text-overflow: ellipsis;
   }
 
-  .lesson-card-right {
+  :global(.lesson-card-right) {
     display: flex;
     align-items: center;
     gap: 1.25rem;
     flex-shrink: 0;
   }
 
-  .lesson-progress-meta {
+  :global(.lesson-progress-meta) {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -1587,7 +1587,7 @@ for (const course of allCourses) {
     min-width: 100px;
   }
 
-  .lesson-progress-bar {
+  :global(.lesson-progress-bar) {
     width: 100%;
     height: 4px;
     background: rgba(255, 255, 255, 0.1);
@@ -1595,19 +1595,19 @@ for (const course of allCourses) {
     overflow: hidden;
   }
 
-  .lesson-progress-fill {
+  :global(.lesson-progress-fill) {
     height: 100%;
     background: var(--grad-primary);
     border-radius: 2px;
   }
 
-  .lesson-time-spent {
+  :global(.lesson-time-spent) {
     font-size: 0.6875rem;
     color: var(--text-secondary);
     font-weight: 600;
   }
 
-  .btn-continue-lesson {
+  :global(.btn-continue-lesson) {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -1622,14 +1622,14 @@ for (const course of allCourses) {
     transition: all var(--motion-fast) ease;
   }
 
-  .btn-continue-lesson:hover {
+  :global(.btn-continue-lesson:hover) {
     background: var(--accent-cyan);
     color: #000000;
     box-shadow: 0 0 12px rgba(0, 242, 254, 0.4);
   }
 
   /* Empty Day State */
-  .empty-day-state {
+  :global(.empty-day-state) {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1641,7 +1641,7 @@ for (const course of allCourses) {
     flex-wrap: wrap;
   }
 
-  .empty-state-visual {
+  :global(.empty-state-visual) {
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -1653,7 +1653,11 @@ for (const course of allCourses) {
     flex-shrink: 0;
   }
 
-  .empty-state-info {
+  :global(.empty-icon) {
+    line-height: 1;
+  }
+
+  :global(.empty-state-info) {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -1661,18 +1665,18 @@ for (const course of allCourses) {
     min-width: 200px;
   }
 
-  .empty-state-title {
+  :global(.empty-state-title) {
     font-size: 0.9375rem;
     font-weight: 700;
     color: #ffffff;
   }
 
-  .empty-state-desc {
+  :global(.empty-state-desc) {
     font-size: 0.8125rem;
     color: var(--text-muted);
   }
 
-  .empty-state-actions {
+  :global(.empty-state-actions) {
     flex-shrink: 0;
   }
 
@@ -1699,15 +1703,15 @@ for (const course of allCourses) {
       width: 100%;
       justify-content: space-between;
     }
-    .day-lesson-card {
+    :global(.day-lesson-card) {
       flex-direction: column;
       align-items: flex-start;
     }
-    .lesson-card-right {
+    :global(.lesson-card-right) {
       width: 100%;
       justify-content: space-between;
     }
-    .empty-day-state {
+    :global(.empty-day-state) {
       flex-direction: column;
       align-items: flex-start;
     }

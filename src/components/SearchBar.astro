@@ -49,95 +49,90 @@ const { placeholder = "Pesquisar cursos, módulos, aulas ou buscar por assunto..
   </div>
 </div>
 
-<script>
-  const input = document.getElementById('global-search-input') as HTMLInputElement | null;
-  const clearBtn = document.getElementById('clear-search-btn');
-  const triggerAiBtn = document.getElementById('trigger-ai-modal-btn');
-  const chips = document.querySelectorAll<HTMLButtonElement>('.quick-filter-chip');
+<script is:inline>
+  (function() {
+    function initSearchBar() {
+      var input = document.getElementById('global-search-input');
+      var clearBtn = document.getElementById('clear-search-btn');
+      var triggerAiBtn = document.getElementById('trigger-ai-modal-btn');
+      var chips = document.querySelectorAll('.quick-filter-chip');
 
-  if (input && clearBtn) {
-    const toggleClear = () => {
-      clearBtn.style.display = input.value.trim().length > 0 ? 'flex' : 'none';
-    };
+      if (input && clearBtn) {
+        var toggleClear = function() {
+          clearBtn.style.display = input.value.trim().length > 0 ? 'flex' : 'none';
+        };
 
-    input.addEventListener('input', toggleClear);
-    toggleClear();
+        input.oninput = function() {
+          toggleClear();
+        };
+        toggleClear();
 
-    clearBtn.addEventListener('click', () => {
-      input.value = '';
-      toggleClear();
-      input.focus();
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-
-    // Clicking or focusing the search bar opens the global Command Palette
-    const openModal = () => {
-      const q = input.value.trim();
-      if (typeof (window as any).openSearchModal === 'function') {
-        (window as any).openSearchModal('all', q);
-      } else {
-        window.dispatchEvent(new CustomEvent('mindflix:open-search', {
-          detail: { type: 'all', query: q }
-        }));
+        clearBtn.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          input.value = '';
+          toggleClear();
+          input.focus();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        };
       }
-    };
 
-    input.addEventListener('click', openModal);
-    input.addEventListener('focus', openModal);
+      if (triggerAiBtn) {
+        triggerAiBtn.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var q = input ? input.value.trim() : '';
+          if (typeof window.openSearchModal === 'function') {
+            window.openSearchModal('ai', q);
+          } else {
+            window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+              detail: { type: 'ai', query: q }
+            }));
+          }
+        };
+      }
 
-    const wrapper = document.querySelector('.search-input-wrapper');
-    wrapper?.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      if (target?.closest('#clear-search-btn') || target?.closest('#trigger-ai-modal-btn')) return;
-      openModal();
-    });
-  }
+      chips.forEach(function(chip) {
+        chip.onclick = function(e) {
+          e.preventDefault();
+          chips.forEach(function(c) { c.classList.remove('active'); });
+          chip.classList.add('active');
 
-  // AI Modal Trigger Button in Input
-  triggerAiBtn?.addEventListener('click', () => {
-    const q = input?.value.trim() || '';
-    if (typeof (window as any).openSearchModal === 'function') {
-      (window as any).openSearchModal('ai', q);
-    } else {
-      window.dispatchEvent(new CustomEvent('mindflix:open-search', {
-        detail: { type: 'ai', query: q }
-      }));
+          var type = chip.getAttribute('data-type') || 'all';
+          var q = input ? input.value.trim() : '';
+
+          if (type === 'ai') {
+            if (typeof window.openSearchModal === 'function') {
+              window.openSearchModal('ai', q);
+            } else {
+              window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+                detail: { type: 'ai', query: q }
+              }));
+            }
+          } else if (type === 'module' || type === 'lesson') {
+            if (typeof window.openSearchModal === 'function') {
+              window.openSearchModal(type, q);
+            } else {
+              window.dispatchEvent(new CustomEvent('mindflix:open-search', {
+                detail: { type: type, query: q }
+              }));
+            }
+          } else {
+            window.dispatchEvent(new CustomEvent('mindflix:catalog-filter-type', {
+              detail: { type: type }
+            }));
+          }
+        };
+      });
     }
-  });
 
-  // Type Filter Chips click handling
-  chips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      chips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-
-      const type = chip.getAttribute('data-type') || 'all';
-      const q = input?.value.trim() || '';
-
-      if (type === 'ai') {
-        if (typeof (window as any).openSearchModal === 'function') {
-          (window as any).openSearchModal('ai', q);
-        } else {
-          window.dispatchEvent(new CustomEvent('mindflix:open-search', {
-            detail: { type: 'ai', query: q }
-          }));
-        }
-      } else if (type === 'module' || type === 'lesson') {
-        if (typeof (window as any).openSearchModal === 'function') {
-          (window as any).openSearchModal(type, q);
-        } else {
-          window.dispatchEvent(new CustomEvent('mindflix:open-search', {
-            detail: { type, query: q }
-          }));
-        }
-      } else {
-        // 'all' or 'course' filters on the current page grid
-        window.dispatchEvent(new CustomEvent('mindflix:catalog-filter-type', {
-          detail: { type }
-        }));
-      }
-    });
-  });
+    document.addEventListener('astro:page-load', initSearchBar);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSearchBar);
+    } else {
+      initSearchBar();
+    }
+  })();
 </script>
 
 <style>

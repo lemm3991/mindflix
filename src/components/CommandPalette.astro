@@ -1,6 +1,67 @@
 ---
 // CommandPalette.astro - Global Raycast / Linear style Command Palette with Type Filters & AI Transcript RAG Search
+import { getAllCourses } from '../lib/catalog';
+
+const allCourses = getAllCourses();
+
+// Build flat search index of courses, modules, lessons, providers, and tags
+const normStr = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const searchIndex: any[] = [];
+
+allCourses.forEach(c => {
+  const firstLessonId = c.modules[0]?.lessons[0]?.id;
+  const courseSub = `${c.provider} • ${c.lessons_count} aulas`;
+  // Course entry
+  searchIndex.push({
+    type: 'course',
+    title: c.display_title,
+    subtitle: courseSub,
+    normTitle: normStr(c.display_title),
+    normSubtitle: normStr(courseSub),
+    url: '#',
+    courseId: c.id,
+    category: 'Cursos',
+    icon: 'book'
+  });
+
+  // Modules entry
+  c.modules.forEach(m => {
+    const modFirstLessonId = m.lessons[0]?.id || firstLessonId;
+    const modSub = `Módulo em: ${c.display_title}`;
+    searchIndex.push({
+      type: 'module',
+      title: m.display_title,
+      subtitle: modSub,
+      normTitle: normStr(m.display_title),
+      normSubtitle: normStr(modSub),
+      url: modFirstLessonId ? `/watch/${c.id}/${modFirstLessonId}` : `/courses`,
+      courseId: c.id,
+      category: 'Módulos',
+      icon: 'folder'
+    });
+
+    // All lessons in module
+    m.lessons.forEach(l => {
+      const lesSub = `Aula em: ${c.display_title} • ${m.display_title}`;
+      searchIndex.push({
+        type: 'lesson',
+        title: l.display_title,
+        subtitle: lesSub,
+        normTitle: normStr(l.display_title),
+        normSubtitle: normStr(lesSub),
+        url: `/watch/${c.id}/${l.id}`,
+        courseId: c.id,
+        category: 'Aulas',
+        icon: 'play'
+      });
+    });
+  });
+});
+const searchIndexJsonSafe = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
 ---
+
+<!-- JSON Payload for safe search index -->
+<script is:inline type="application/json" id="mindflix-search-index-json" set:html={searchIndexJsonSafe}></script>
 
 <div id="cmd-palette-backdrop" class="cmd-palette-backdrop" style="display: none;" aria-hidden="true">
   <div class="cmd-palette-dialog" role="dialog" aria-modal="true" aria-label="Busca Global">
@@ -25,7 +86,13 @@
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </button>
-      <span class="cmd-kbd-esc">ESC</span>
+      <button type="button" class="cmd-modal-close-btn" id="cmd-modal-close-btn" aria-label="Fechar busca">
+        <span class="cmd-kbd-esc">ESC</span>
+        <svg class="cmd-close-x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
 
     <!-- Type Filters Tabs Bar (Curso, Módulo, Aulas & IA) -->
@@ -53,495 +120,470 @@
   </div>
 </div>
 
-<script>
-  const backdrop = document.getElementById('cmd-palette-backdrop');
-  const input = document.getElementById('cmd-palette-input') as HTMLInputElement | null;
-  const resultsContainer = document.getElementById('cmd-results-list');
-  const aiSearchBtn = document.getElementById('cmd-ai-search-btn');
-  const filterTabs = document.querySelectorAll('.cmd-filter-tab');
-  const hintActionText = document.getElementById('cmd-hint-action-text');
-
-  let searchIndex: any[] = [];
-  let isIndexLoaded = false;
-  let isLoadingIndex = false;
-
-  async function ensureSearchIndex(): Promise<any[]> {
-    if (isIndexLoaded) return searchIndex;
-    if (isLoadingIndex) return searchIndex;
-    isLoadingIndex = true;
-    try {
-      const res = await fetch('/api/search/index.json');
-      if (res.ok) {
-        searchIndex = await res.json();
-        isIndexLoaded = true;
-      }
-    } catch (e) {
-      console.error('Failed to load search index:', e);
-    } finally {
-      isLoadingIndex = false;
-    }
-    return searchIndex;
-  }
-
-  // Pre-fetch on idle/first interaction
-  if (typeof window !== 'undefined') {
-    window.addEventListener('pointerdown', () => ensureSearchIndex(), { once: true, passive: true });
-    window.addEventListener('keydown', (e) => {
-      if (e.ctrlKey || e.metaKey) ensureSearchIndex();
-    }, { once: true, passive: true });
-  }
-
-  let activeIndex = -1;
-  let currentResults: any[] = [];
-  let currentFilter = 'all'; // 'all' | 'course' | 'module' | 'lesson' | 'ai'
-  let isAiSearching = false;
-  let lastAiQuery = '';
-
-  const norm = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-
-  function renderLoadingIndex() {
-    if (!resultsContainer) return;
-    resultsContainer.innerHTML = `
-      <div class="cmd-empty" style="padding: 1.5rem 1rem;">
-        <p style="color: var(--text-muted);">Carregando índice de busca...</p>
-      </div>
-    `;
-  }
-
-  async function openPalette(initialFilter = 'all', initialQuery = '') {
-    const bd = document.getElementById('cmd-palette-backdrop');
-    const inp = document.getElementById('cmd-palette-input') as HTMLInputElement | null;
-    if (!bd || !inp) return;
-
-    bd.style.display = 'flex';
-    requestAnimationFrame(() => {
-      bd.classList.add('active');
-    });
-    document.body.style.overflow = 'hidden';
-    
-    if (initialQuery) {
-      inp.value = initialQuery;
-    }
-    
-    setFilter(initialFilter, false);
-
-    if (initialFilter === 'ai' && initialQuery.trim()) {
-      runAiSearch(initialQuery.trim());
-    } else {
-      if (!isIndexLoaded) {
-        renderLoadingIndex();
-        await ensureSearchIndex();
-      }
-      renderResults(inp.value);
-    }
-
-    setTimeout(() => inp.focus(), 60);
-  }
-
-  function closePalette() {
-    const bd = document.getElementById('cmd-palette-backdrop');
-    if (!bd) return;
-    bd.classList.remove('active');
-    document.body.style.overflow = '';
-    setTimeout(() => {
-      bd.style.display = 'none';
-    }, 150);
-  }
-
-  // Expose globally on window
-  window.openSearchModal = function(type = 'all', query = '') {
-    openPalette(type, query);
-  };
-  window.closeSearchModal = function() {
-    closePalette();
-  };
-
-  function setFilter(type, shouldRender = true) {
-    currentFilter = type;
-    filterTabs.forEach(tab => {
-      if (tab.getAttribute('data-type') === type) {
-        tab.classList.add('active');
-      } else {
-        tab.classList.remove('active');
-      }
-    });
-
-    if (type === 'ai') {
-      input.placeholder = "Pergunte sobre qualquer assunto no acervo (ex: 'prompt para criar imagem?')...";
-      if (aiSearchBtn) aiSearchBtn.style.display = 'flex';
-      if (hintActionText) hintActionText.textContent = 'Pesquisar com IA';
-      if (shouldRender) {
-        if (input.value.trim().length >= 3) {
-          runAiSearch(input.value.trim());
-        } else {
-          renderAiWelcome();
-        }
-      }
-    } else {
-      if (aiSearchBtn) aiSearchBtn.style.display = 'none';
-      if (hintActionText) hintActionText.textContent = 'Selecionar';
-
-      if (type === 'course') input.placeholder = "Filtrar por nome do curso ou fornecedor...";
-      else if (type === 'module') input.placeholder = "Filtrar módulos da biblioteca...";
-      else if (type === 'lesson') input.placeholder = "Buscar aulas específicas no catálogo...";
-      else input.placeholder = "Buscar cursos, aulas, módulos, tags... (↑ ↓ para navegar)";
-
-      if (shouldRender) renderResults(input.value);
-    }
-  }
-
-  filterTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const type = tab.getAttribute('data-type') || 'all';
-      setFilter(type, true);
-    });
-  });
-
-  // Keyboard shortcut Ctrl+K / Cmd+K
-  window.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
-      e.preventDefault();
-      if (backdrop?.style.display === 'flex') {
-        closePalette();
-      } else {
-        openPalette('all', '');
-      }
-    } else if (e.key === 'Escape' && backdrop?.style.display === 'flex') {
-      closePalette();
-    }
-  });
-
-  // External open trigger (e.g. from navbar or searchbar)
-  window.addEventListener('mindflix:open-search', (e) => {
-    const detail = e.detail || {};
-    openPalette(detail.type || 'all', detail.query || '');
-  });
-
-  // Close on backdrop click outside dialog
-  backdrop?.addEventListener('click', (e) => {
-    if (e.target === backdrop) {
-      closePalette();
-    }
-  });
-
-  // Render AI Welcome prompt when user enters AI mode without query
-  function renderAiWelcome() {
-    if (!resultsContainer) return;
-    resultsContainer.innerHTML = `
-      <div class="cmd-ai-welcome">
-        <div class="ai-welcome-glow">✦</div>
-        <h3>Busca Inteligente por Assunto nas Transcrições</h3>
-        <p>A IA varre as transcrições das mais de 2.400 aulas e artigos do acervo para responder onde o tema é ensinado, citando trechos exatos e marcas de tempo.</p>
-        <div class="ai-suggested-pills">
-          <span class="ai-pill-label">Exemplos populares:</span>
-          <button type="button" class="ai-sample-pill" data-query="prompt para criar imagem">"prompt para criar imagem"</button>
-          <button type="button" class="ai-sample-pill" data-query="como criar agentes no n8n">"como criar agentes no n8n"</button>
-          <button type="button" class="ai-sample-pill" data-query="leilão de carros judiciais">"leilão de carros judiciais"</button>
-          <button type="button" class="ai-sample-pill" data-query="backtesting dados historicos">"backtesting com python"</button>
-        </div>
-      </div>
-    `;
-
-    resultsContainer.querySelectorAll('.ai-sample-pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const q = btn.getAttribute('data-query') || '';
-        input.value = q;
-        runAiSearch(q);
-      });
-    });
-  }
-
-  // Execute RAG Search over /api/search/ai
-  async function runAiSearch(query) {
-    if (!query || isAiSearching || !resultsContainer) return;
-    isAiSearching = true;
-    lastAiQuery = query;
-
-    resultsContainer.innerHTML = `
-      <div class="cmd-ai-loading">
-        <div class="ai-pulse-orb"></div>
-        <h4 class="ai-loading-title">Analisando mais de 2.400 transcrições do acervo...</h4>
-        <p class="ai-loading-desc">Cruzando aulas, trechos comentados e sintetizando os melhores pontos de estudo para "${query}"</p>
-      </div>
-    `;
-
-    try {
-      // Check for user-configured gemini key in localStorage
-      let apiKey = '';
+<script is:inline>
+  (function() {
+    function getLoadedSearchIndex() {
       try {
-        const prefs = JSON.parse(localStorage.getItem('mindflix_preferences') || '{}');
-        apiKey = prefs.gemini_api_key || '';
-      } catch {}
+        var el = document.getElementById('mindflix-search-index-json');
+        if (el && el.textContent) {
+          return JSON.parse(el.textContent);
+        }
+      } catch (e) {}
+      return [];
+    }
 
-      const res = await fetch('/api/search/ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(apiKey ? { 'x-gemini-api-key': apiKey } : {})
-        },
-        body: JSON.stringify({ query, apiKey })
+    var searchIndex = [];
+    var activeIndex = -1;
+    var currentResults = [];
+    var currentFilter = 'all'; // 'all' | 'course' | 'module' | 'lesson' | 'ai'
+    var isAiSearching = false;
+    var lastAiQuery = '';
+
+    var norm = function(s) {
+      return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    };
+
+    function openPalette(initialFilter, initialQuery) {
+      if (!initialFilter) initialFilter = 'all';
+      if (!initialQuery) initialQuery = '';
+
+      if (!searchIndex || searchIndex.length === 0) {
+        searchIndex = getLoadedSearchIndex();
+      }
+
+      var bd = document.getElementById('cmd-palette-backdrop');
+      var inp = document.getElementById('cmd-palette-input');
+      if (!bd || !inp) return;
+
+      bd.style.display = 'flex';
+      requestAnimationFrame(function() {
+        bd.classList.add('active');
+      });
+      document.body.style.overflow = 'hidden';
+
+      if (initialQuery) {
+        inp.value = initialQuery;
+      }
+
+      setFilter(initialFilter, false);
+
+      if (initialFilter === 'ai' && initialQuery.trim()) {
+        runAiSearch(initialQuery.trim());
+      } else {
+        renderResults(inp.value);
+      }
+
+      setTimeout(function() {
+        inp.focus();
+      }, 60);
+    }
+
+    function closePalette() {
+      var bd = document.getElementById('cmd-palette-backdrop');
+      if (!bd) return;
+      bd.classList.remove('active');
+      document.body.style.overflow = '';
+      setTimeout(function() {
+        bd.style.display = 'none';
+      }, 150);
+    }
+
+    window.openSearchModal = openPalette;
+    window.closeSearchModal = closePalette;
+
+    function setFilter(type, shouldRender) {
+      if (typeof shouldRender === 'undefined') shouldRender = true;
+      currentFilter = type;
+      var filterTabs = document.querySelectorAll('.cmd-filter-tab');
+      filterTabs.forEach(function(tab) {
+        if (tab.getAttribute('data-type') === type) {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
       });
 
-      if (!res.ok) throw new Error('Falha na resposta do servidor.');
-      const data = await res.json();
-      renderAiResults(data);
-    } catch (err) {
-      resultsContainer.innerHTML = `
-        <div class="cmd-empty">
-          <p>Ocorreu um erro ao consultar o acervo com IA: ${err.message || 'Erro desconhecido'}</p>
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-ai" style="margin-top: 1rem;">Tentar Novamente</button>
-        </div>
-      `;
-      document.getElementById('btn-retry-ai')?.addEventListener('click', () => runAiSearch(query));
-    } finally {
-      isAiSearching = false;
-    }
-  }
+      var input = document.getElementById('cmd-palette-input');
+      var aiSearchBtn = document.getElementById('cmd-ai-search-btn');
+      var hintActionText = document.getElementById('cmd-hint-action-text');
 
-  // Format AI summary markdown to HTML
-  function formatSummaryHtml(text) {
-    if (!text) return '';
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n\n/g, '<br><br>')
-      .replace(/\n/g, '<br>');
-  }
+      if (type === 'ai') {
+        if (input) input.placeholder = "Pergunte sobre qualquer assunto no acervo (ex: 'prompt para criar imagem?')...";
+        if (aiSearchBtn) aiSearchBtn.style.display = 'flex';
+        if (hintActionText) hintActionText.textContent = 'Pesquisar com IA';
+        if (shouldRender) {
+          if (input && input.value.trim().length >= 3) {
+            runAiSearch(input.value.trim());
+          } else {
+            renderAiWelcome();
+          }
+        }
+      } else {
+        if (aiSearchBtn) aiSearchBtn.style.display = 'none';
+        if (hintActionText) hintActionText.textContent = 'Selecionar';
 
-  // Highlight keywords in snippet
-  function highlightSnippet(snippet, keywords) {
-    if (!keywords || keywords.length === 0) return snippet;
-    let text = snippet;
-    keywords.forEach(kw => {
-      if (kw.length >= 3) {
-        const regex = new RegExp(`(${kw})`, 'gi');
-        text = text.replace(regex, '<mark class="ai-term-mark">$1</mark>');
+        if (input) {
+          if (type === 'course') input.placeholder = "Filtrar por nome do curso ou fornecedor...";
+          else if (type === 'module') input.placeholder = "Filtrar módulos da biblioteca...";
+          else if (type === 'lesson') input.placeholder = "Buscar aulas específicas no catálogo...";
+          else input.placeholder = "Buscar cursos, aulas, módulos, tags... (↑ ↓ para navegar)";
+        }
+
+        if (shouldRender && input) renderResults(input.value);
       }
-    });
-    return text;
-  }
-
-  // Render AI Results Section
-  function renderAiResults(data) {
-    if (!resultsContainer) return;
-    const { query, summary, matches, totalMatches, searchTimeMs, hasGeminiKey } = data;
-
-    if (!matches || matches.length === 0) {
-      resultsContainer.innerHTML = `
-        <div class="cmd-empty">
-          <p>Nenhuma menção direta ao tema "<strong>${query}</strong>" foi encontrada nas transcrições.</p>
-          <p style="font-size: 0.8125rem; margin-top: 0.5rem; color: var(--text-muted);">Tente buscar por termos sinônimos ou conceitos relacionados.</p>
-        </div>
-      `;
-      return;
     }
 
-    let html = `
-      <div class="ai-results-wrapper">
-        <!-- AI Synthesis Card -->
-        <div class="ai-summary-card">
-          <div class="ai-summary-header">
-            <div class="ai-badge-group">
-              <span class="ai-sparkle-badge">✦ Análise Inteligente do Acervo</span>
-              <span class="ai-mode-tag">${hasGeminiKey ? 'Gemini 2.5' : 'Motor RAG Local'}</span>
-            </div>
-            <span class="ai-meta-time">${totalMatches} referências em ${searchTimeMs}ms</span>
-          </div>
-          <div class="ai-summary-body">
-            ${formatSummaryHtml(summary)}
-          </div>
-        </div>
+    function renderAiWelcome() {
+      var resultsContainer = document.getElementById('cmd-results-list');
+      if (!resultsContainer) return;
+      resultsContainer.innerHTML = '<div class="cmd-ai-welcome">' +
+        '<div class="ai-welcome-glow">✦</div>' +
+        '<h3>Busca Inteligente por Assunto nas Transcrições</h3>' +
+        '<p>A IA varre as transcrições das mais de 2.400 aulas e artigos do acervo para responder onde o tema é ensinado, citando trechos exatos e marcas de tempo.</p>' +
+        '<div class="ai-suggested-pills">' +
+          '<span class="ai-pill-label">Exemplos populares:</span>' +
+          '<button type="button" class="ai-sample-pill" data-query="prompt para criar imagem">"prompt para criar imagem"</button>' +
+          '<button type="button" class="ai-sample-pill" data-query="como criar agentes no n8n">"como criar agentes no n8n"</button>' +
+          '<button type="button" class="ai-sample-pill" data-query="leilão de carros judiciais">"leilão de carros judiciais"</button>' +
+          '<button type="button" class="ai-sample-pill" data-query="backtesting dados historicos">"backtesting com python"</button>' +
+        '</div>' +
+      '</div>';
 
-        <!-- Matching Lessons Header -->
-        <div class="ai-matches-header">
-          <span class="ai-matches-title">Aulas Recomendadas no Acervo</span>
-          <span class="ai-matches-count">${matches.length} principais aulas encontradas</span>
-        </div>
-
-        <!-- Lessons Cards List -->
-        <div class="ai-matches-list">
-    `;
-
-    matches.forEach(m => {
-      html += `
-        <div class="ai-match-card">
-          <div class="ai-match-top">
-            <div class="ai-match-tags">
-              <span class="ai-course-tag">${m.courseTitle}</span>
-              <span class="ai-tag-sep">•</span>
-              <span class="ai-module-tag">${m.moduleTitle}</span>
-            </div>
-            ${m.timestamp ? `<span class="ai-timestamp-pill">⏱ ${m.timestamp}</span>` : ''}
-          </div>
-
-          <h4 class="ai-match-title">${m.lessonTitle}</h4>
-
-          <div class="ai-match-snippet">
-            <p>"${highlightSnippet(m.snippet, m.highlightWords)}"</p>
-          </div>
-
-          <div class="ai-match-footer">
-            <a href="${m.watchUrl}" class="ai-watch-link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-              <span>Assistir Aula no Player</span>
-            </a>
-          </div>
-        </div>
-      `;
-    });
-
-    html += `
-        </div>
-      </div>
-    `;
-
-    resultsContainer.innerHTML = html;
-  }
-
-  // Standard Metadata Search Rendering
-  function renderResults(query: string) {
-    if (!resultsContainer) return;
-    if (!isIndexLoaded) {
-      renderLoadingIndex();
-      ensureSearchIndex().then(() => {
-        renderResults(input?.value || '');
+      resultsContainer.querySelectorAll('.ai-sample-pill').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var q = btn.getAttribute('data-query') || '';
+          var inp = document.getElementById('cmd-palette-input');
+          if (inp) inp.value = q;
+          runAiSearch(q);
+        });
       });
-      return;
-    }
-    const q = norm(query);
-
-    let filtered = searchIndex;
-    if (currentFilter !== 'all') {
-      filtered = searchIndex.filter(item => item.type === currentFilter);
     }
 
-    if (!q) {
-      currentResults = filtered.slice(0, 12);
-    } else {
-      currentResults = filtered
-        .filter(item => (item.normTitle && item.normTitle.includes(q)) || (item.normSubtitle && item.normSubtitle.includes(q)))
-        .slice(0, 16);
+    async function runAiSearch(query) {
+      var resultsContainer = document.getElementById('cmd-results-list');
+      if (!query || isAiSearching || !resultsContainer) return;
+      isAiSearching = true;
+      lastAiQuery = query;
+
+      resultsContainer.innerHTML = '<div class="cmd-ai-loading">' +
+        '<div class="ai-pulse-orb"></div>' +
+        '<h4 class="ai-loading-title">Analisando mais de 2.400 transcrições do acervo...</h4>' +
+        '<p class="ai-loading-desc">Cruzando aulas, trechos comentados e sintetizando os melhores pontos de estudo para "' + query + '"</p>' +
+      '</div>';
+
+      try {
+        var apiKey = '';
+        try {
+          var prefs = JSON.parse(localStorage.getItem('mindflix_preferences') || '{}');
+          apiKey = prefs.gemini_api_key || '';
+        } catch (e) {}
+
+        var res = await fetch('/api/search/ai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(apiKey ? { 'x-gemini-api-key': apiKey } : {})
+          },
+          body: JSON.stringify({ query: query, apiKey: apiKey })
+        });
+
+        if (!res.ok) throw new Error('Falha na resposta do servidor.');
+        var data = await res.json();
+        renderAiResults(data);
+      } catch (err) {
+        resultsContainer.innerHTML = '<div class="cmd-empty">' +
+          '<p>Ocorreu um erro ao consultar o acervo com IA: ' + (err.message || 'Erro desconhecido') + '</p>' +
+          '<button type="button" class="btn btn-secondary btn-sm" id="btn-retry-ai" style="margin-top: 1rem;">Tentar Novamente</button>' +
+        '</div>';
+        var retryBtn = document.getElementById('btn-retry-ai');
+        if (retryBtn) retryBtn.addEventListener('click', function() { runAiSearch(query); });
+      } finally {
+        isAiSearching = false;
+      }
     }
 
-    activeIndex = currentResults.length > 0 ? 0 : -1;
-
-    if (currentResults.length === 0) {
-      resultsContainer.innerHTML = `
-        <div class="cmd-empty">
-          <p>Nenhum resultado encontrado para "<strong>${query}</strong>"</p>
-          <p style="font-size: 0.8125rem; margin-top: 0.5rem;">Dica: experimente a aba <strong>✦ Buscar por Assunto (IA)</strong> para pesquisar nas transcrições!</p>
-        </div>
-      `;
-      return;
+    function formatSummaryHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
     }
 
-    let html = '';
-    currentResults.forEach((item, idx) => {
-      const isSelected = idx === activeIndex ? 'selected' : '';
-      html += `
-        <a href="${item.url}" class="cmd-result-item ${isSelected}" data-index="${idx}">
-          <div class="cmd-item-left">
-            <span class="cmd-badge-type">${item.category}</span>
-            <div class="cmd-item-titles">
-              <strong class="cmd-item-title">${item.title}</strong>
-              <span class="cmd-item-subtitle">${item.subtitle}</span>
-            </div>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </a>
-      `;
+    function highlightSnippet(snippet, keywords) {
+      if (!keywords || keywords.length === 0) return snippet;
+      var text = snippet;
+      keywords.forEach(function(kw) {
+        if (kw && kw.length >= 3) {
+          var regex = new RegExp('(' + kw + ')', 'gi');
+          text = text.replace(regex, '<mark class="ai-term-mark">$1</mark>');
+        }
+      });
+      return text;
+    }
+
+    function renderAiResults(data) {
+      var resultsContainer = document.getElementById('cmd-results-list');
+      if (!resultsContainer) return;
+      var query = data.query;
+      var summary = data.summary;
+      var matches = data.matches || [];
+      var totalMatches = data.totalMatches || 0;
+      var searchTimeMs = data.searchTimeMs || 0;
+      var hasGeminiKey = data.hasGeminiKey;
+
+      if (!matches || matches.length === 0) {
+        resultsContainer.innerHTML = '<div class="cmd-empty">' +
+          '<p>Nenhuma menção direta ao tema "<strong>' + query + '</strong>" foi encontrada nas transcrições.</p>' +
+          '<p style="font-size: 0.8125rem; margin-top: 0.5rem; color: var(--text-muted);">Tente buscar por termos sinônimos ou conceitos relacionados.</p>' +
+        '</div>';
+        return;
+      }
+
+      var html = '<div class="ai-results-wrapper">' +
+        '<div class="ai-summary-card">' +
+          '<div class="ai-summary-header">' +
+            '<div class="ai-badge-group">' +
+              '<span class="ai-sparkle-badge">✦ Análise Inteligente do Acervo</span>' +
+              '<span class="ai-mode-tag">' + (hasGeminiKey ? 'Gemini 2.5' : 'Motor RAG Local') + '</span>' +
+            '</div>' +
+            '<span class="ai-meta-time">' + totalMatches + ' referências em ' + searchTimeMs + 'ms</span>' +
+          '</div>' +
+          '<div class="ai-summary-body">' + formatSummaryHtml(summary) + '</div>' +
+        '</div>' +
+        '<div class="ai-matches-header">' +
+          '<span class="ai-matches-title">Aulas Recomendadas no Acervo</span>' +
+          '<span class="ai-matches-count">' + matches.length + ' principais aulas encontradas</span>' +
+        '</div>' +
+        '<div class="ai-matches-list">';
+
+      matches.forEach(function(m) {
+        html += '<div class="ai-match-card">' +
+          '<div class="ai-match-top">' +
+            '<div class="ai-match-tags">' +
+              '<span class="ai-course-tag">' + m.courseTitle + '</span>' +
+              '<span class="ai-tag-sep">•</span>' +
+              '<span class="ai-module-tag">' + m.moduleTitle + '</span>' +
+            '</div>' +
+            (m.timestamp ? ('<span class="ai-timestamp-pill">⏱ ' + m.timestamp + '</span>') : '') +
+          '</div>' +
+          '<h4 class="ai-match-title">' + m.lessonTitle + '</h4>' +
+          '<div class="ai-match-snippet">' +
+            '<p>"' + highlightSnippet(m.snippet, m.highlightWords) + '"</p>' +
+          '</div>' +
+          '<div class="ai-match-footer">' +
+            '<a href="' + m.watchUrl + '" class="ai-watch-link">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>' +
+              '<span>Assistir Aula no Player</span>' +
+            '</a>' +
+          '</div>' +
+        '</div>';
+      });
+
+      html += '</div></div>';
+      resultsContainer.innerHTML = html;
+    }
+
+    function renderResults(query) {
+      var resultsContainer = document.getElementById('cmd-results-list');
+      if (!resultsContainer) return;
+      if (!searchIndex || searchIndex.length === 0) {
+        searchIndex = getLoadedSearchIndex();
+      }
+
+      var q = norm(query);
+      var filtered = searchIndex;
+      if (currentFilter !== 'all') {
+        filtered = searchIndex.filter(function(item) { return item.type === currentFilter; });
+      }
+
+      if (!q) {
+        currentResults = filtered.slice(0, 12);
+      } else {
+        currentResults = filtered
+          .filter(function(item) {
+            return (item.normTitle && item.normTitle.indexOf(q) !== -1) || (item.normSubtitle && item.normSubtitle.indexOf(q) !== -1);
+          })
+          .slice(0, 16);
+      }
+
+      activeIndex = currentResults.length > 0 ? 0 : -1;
+
+      if (currentResults.length === 0) {
+        resultsContainer.innerHTML = '<div class="cmd-empty">' +
+          '<p>Nenhum resultado encontrado para "<strong>' + query + '</strong>"</p>' +
+          '<p style="font-size: 0.8125rem; margin-top: 0.5rem;">Dica: experimente a aba <strong>✦ Buscar por Assunto (IA)</strong> para pesquisar nas transcrições!</p>' +
+        '</div>';
+        return;
+      }
+
+      var html = '';
+      currentResults.forEach(function(item, idx) {
+        var isSelected = idx === activeIndex ? 'selected' : '';
+        html += '<a href="' + item.url + '" class="cmd-result-item ' + isSelected + '" data-index="' + idx + '">' +
+          '<div class="cmd-item-left">' +
+            '<span class="cmd-badge-type">' + item.category + '</span>' +
+            '<div class="cmd-item-titles">' +
+              '<strong class="cmd-item-title">' + item.title + '</strong>' +
+              '<span class="cmd-item-subtitle">' + item.subtitle + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<polyline points="9 18 15 12 9 6"></polyline>' +
+          '</svg>' +
+        '</a>';
+      });
+
+      resultsContainer.innerHTML = html;
+    }
+
+    function executeItem(item) {
+      if (!item) return;
+      if (item.type === 'course' && item.courseId) {
+        closePalette();
+        if (window.openCourseModal) {
+          window.openCourseModal(item.courseId);
+        } else {
+          document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId: item.courseId } }));
+        }
+      } else if (item.url && item.url !== '#') {
+        window.location.href = item.url;
+      }
+    }
+
+    function updateSelectedUI() {
+      var resultsContainer = document.getElementById('cmd-results-list');
+      var items = resultsContainer ? resultsContainer.querySelectorAll('.cmd-result-item') : [];
+      items.forEach(function(el, idx) {
+        if (idx === activeIndex) {
+          el.classList.add('selected');
+          el.scrollIntoView({ block: 'nearest' });
+        } else {
+          el.classList.remove('selected');
+        }
+      });
+    }
+
+    // Global event delegation for clicks and keyboard
+    document.addEventListener('keydown', function(e) {
+      var bd = document.getElementById('cmd-palette-backdrop');
+      var isOpen = bd && (bd.classList.contains('active') || bd.style.display === 'flex');
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        if (isOpen) closePalette();
+        else openPalette('all', '');
+      } else if (e.key === 'Escape' && isOpen) {
+        e.preventDefault();
+        closePalette();
+      }
     });
 
-    resultsContainer.innerHTML = html;
-  }
+    document.addEventListener('click', function(e) {
+      var target = e.target;
+      if (!target) return;
 
-  input?.addEventListener('input', () => {
-    if (currentFilter === 'ai') {
-      // In AI mode, typing can suggest sample queries or user can press Enter
-      if (!input.value.trim()) {
-        renderAiWelcome();
+      var bd = document.getElementById('cmd-palette-backdrop');
+      var isOpen = bd && (bd.classList.contains('active') || bd.style.display === 'flex');
+
+      // Backdrop click outside dialog
+      if (isOpen && target === bd) {
+        closePalette();
+        return;
       }
-    } else {
-      renderResults(input.value);
-    }
-  });
 
-  aiSearchBtn?.addEventListener('click', () => {
-    if (input.value.trim()) {
-      runAiSearch(input.value.trim());
-    }
-  });
-
-  function executeItem(item) {
-    if (!item) return;
-    if (item.type === 'course' && item.courseId) {
-      closePalette();
-      if (window.openCourseModal) {
-        window.openCourseModal(item.courseId);
-      } else {
-        document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId: item.courseId } }));
+      // Close button click
+      if (target.closest('#cmd-modal-close-btn') || target.closest('.cmd-modal-close-btn')) {
+        closePalette();
+        return;
       }
-    } else if (item.url && item.url !== '#') {
-      window.location.href = item.url;
-    }
-  }
 
-  resultsContainer?.addEventListener('click', (e) => {
-    const target = e.target;
-    const link = target && target.closest ? target.closest('.cmd-result-item') : null;
-    if (link) {
-      const idx = parseInt(link.getAttribute('data-index') || '-1', 10);
-      if (idx >= 0 && currentResults[idx]) {
+      // Navbar search button trigger
+      if (target.closest('#open-search-modal-btn')) {
         e.preventDefault();
-        executeItem(currentResults[idx]);
+        openPalette('all', '');
+        return;
       }
-    }
-  });
 
-  input?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (currentFilter === 'ai') {
-        if (input.value.trim()) {
-          runAiSearch(input.value.trim());
-        }
-      } else {
-        if (activeIndex >= 0 && activeIndex < currentResults.length) {
-          executeItem(currentResults[activeIndex]);
-        }
-      }
-    } else if (currentFilter !== 'ai') {
-      if (e.key === 'ArrowDown') {
+      // Filter tabs
+      var filterTab = target.closest('.cmd-filter-tab');
+      if (filterTab && filterTab.closest('#cmd-filters-bar')) {
         e.preventDefault();
-        if (currentResults.length > 0) {
-          activeIndex = (activeIndex + 1) % currentResults.length;
-          updateSelectedUI();
-        }
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (currentResults.length > 0) {
-          activeIndex = (activeIndex - 1 + currentResults.length) % currentResults.length;
-          updateSelectedUI();
-        }
+        var type = filterTab.getAttribute('data-type') || 'all';
+        setFilter(type, true);
+        return;
       }
-    }
-  });
 
-  function updateSelectedUI() {
-    const items = resultsContainer?.querySelectorAll('.cmd-result-item');
-    items?.forEach((el, idx) => {
-      if (idx === activeIndex) {
-        el.classList.add('selected');
-        el.scrollIntoView({ block: 'nearest' });
-      } else {
-        el.classList.remove('selected');
+      // AI action button in input
+      if (target.closest('#cmd-ai-search-btn')) {
+        e.preventDefault();
+        var inp = document.getElementById('cmd-palette-input');
+        if (inp && inp.value.trim()) {
+          runAiSearch(inp.value.trim());
+        }
+        return;
+      }
+
+      // Result item click
+      var resultItem = target.closest('.cmd-result-item');
+      if (resultItem && resultItem.closest('#cmd-results-list')) {
+        var idx = parseInt(resultItem.getAttribute('data-index') || '-1', 10);
+        if (idx >= 0 && currentResults[idx]) {
+          e.preventDefault();
+          executeItem(currentResults[idx]);
+        }
       }
     });
-  }
+
+    function bindInputEvents() {
+      var input = document.getElementById('cmd-palette-input');
+      if (!input) return;
+
+      input.oninput = function() {
+        if (currentFilter === 'ai') {
+          if (!input.value.trim()) renderAiWelcome();
+        } else {
+          renderResults(input.value);
+        }
+      };
+
+      input.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (currentFilter === 'ai') {
+            if (input.value.trim()) runAiSearch(input.value.trim());
+          } else {
+            if (activeIndex >= 0 && activeIndex < currentResults.length) {
+              executeItem(currentResults[activeIndex]);
+            }
+          }
+        } else if (currentFilter !== 'ai') {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (currentResults.length > 0) {
+              activeIndex = (activeIndex + 1) % currentResults.length;
+              updateSelectedUI();
+            }
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentResults.length > 0) {
+              activeIndex = (activeIndex - 1 + currentResults.length) % currentResults.length;
+              updateSelectedUI();
+            }
+          }
+        }
+      };
+    }
+
+    window.addEventListener('mindflix:open-search', function(e) {
+      var detail = e.detail || {};
+      openPalette(detail.type || 'all', detail.query || '');
+    });
+
+    document.addEventListener('astro:page-load', bindInputEvents);
+    bindInputEvents();
+  })();
 </script>
 
 <style>

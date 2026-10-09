@@ -23,6 +23,7 @@ export interface Trilha {
   source: string;
   provider: string;
   description: string;
+  categories?: string[];
   total_cursos: number;
   total_lessons_count: number;
   total_duration_seconds: number;

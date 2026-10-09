@@ -9,6 +9,8 @@ export interface NoteItem {
   moduleTitle?: string;
   content: string; // HTML com formatação e checklist
   updatedAt: string; // ISO Date String
+  timestampSeconds?: number | null; // Posição do vídeo associada à anotação
+  hasTimestamp?: boolean; // Se a caixinha de tempo estava selecionada/ativa
 }
 
 const STORAGE_KEY = 'mindflix_user_notes';

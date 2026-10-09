@@ -50,72 +50,88 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
   }
   
   if (flatLessons.length === 0) return defaultRes;
-  
-  // 1. Find the LAST lesson index marked as completed in course order
-  let lastCompletedIdx = -1;
-  for (let i = flatLessons.length - 1; i >= 0; i--) {
-    const item = flatLessons[i];
+
+  // Check if course has any progress (any lesson completed or position > 0)
+  const hasStarted = flatLessons.some(item => {
     const prog = allProgress[item.lesson.id];
-    if (prog && prog.completed) {
-      lastCompletedIdx = i;
-      break;
-    }
-  }
+    return prog && (prog.completed || prog.percentage > 0 || prog.position_seconds > 0);
+  });
 
-  // If at least one lesson is marked completed, return the next video immediately after it
-  if (lastCompletedIdx >= 0) {
-    const nextIdx = lastCompletedIdx + 1;
-    if (nextIdx < flatLessons.length) {
-      const nextItem = flatLessons[nextIdx];
-      return {
-        lesson: nextItem.lesson,
-        module: nextItem.module,
-        isResume: true,
-        watchUrl: `/watch/${course.id}/${nextItem.lesson.id}`,
-        label: `Continuar: ${nextItem.lesson.display_title}`
-      };
-    } else {
-      // All lessons are completed: default to first lesson for rewatching
-      const first = flatLessons[0];
-      return {
-        lesson: first.lesson,
-        module: first.module,
-        isResume: true,
-        watchUrl: `/watch/${course.id}/${first.lesson.id}`,
-        label: 'Reassistir Curso'
-      };
-    }
-  }
-
-  // 2. If NO lesson is marked completed yet, check for an in-progress lesson
-  let inProgressItem: { lesson: Lesson; module: Module; lastWatched?: string } | null = null;
-  for (const item of flatLessons) {
+  // Find the FIRST lesson in order that is NOT completed
+  const firstUncompletedItem = flatLessons.find(item => {
     const prog = allProgress[item.lesson.id];
-    if (prog && prog.percentage > 0 && !prog.completed) {
-      if (!inProgressItem || (prog.last_watched_at && (!inProgressItem.lastWatched || new Date(prog.last_watched_at) > new Date(inProgressItem.lastWatched)))) {
-        inProgressItem = { lesson: item.lesson, module: item.module, lastWatched: prog.last_watched_at };
-      }
-    }
-  }
+    return !prog || !prog.completed;
+  });
 
-  if (inProgressItem) {
+  if (firstUncompletedItem) {
     return {
-      lesson: inProgressItem.lesson,
-      module: inProgressItem.module,
-      isResume: true,
-      watchUrl: `/watch/${course.id}/${inProgressItem.lesson.id}`,
-      label: `Continuar: ${inProgressItem.lesson.display_title}`
+      lesson: firstUncompletedItem.lesson,
+      module: firstUncompletedItem.module,
+      isResume: hasStarted,
+      watchUrl: `/watch/${course.id}/${firstUncompletedItem.lesson.id}`,
+      label: hasStarted ? 'Continuar assistindo' : 'Assistir Agora'
     };
   }
 
-  // 3. Fallback to first lesson
+  // If ALL lessons in the course are completed:
   const first = flatLessons[0];
   return {
     lesson: first.lesson,
     module: first.module,
-    isResume: false,
+    isResume: true,
     watchUrl: `/watch/${course.id}/${first.lesson.id}`,
-    label: 'Assistir Agora'
+    label: 'Reassistir Curso'
+  };
+}
+
+// HELPER: GET NEXT LESSON OR RESUME LESSON FOR TRILHA
+export function getNextLessonToWatchForTrilha(
+  trilhaId: string, 
+  allLessons: { lesson: Lesson; courseId: string; courseTitle: string }[]
+): { lesson?: Lesson; courseId?: string; isResume: boolean; watchUrl: string; label: string } {
+  const defaultLessonItem = allLessons?.[0];
+  const defaultRes = {
+    lesson: defaultLessonItem?.lesson,
+    courseId: defaultLessonItem?.courseId,
+    isResume: false,
+    watchUrl: defaultLessonItem ? `/watch/trilha/${trilhaId}/${defaultLessonItem.lesson.id}` : '/courses',
+    label: 'Iniciar Trilha'
+  };
+
+  if (!allLessons || allLessons.length === 0) return defaultRes;
+
+  const allProgress = getAllLocalProgress();
+
+  // Check if trilha has any progress
+  const hasStarted = allLessons.some(item => {
+    const prog = allProgress[item.lesson.id];
+    return prog && (prog.completed || prog.percentage > 0 || prog.position_seconds > 0);
+  });
+
+  // Find the FIRST lesson in chronological order that is NOT marked as completed
+  const firstUncompletedItem = allLessons.find(item => {
+    const prog = allProgress[item.lesson.id];
+    return !prog || !prog.completed;
+  });
+
+  if (firstUncompletedItem) {
+    return {
+      lesson: firstUncompletedItem.lesson,
+      courseId: firstUncompletedItem.courseId,
+      isResume: hasStarted,
+      watchUrl: `/watch/trilha/${trilhaId}/${firstUncompletedItem.lesson.id}`,
+      label: hasStarted ? 'Continuar assistindo' : 'Iniciar Trilha'
+    };
+  }
+
+  // If ALL lessons in the trilha are completed:
+  const first = allLessons[0];
+  return {
+    lesson: first.lesson,
+    courseId: first.courseId,
+    isResume: true,
+    watchUrl: `/watch/trilha/${trilhaId}/${first.lesson.id}`,
+    label: 'Reassistir Trilha'
   };
 }
 
@@ -298,8 +314,30 @@ export function getAllLocalProgress(): Record<string, UserProgress> {
   if (typeof window === 'undefined') return {};
   try {
     const key = getUserScopedKey(STORAGE_KEYS.PROGRESS);
-    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.PROGRESS);
-    return raw ? JSON.parse(raw) : {};
+    const userRaw = localStorage.getItem(key);
+    const globalRaw = localStorage.getItem(STORAGE_KEYS.PROGRESS);
+    const permanentRaw = localStorage.getItem('mindflix_progress_permanent');
+
+    const userProg: Record<string, UserProgress> = userRaw ? JSON.parse(userRaw) : {};
+    const globalProg: Record<string, UserProgress> = globalRaw ? JSON.parse(globalRaw) : {};
+    const permanentProg: Record<string, UserProgress> = permanentRaw ? JSON.parse(permanentRaw) : {};
+
+    // Merge: permanent + global + user scoped (preserving completed status regardless of logout)
+    const merged: Record<string, UserProgress> = { ...permanentProg, ...globalProg, ...userProg };
+    
+    // Ensure any completed mark from any source is preserved
+    for (const [id, item] of Object.entries(permanentProg)) {
+      if (item?.completed && merged[id]) {
+        merged[id].completed = true;
+      }
+    }
+    for (const [id, item] of Object.entries(globalProg)) {
+      if (item?.completed && merged[id]) {
+        merged[id].completed = true;
+      }
+    }
+
+    return merged;
   } catch {
     return {};
   }
@@ -309,8 +347,10 @@ export function saveAllLocalProgress(progressMap: Record<string, UserProgress>):
   if (typeof window === 'undefined') return;
   try {
     const key = getUserScopedKey(STORAGE_KEYS.PROGRESS);
-    localStorage.setItem(key, JSON.stringify(progressMap));
-    localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(progressMap));
+    const json = JSON.stringify(progressMap);
+    localStorage.setItem(key, json);
+    localStorage.setItem(STORAGE_KEYS.PROGRESS, json);
+    localStorage.setItem('mindflix_progress_permanent', json);
   } catch {}
 }
 

@@ -2,7 +2,7 @@
 // HeroCourse.astro - Rotating editorial showcase with mouse parallax and smooth crossfade
 import type { Course } from '../types/catalog';
 import { getAllCourses, getFirstPlayableLesson, isPlayableVideoLesson, isComecePorAqui, isProjectCourse } from '../lib/catalog';
-import { getLessonDriveId } from '../lib/drive';
+import { buildServerStreamUrl } from '../lib/mediaProvider';
 import { getCourseSourceId } from '../lib/sources';
 import ProgressBar from './ProgressBar.astro';
 
@@ -56,10 +56,7 @@ if (featuredCourses && featuredCourses.length > 0) {
       const isVideo = isPlayableVideoLesson(firstLesson);
       const videoPath = isVideo ? (firstLesson?.relative_path || '') : '';
       const sourceId = getCourseSourceId(course);
-      const driveId = getLessonDriveId(firstLesson);
-      const videoSrc = driveId 
-        ? `/api/video?drive_id=${driveId}&stream=1`
-        : (videoPath ? `/api/video?path=${encodeURIComponent(videoPath)}` : '');
+      const videoSrc = videoPath ? buildServerStreamUrl(videoPath) : '';
 
       return (
         <div
@@ -206,254 +203,248 @@ if (featuredCourses && featuredCourses.length > 0) {
   </div>
 </section>
 
-<script>
-  import { getAllCourses } from '../lib/catalog';
-  import { getActiveSource } from '../lib/sources';
-  import { getCourseCompletionStats, isCourseFavorite, toggleFavorite, getUserPreferences, getNextLessonToWatch } from '../lib/progress';
-  import { showToast } from '../lib/toast';
+<script is:inline>
+  (function() {
+    function initHero() {
+      var heroSection = document.getElementById('home-hero-section');
+      if (!heroSection) return;
 
-  const heroSection = document.getElementById('home-hero-section');
-  const parallaxBg = document.getElementById('hero-parallax-bg');
-  const glow = document.getElementById('hero-glow');
-  const slides = document.querySelectorAll<HTMLElement>('.hero-slide');
-  const dots = document.querySelectorAll<HTMLElement>('.indicator-dot');
-  const allCourses = getAllCourses();
-  const videoItems = document.querySelectorAll<HTMLElement>('.hero-video-item');
-  const soundBtn = document.getElementById('hero-sound-toggle');
+      var slides = Array.from(heroSection.querySelectorAll('.hero-slide'));
+      var dots = Array.from(heroSection.querySelectorAll('.indicator-dot'));
+      var videoItems = Array.from(heroSection.querySelectorAll('.hero-video-item'));
+      var soundBtn = document.getElementById('hero-sound-toggle');
+      var parallaxBg = document.getElementById('hero-parallax-bg');
+      var glow = document.getElementById('hero-glow');
 
-  let currentSlide = 0;
-  let rotationTimer: any;
-  let isHeroMuted = true;
+      if (slides.length === 0) return;
 
-  function updateSoundUI() {
-    if (!soundBtn) return;
-    const mutedIcon = soundBtn.querySelector<HTMLElement>('.sound-icon-muted');
-    const unmutedIcon = soundBtn.querySelector<HTMLElement>('.sound-icon-unmuted');
-    const soundLabel = soundBtn.querySelector<HTMLElement>('.sound-label');
+      var currentSlide = 0;
+      var rotationTimer = null;
+      var isHeroMuted = true;
 
-    if (isHeroMuted) {
-      if (mutedIcon) mutedIcon.style.display = 'inline-flex';
-      if (unmutedIcon) unmutedIcon.style.display = 'none';
-      if (soundLabel) soundLabel.textContent = 'Mudo';
-      soundBtn.classList.remove('unmuted');
-      soundBtn.title = 'Clique para ativar som';
-    } else {
-      if (mutedIcon) mutedIcon.style.display = 'none';
-      if (unmutedIcon) unmutedIcon.style.display = 'inline-flex';
-      if (soundLabel) soundLabel.textContent = 'Som Ativo';
-      soundBtn.classList.add('unmuted');
-      soundBtn.title = 'Clique para mutar';
-    }
-  }
+      function updateSoundUI() {
+        if (!soundBtn) return;
+        var mutedIcon = soundBtn.querySelector('.sound-icon-muted');
+        var unmutedIcon = soundBtn.querySelector('.sound-icon-unmuted');
+        var soundLabel = soundBtn.querySelector('.sound-label');
 
-  function setHeroMuted(muted: boolean) {
-    isHeroMuted = muted;
-    videoItems.forEach((item, idx) => {
-      const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
-      if (vid) {
-        if (idx === currentSlide) {
-          vid.muted = isHeroMuted;
-          if (!isHeroMuted) {
-            vid.volume = 0.8;
-            vid.play().catch(() => {});
-          }
+        if (isHeroMuted) {
+          if (mutedIcon) mutedIcon.style.display = 'inline-flex';
+          if (unmutedIcon) unmutedIcon.style.display = 'none';
+          if (soundLabel) soundLabel.textContent = 'Mudo';
+          soundBtn.classList.remove('unmuted');
+          soundBtn.title = 'Clique para ativar som';
         } else {
-          vid.muted = true;
-          if (!vid.paused) {
-            vid.pause();
-          }
+          if (mutedIcon) mutedIcon.style.display = 'none';
+          if (unmutedIcon) unmutedIcon.style.display = 'inline-flex';
+          if (soundLabel) soundLabel.textContent = 'Som Ativo';
+          soundBtn.classList.add('unmuted');
+          soundBtn.title = 'Clique para mutar';
         }
       }
-    });
-    updateSoundUI();
-  }
 
-  if (soundBtn) {
-    soundBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      setHeroMuted(!isHeroMuted);
-    });
-  }
-
-  function updateVideoBackdrop(index: number) {
-    videoItems.forEach((item, idx) => {
-      const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
-
-      if (idx === index) {
-        item.classList.add('active');
-        if (vid) {
-          vid.muted = isHeroMuted;
-          if (!vid.src && vid.dataset.src) {
-            vid.src = vid.dataset.src;
+      function setHeroMuted(muted) {
+        isHeroMuted = muted;
+        videoItems.forEach(function(item, idx) {
+          var vid = item.querySelector('.hero-bg-video');
+          if (vid) {
+            if (idx === currentSlide) {
+              vid.muted = isHeroMuted;
+              if (!isHeroMuted) {
+                vid.volume = 0.8;
+                vid.play().catch(function() {});
+              }
+            } else {
+              vid.muted = true;
+              if (!vid.paused) vid.pause();
+            }
           }
-          if (!isHeroMuted) {
-            vid.volume = 0.8;
-          }
-          vid.play().catch(() => {});
-        }
-      } else {
-        item.classList.remove('active');
-        if (vid) {
-          vid.muted = true;
-          if (!vid.paused) {
-            vid.pause();
-          }
-        }
+        });
+        updateSoundUI();
       }
-    });
-  }
 
-  // Attach error listeners for smooth fallback
-  videoItems.forEach(item => {
-    const vid = item.querySelector<HTMLVideoElement>('.hero-bg-video');
-    if (vid) {
-      vid.addEventListener('error', () => {
-        vid.style.display = 'none';
+      function updateVideoBackdrop(index) {
+        videoItems.forEach(function(item, idx) {
+          var vid = item.querySelector('.hero-bg-video');
+          if (idx === index) {
+            item.classList.add('active');
+            if (vid) {
+              vid.muted = isHeroMuted;
+              if (!vid.src && vid.dataset.src) {
+                vid.src = vid.dataset.src;
+              }
+              if (!isHeroMuted) {
+                vid.volume = 0.8;
+              }
+              vid.play().catch(function() {});
+            }
+          } else {
+            item.classList.remove('active');
+            if (vid) {
+              vid.muted = true;
+              if (!vid.paused) vid.pause();
+            }
+          }
+        });
+      }
+
+      function setSlide(index) {
+        if (index < 0 || index >= slides.length) index = 0;
+        slides.forEach(function(s, idx) {
+          if (idx === index) s.classList.add('active');
+          else s.classList.remove('active');
+        });
+
+        dots.forEach(function(d, idx) {
+          if (idx === index) d.classList.add('active');
+          else d.classList.remove('active');
+        });
+
+        currentSlide = index;
+        updateVideoBackdrop(currentSlide);
+      }
+
+      function startRotation() {
+        if (rotationTimer) clearInterval(rotationTimer);
+        if (slides.length <= 1) return;
+        rotationTimer = setInterval(function() {
+          var nextIndex = (currentSlide + 1) % slides.length;
+          setSlide(nextIndex);
+        }, 10000);
+      }
+
+      // Attach click listeners to indicator dots
+      dots.forEach(function(dot) {
+        dot.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var idx = parseInt(dot.getAttribute('data-dot-index') || '0', 10);
+          setSlide(idx);
+          startRotation();
+        };
       });
-    }
-  });
 
-  function setSlide(index: number) {
-    slides[currentSlide]?.classList.remove('active');
-    dots[currentSlide]?.classList.remove('active');
-
-    currentSlide = index;
-
-    slides[currentSlide]?.classList.add('active');
-    dots[currentSlide]?.classList.add('active');
-    updateVideoBackdrop(currentSlide);
-  }
-
-  function setupHeroRotation() {
-    clearInterval(rotationTimer);
-    const activeSource = getActiveSource();
-
-    // Find eligible slide indices for the current source
-    const eligibleIndices: number[] = [];
-    slides.forEach((slide, idx) => {
-      const s = slide.getAttribute('data-source') || 'outros';
-      if (activeSource === 'all' || s === activeSource) {
-        eligibleIndices.push(idx);
+      // Sound button listener
+      if (soundBtn) {
+        soundBtn.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          setHeroMuted(!isHeroMuted);
+        };
       }
-    });
 
-    if (eligibleIndices.length > 0) {
-      // Activate the first matching slide
-      setSlide(eligibleIndices[0]);
-
-      if (eligibleIndices.length > 1) {
-        let eligiblePos = 0;
-        rotationTimer = setInterval(() => {
-          eligiblePos = (eligiblePos + 1) % eligibleIndices.length;
-          setSlide(eligibleIndices[eligiblePos]);
-        }, 12000);
-      }
-    } else {
-      // Fallback to slide 0 if no match
+      // Ensure initial video is muted and playing
+      setHeroMuted(true);
       setSlide(0);
-    }
-  }
+      startRotation();
 
-  dots.forEach(dot => {
-    dot.addEventListener('click', () => {
-      clearInterval(rotationTimer);
-      const idx = parseInt(dot.getAttribute('data-dot-index') || '0', 10);
-      setSlide(idx);
-    });
-  });
+      // Parallax effect
+      heroSection.addEventListener('mousemove', function(e) {
+        var rect = heroSection.getBoundingClientRect();
+        var x = (e.clientX - rect.left) / rect.width - 0.5;
+        var y = (e.clientY - rect.top) / rect.height - 0.5;
 
-  // Listen to source changes
-  window.addEventListener('mindflix:source-changed', () => {
-    setupHeroRotation();
-  });
+        if (parallaxBg) {
+          parallaxBg.style.transform = 'translate(' + (x * 6) + 'px, ' + (y * 4) + 'px)';
+        }
+        if (glow) {
+          glow.style.transform = 'translate(' + (x * 16) + 'px, ' + (y * 12) + 'px)';
+        }
+      }, { passive: true });
 
-  setupHeroRotation();
+      heroSection.addEventListener('mouseleave', function() {
+        if (parallaxBg) parallaxBg.style.transform = 'translate(0, 0)';
+        if (glow) glow.style.transform = 'translate(0, 0)';
+      });
 
-  // Mouse Parallax on Hero
-  const prefs = getUserPreferences();
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!prefersReduced && prefs.parallax_enabled && heroSection) {
-    heroSection.addEventListener('mousemove', (e) => {
-      const rect = heroSection.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      // Favorites, Progress and modal hooks
+      slides.forEach(function(slide) {
+        var courseId = slide.getAttribute('data-course-id');
+        if (!courseId) return;
 
-      if (parallaxBg) {
-        parallaxBg.style.transform = `translate(${x * 6}px, ${y * 4}px)`;
-      }
-      if (glow) {
-        glow.style.transform = `translate(${x * 16}px, ${y * 12}px)`;
-      }
-    }, { passive: true });
+        // Progress check
+        try {
+          var userStr = localStorage.getItem('mindflix_user');
+          var uId = userStr ? JSON.parse(userStr).id : null;
+          var progKey = uId ? ('mindflix_progress_' + uId) : 'mindflix_progress';
+          var prog = JSON.parse(localStorage.getItem(progKey) || localStorage.getItem('mindflix_progress') || '{}');
+          var permProg = JSON.parse(localStorage.getItem('mindflix_progress_permanent') || '{}');
+          var mergedProg = Object.assign({}, permProg, prog);
 
-    heroSection.addEventListener('mouseleave', () => {
-      if (parallaxBg) parallaxBg.style.transform = 'translate(0, 0)';
-      if (glow) glow.style.transform = 'translate(0, 0)';
-    });
-  }
+          var hasProg = Object.keys(mergedProg).some(function(k) {
+            return mergedProg[k] && (mergedProg[k].course_id === courseId || k.indexOf(courseId) !== -1);
+          });
 
-  // Progress and Favorites initialization
-  slides.forEach(slide => {
-    const courseId = slide.getAttribute('data-course-id');
-    if (!courseId) return;
+          var watchBtn = slide.querySelector('.btn-primary.btn-hero');
+          if (watchBtn && hasProg) {
+            var span = watchBtn.querySelector('span');
+            if (span) span.textContent = 'Continuar Assistindo';
+          }
+        } catch (e) {}
 
-    const courseObj = allCourses.find(c => c.id === courseId);
-    if (courseObj) {
-      const heroWatchBtn = slide.querySelector<HTMLAnchorElement>('.btn-primary.btn-hero');
-      if (heroWatchBtn) {
-        const nextWatch = getNextLessonToWatch(courseObj);
-        heroWatchBtn.href = nextWatch.watchUrl;
-        const btnSpan = heroWatchBtn.querySelector('span');
-        if (btnSpan) btnSpan.textContent = nextWatch.isResume ? 'Continuar Assistindo' : 'Assistir Agora';
-      }
-    }
+        // Info button
+        var infoBtn = slide.querySelector('.btn-hero-info');
+        if (infoBtn) {
+          infoBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.openCourseModal) {
+              window.openCourseModal(courseId);
+            } else {
+              document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId: courseId } }));
+            }
+          });
+        }
 
-    // Progress
-    const stats = getCourseCompletionStats(courseId, 100);
-    const progressBox = slide.querySelector<HTMLElement>(`[data-progress-course-id="${courseId}"]`);
-    if (stats.percentage > 0 && progressBox) {
-      progressBox.style.display = 'block';
-      const pctEl = progressBox.querySelector('.hero-progress-percent');
-      const fill = progressBox.querySelector('.progress-fill') as HTMLElement;
-      if (pctEl) pctEl.textContent = `${stats.percentage}%`;
-      if (fill) fill.style.width = `${stats.percentage}%`;
-    }
+        // Fav button
+        var favBtn = slide.querySelector('.hero-fav-btn');
+        if (favBtn) {
+          var userStr = localStorage.getItem('mindflix_user');
+          var uId = userStr ? JSON.parse(userStr).id : null;
+          var favKey = uId ? ('mindflix_favorites_' + uId) : 'mindflix_favorites';
+          var favs = JSON.parse(localStorage.getItem(favKey) || localStorage.getItem('mindflix_favorites') || '[]');
+          if (Array.isArray(favs) && favs.indexOf(courseId) !== -1) {
+            favBtn.classList.add('active');
+            favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+          }
 
-    // Favorite
-    const favBtn = slide.querySelector<HTMLButtonElement>(`[data-fav-id="${courseId}"]`);
-    if (favBtn) {
-      if (isCourseFavorite(courseId)) {
-        favBtn.classList.add('active');
-        favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-      }
+          favBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var curFavs = JSON.parse(localStorage.getItem(favKey) || localStorage.getItem('mindflix_favorites') || '[]');
+            if (!Array.isArray(curFavs)) curFavs = [];
+            var pos = curFavs.indexOf(courseId);
+            var isFav = false;
+            if (pos === -1) {
+              curFavs.push(courseId);
+              isFav = true;
+            } else {
+              curFavs.splice(pos, 1);
+              isFav = false;
+            }
+            localStorage.setItem(favKey, JSON.stringify(curFavs));
+            localStorage.setItem('mindflix_favorites', JSON.stringify(curFavs));
 
-      favBtn.addEventListener('click', async () => {
-        const isFav = await toggleFavorite(courseId);
-        if (isFav) {
-          favBtn.classList.add('active');
-          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
-          showToast('Curso adicionado à Minha Lista', 'success');
-        } else {
-          favBtn.classList.remove('active');
-          favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
-          showToast('Curso removido da Minha Lista', 'info');
+            if (isFav) {
+              favBtn.classList.add('active');
+              favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'currentColor');
+            } else {
+              favBtn.classList.remove('active');
+              favBtn.querySelector('.heart-icon')?.setAttribute('fill', 'none');
+            }
+            window.dispatchEvent(new CustomEvent('mindflix:favorites-changed'));
+          });
         }
       });
     }
 
-    // Info / Modal Trigger
-    const infoBtn = slide.querySelector<HTMLButtonElement>('.btn-hero-info');
-    if (infoBtn) {
-      infoBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if ((window as any).openCourseModal) {
-          (window as any).openCourseModal(courseId);
-        } else {
-          document.dispatchEvent(new CustomEvent('open-course-modal', { detail: { courseId } }));
-        }
-      });
+    document.addEventListener('astro:page-load', initHero);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initHero);
+    } else {
+      initHero();
     }
-  });
+  })();
 </script>
 
 <style>
@@ -681,30 +672,48 @@ if (featuredCourses && featuredCourses.length > 0) {
     gap: 1.5rem;
     margin-top: 2rem;
     max-width: 740px;
+    position: relative;
+    z-index: 20;
   }
 
   /* Slide Indicators */
   .hero-indicators {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.65rem;
+    position: relative;
+    z-index: 20;
   }
 
   .indicator-dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
+    background: rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     cursor: pointer;
     transition: all var(--motion-normal) var(--ease-out);
     padding: 0;
+    position: relative;
+  }
+
+  .indicator-dot::before {
+    content: '';
+    position: absolute;
+    inset: -8px -6px;
+  }
+
+  .indicator-dot:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(1.2);
   }
 
   .indicator-dot.active {
-    width: 24px;
-    background: var(--accent-cyan);
-    box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+    width: 28px;
+    background: var(--accent-cyan, #00f2fe);
+    border-color: rgba(0, 242, 254, 0.6);
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+    transform: none;
   }
 
   /* Hero Sound Toggle Button */
@@ -712,32 +721,34 @@ if (featuredCourses && featuredCourses.length > 0) {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    padding: 0.4rem 0.85rem;
-    background: rgba(15, 23, 42, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0.45rem 0.95rem;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-full);
-    color: var(--text-secondary);
+    color: var(--text-secondary, #cbd5e1);
     font-size: 0.8125rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     transition: all var(--motion-fast) var(--ease-out);
     user-select: none;
+    position: relative;
+    z-index: 20;
   }
 
   .hero-sound-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
     color: #ffffff;
     transform: translateY(-1px);
   }
 
   .hero-sound-btn.unmuted {
-    background: rgba(0, 242, 254, 0.12);
-    border-color: rgba(0, 242, 254, 0.4);
-    color: var(--accent-cyan);
-    box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+    background: rgba(0, 242, 254, 0.15);
+    border-color: rgba(0, 242, 254, 0.5);
+    color: var(--accent-cyan, #00f2fe);
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.3);
   }
 
   .sound-icon {

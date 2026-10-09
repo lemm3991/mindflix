@@ -44,6 +44,49 @@ const { lessonId, courseId, watchUrl, courseTitle, lessonTitle, moduleTitle } = 
     </div>
   </div>
 
+  <!-- Video Timestamp Selector Bar -->
+  <div class="notes-timestamp-bar" id={`notes-timestamp-bar-${lessonId}`} style="display: none;">
+    <label class="notes-timestamp-toggle" title="Vincular anotação a este momento do vídeo">
+      <input type="checkbox" id={`notes-time-check-${lessonId}`} class="notes-time-checkbox" />
+      <span class="notes-time-icon-wrap">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </span>
+      <span class="notes-time-label">Marcar tempo do vídeo</span>
+    </label>
+
+    <div class="notes-time-controls" id={`notes-time-controls-${lessonId}`} style="display: none;">
+      <div class="notes-time-input-group" title="Tempo da anotação (MM:SS ou HH:MM:SS) editável">
+        <input
+          type="text"
+          id={`notes-time-input-${lessonId}`}
+          class="notes-time-input"
+          value="00:00"
+          placeholder="00:00"
+          maxlength="8"
+          title="Edite o tempo manualmente (Ex: 01:45 ou 00:30)"
+        />
+        <span class="notes-time-total" id={`notes-time-total-${lessonId}`}>/ 00:00</span>
+      </div>
+
+      <button type="button" class="notes-time-btn-sync" id={`btn-sync-time-${lessonId}`} title="Atualizar para o tempo atual do vídeo">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+        </svg>
+        <span>Pegar atual</span>
+      </button>
+
+      <button type="button" class="notes-time-btn-jump" id={`btn-jump-time-${lessonId}`} title="Saltar o vídeo para este tempo agora">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>Ir</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Formatting Toolbar (Hidden until field is clicked/focused) -->
   <div class="notes-toolbar" id={`notes-toolbar-${lessonId}`} style="display: none;">
     <button type="button" class="toolbar-btn" data-cmd="bold" title="Negrito (Ctrl+B)">
@@ -178,6 +221,114 @@ const { lessonId, courseId, watchUrl, courseTitle, lessonTitle, moduleTitle } = 
     background: rgba(244, 63, 94, 0.1);
   }
 
+  /* Video Timestamp Bar */
+  .notes-timestamp-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.4rem 0.65rem;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(0, 242, 254, 0.15);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .notes-timestamp-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .notes-time-checkbox {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--accent-cyan);
+    cursor: pointer;
+  }
+
+  .notes-time-icon-wrap {
+    color: var(--accent-cyan);
+    display: flex;
+    align-items: center;
+  }
+
+  .notes-time-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .notes-timestamp-toggle:hover .notes-time-label {
+    color: #ffffff;
+  }
+
+  .notes-time-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .notes-time-input-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-xs);
+    padding: 0.15rem 0.4rem;
+  }
+
+  .notes-time-input-group:focus-within {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
+  }
+
+  .notes-time-input {
+    width: 48px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--accent-cyan);
+    font-family: monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .notes-time-total {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: monospace;
+  }
+
+  .notes-time-btn-sync,
+  .notes-time-btn-jump {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.45rem;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.15s ease;
+  }
+
+  .notes-time-btn-sync:hover,
+  .notes-time-btn-jump:hover {
+    background: rgba(0, 242, 254, 0.15);
+    border-color: rgba(0, 242, 254, 0.3);
+    color: #ffffff;
+  }
+
   /* Toolbar */
   .notes-toolbar {
     display: flex;
@@ -305,19 +456,97 @@ const { lessonId, courseId, watchUrl, courseTitle, lessonTitle, moduleTitle } = 
     const lessonTitle = wrapper.getAttribute('data-lesson-title') || '';
     const moduleTitle = wrapper.getAttribute('data-module-title') || '';
 
-    const editor = wrapper.querySelector<HTMLElement>(`#notes-editor-${lessonId}`);
-    const toolbar = wrapper.querySelector<HTMLElement>(`#notes-toolbar-${lessonId}`);
-    const saveStatus = wrapper.querySelector<HTMLElement>(`#notes-save-status-${lessonId}`);
-    const deleteBtn = wrapper.querySelector<HTMLElement>(`#btn-delete-note-${lessonId}`);
-    const addChecklistBtn = wrapper.querySelector<HTMLElement>(`#btn-add-checklist-${lessonId}`);
+    const editor = wrapper.querySelector<HTMLElement>('.notes-editor-body');
+    const toolbar = wrapper.querySelector<HTMLElement>('.notes-toolbar');
+    const saveStatus = wrapper.querySelector<HTMLElement>('.notes-save-indicator');
+    const deleteBtn = wrapper.querySelector<HTMLElement>('.notes-btn-delete');
+    const addChecklistBtn = wrapper.querySelector<HTMLElement>('.toolbar-btn-checklist');
+    const timestampBar = wrapper.querySelector<HTMLElement>('.notes-timestamp-bar');
+    const timeCheckbox = wrapper.querySelector<HTMLInputElement>('.notes-time-checkbox');
+    const timeControls = wrapper.querySelector<HTMLElement>('.notes-time-controls');
+    const timeInput = wrapper.querySelector<HTMLInputElement>('.notes-time-input');
+    const timeTotal = wrapper.querySelector<HTMLElement>('.notes-time-total');
+    const btnSyncTime = wrapper.querySelector<HTMLElement>('.notes-time-btn-sync');
+    const btnJumpTime = wrapper.querySelector<HTMLElement>('.notes-time-btn-jump');
 
     if (!editor || !lessonId) return;
+
+    // Helper: format seconds to MM:SS or HH:MM:SS
+    function formatSeconds(secs: number): string {
+      if (isNaN(secs) || secs < 0) return '00:00';
+      const s = Math.floor(secs % 60);
+      const m = Math.floor((secs / 60) % 60);
+      const h = Math.floor(secs / 3600);
+      if (h > 0) {
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    // Helper: parse string (MM:SS or HH:MM:SS or pure numbers) to seconds
+    function parseTimeString(str: string): number {
+      if (!str) return 0;
+      const clean = str.trim();
+      const parts = clean.split(':').map(p => parseFloat(p));
+      if (parts.some(p => isNaN(p))) return 0;
+
+      if (parts.length === 1) {
+        return Math.max(0, parts[0]);
+      } else if (parts.length === 2) {
+        return Math.max(0, parts[0] * 60 + parts[1]);
+      } else if (parts.length === 3) {
+        return Math.max(0, parts[0] * 3600 + parts[1] * 60 + parts[2]);
+      }
+      return 0;
+    }
+
+    // Helper to get video element
+    function getVideoEl(): HTMLVideoElement | null {
+      return document.getElementById('main-video-player') as HTMLVideoElement | null;
+    }
+
+    function getVideoDuration(): number {
+      const vid = getVideoEl();
+      if (vid && !isNaN(vid.duration) && vid.duration > 0) return vid.duration;
+      return 0;
+    }
+
+    function getVideoCurrentTime(): number {
+      const vid = getVideoEl();
+      if (vid && !isNaN(vid.currentTime)) return vid.currentTime;
+      return 0;
+    }
+
+    let currentTimestampSeconds: number = 0;
+    let isTimestampActive: boolean = false;
 
     // Load existing note from localStorage
     const existing = getNoteForLesson(lessonId);
     if (existing && existing.content && existing.content.trim()) {
       editor.innerHTML = existing.content;
       if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+
+      if (existing.hasTimestamp && typeof existing.timestampSeconds === 'number' && existing.timestampSeconds >= 0) {
+        isTimestampActive = true;
+        currentTimestampSeconds = existing.timestampSeconds;
+        if (timeCheckbox) timeCheckbox.checked = true;
+        if (timeControls) timeControls.style.display = 'inline-flex';
+        if (timeInput) timeInput.value = formatSeconds(currentTimestampSeconds);
+      }
+    }
+
+    // Update total duration indicator if video is loaded
+    function updateTotalDisplay() {
+      const totalDur = getVideoDuration();
+      if (timeTotal && totalDur > 0) {
+        timeTotal.textContent = `/ ${formatSeconds(totalDur)}`;
+      }
+    }
+
+    const vidEl = getVideoEl();
+    if (vidEl) {
+      vidEl.addEventListener('loadedmetadata', updateTotalDisplay);
+      if (vidEl.readyState >= 1) updateTotalDisplay();
     }
 
     let saveTimer: any;
@@ -346,7 +575,9 @@ const { lessonId, courseId, watchUrl, courseTitle, lessonTitle, moduleTitle } = 
             courseTitle,
             lessonTitle,
             moduleTitle,
-            content: htmlContent
+            content: htmlContent,
+            hasTimestamp: isTimestampActive,
+            timestampSeconds: isTimestampActive ? currentTimestampSeconds : null
           });
           if (deleteBtn) deleteBtn.style.display = 'inline-flex';
           if (saveStatus) {
@@ -359,22 +590,103 @@ const { lessonId, courseId, watchUrl, courseTitle, lessonTitle, moduleTitle } = 
       }, 500);
     }
 
-    // Toggle active state & toolbar on click/focus
+    // When note box opens (wrapper click/focus)
     wrapper.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
       if (target.closest('.notes-btn-delete')) return;
 
+      const wasInactive = !wrapper.classList.contains('active');
       wrapper.classList.add('active');
       if (toolbar) toolbar.style.display = 'flex';
+      if (timestampBar) timestampBar.style.display = 'flex';
+      updateTotalDisplay();
+
+      // If user opened box for the first time without a saved timestamp, sync time with current video time
+      if (wasInactive && !isTimestampActive) {
+        const cur = getVideoCurrentTime();
+        currentTimestampSeconds = Math.round(cur);
+        if (timeInput) timeInput.value = formatSeconds(currentTimestampSeconds);
+      }
     });
 
     // Blur outside wrapper
     document.addEventListener('click', (e) => {
-      if (!wrapper.contains(e.target as Node)) {
+      const target = e.target as HTMLElement;
+      if (!wrapper.contains(target)) {
         wrapper.classList.remove('active');
         if (toolbar) toolbar.style.display = 'none';
+        if (!isTimestampActive) {
+          if (timestampBar) timestampBar.style.display = 'none';
+        }
       }
     });
+
+    // Timestamp checkbox toggle handler
+    if (timeCheckbox) {
+      timeCheckbox.addEventListener('change', () => {
+        isTimestampActive = timeCheckbox.checked;
+        if (isTimestampActive) {
+          if (timeControls) timeControls.style.display = 'inline-flex';
+          // Se não houver tempo válido, capturar o tempo atual do vídeo
+          if (!currentTimestampSeconds || currentTimestampSeconds === 0) {
+            currentTimestampSeconds = Math.round(getVideoCurrentTime());
+          }
+          if (timeInput) timeInput.value = formatSeconds(currentTimestampSeconds);
+          updateTotalDisplay();
+        } else {
+          if (timeControls) timeControls.style.display = 'none';
+        }
+        triggerAutoSave();
+      });
+    }
+
+    // Manual time input edits
+    if (timeInput) {
+      timeInput.addEventListener('change', () => {
+        let parsed = parseTimeString(timeInput.value);
+        const maxDur = getVideoDuration();
+        if (maxDur > 0 && parsed > maxDur) {
+          parsed = Math.round(maxDur);
+        }
+        if (parsed < 0) parsed = 0;
+        currentTimestampSeconds = parsed;
+        timeInput.value = formatSeconds(currentTimestampSeconds);
+        triggerAutoSave();
+      });
+
+      timeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          timeInput.blur();
+        }
+      });
+    }
+
+    // Sync button (Pegar tempo atual do vídeo)
+    if (btnSyncTime) {
+      btnSyncTime.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const curTime = Math.round(getVideoCurrentTime());
+        currentTimestampSeconds = curTime;
+        if (timeInput) timeInput.value = formatSeconds(currentTimestampSeconds);
+        updateTotalDisplay();
+        triggerAutoSave();
+      });
+    }
+
+    // Jump button (Ir para o tempo marcado)
+    if (btnJumpTime) {
+      btnJumpTime.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const vid = getVideoEl();
+        if (vid) {
+          vid.currentTime = currentTimestampSeconds;
+          vid.play().catch(() => {});
+        }
+      });
+    }
 
     // Editor inputs
     editor.addEventListener('input', triggerAutoSave);
@@ -382,7 +694,7 @@ const { lessonId, courseId, watchUrl, courseTitle, lessonTitle, moduleTitle } = 
     // Checkbox toggles inside notes
     editor.addEventListener('change', (e) => {
       const target = e.target as HTMLInputElement;
-      if (target && target.type === 'checkbox') {
+      if (target && target.type === 'checkbox' && !target.classList.contains('notes-time-checkbox')) {
         const parentItem = target.closest('.note-checklist-item');
         if (parentItem) {
           if (target.checked) {
@@ -436,6 +748,10 @@ const { lessonId, courseId, watchUrl, courseTitle, lessonTitle, moduleTitle } = 
           deleteNoteForLesson(lessonId);
           editor.innerHTML = '';
           deleteBtn.style.display = 'none';
+          if (timeCheckbox) timeCheckbox.checked = false;
+          if (timeControls) timeControls.style.display = 'none';
+          isTimestampActive = false;
+          currentTimestampSeconds = 0;
           if (saveStatus) {
             saveStatus.textContent = 'Anotação excluída';
             saveStatus.classList.add('visible');

@@ -143,6 +143,10 @@
           "total_duration_formatted": "3h 34m",
           "relative_path": "AI LAB/Artista AI/Retoque de Produto"
         }
+      ],
+      "categories": [
+        "design-artes",
+        "ia-llms"
       ]
     },
     {
@@ -196,6 +200,10 @@
           "total_duration_formatted": "6 min",
           "relative_path": "Asimov/Cursos/Criando nosso primeiro agente com ChatGPT"
         }
+      ],
+      "categories": [
+        "agentes-automacao",
+        "ia-llms"
       ]
     },
     {
@@ -262,6 +270,10 @@
           "total_duration_formatted": "1h 06m",
           "relative_path": "Asimov/Cursos/Análise de dados em 10 minutos com Claude Code"
         }
+      ],
+      "categories": [
+        "dados-ml",
+        "ia-llms"
       ]
     },
     {
@@ -393,6 +405,10 @@
           "total_duration_formatted": "2h 54m",
           "relative_path": "Asimov/Cursos/Análise Exploratória de Dados"
         }
+      ],
+      "categories": [
+        "dados-ml",
+        "programacao-python"
       ]
     },
     {
@@ -563,6 +579,11 @@
           "total_duration_formatted": "1h 34m",
           "relative_path": "Asimov/Projetos/[Projeto] Auto Retoucher"
         }
+      ],
+      "categories": [
+        "ia-llms",
+        "agentes-automacao",
+        "programacao-python"
       ]
     },
     {
@@ -775,6 +796,10 @@
           "total_duration_formatted": "2h 00m",
           "relative_path": "Asimov/Cursos/Hermes Agent"
         }
+      ],
+      "categories": [
+        "agentes-automacao",
+        "ia-llms"
       ]
     },
     {
@@ -841,6 +866,10 @@
           "total_duration_formatted": "1h 33m",
           "relative_path": "Asimov/Cursos/Consumindo Apis Com N8N"
         }
+      ],
+      "categories": [
+        "agentes-automacao",
+        "ia-llms"
       ]
     },
     {
@@ -972,6 +1001,10 @@
           "total_duration_formatted": "1h 13m",
           "relative_path": "Asimov/Projetos/[Projeto] Deploy na Google Cloud Platform (GCP) usando Cloud Run"
         }
+      ],
+      "categories": [
+        "dados-ml",
+        "web-apps"
       ]
     },
     {
@@ -1103,6 +1136,9 @@
           "total_duration_formatted": "1h 47m",
           "relative_path": "Asimov/Cursos/Árvores de Decisão e Ensemble Learning"
         }
+      ],
+      "categories": [
+        "dados-ml"
       ]
     },
     {
@@ -1156,6 +1192,10 @@
           "total_duration_formatted": "1h 59m",
           "relative_path": "Asimov/Projetos/[Projeto] Criando um assistente pessoal com OpenClaw"
         }
+      ],
+      "categories": [
+        "agentes-automacao",
+        "ia-llms"
       ]
     },
     {
@@ -1222,6 +1262,10 @@
           "total_duration_formatted": "26 min",
           "relative_path": "Asimov/Cursos/Masterclass Claude Code"
         }
+      ],
+      "categories": [
+        "ia-llms",
+        "agentes-automacao"
       ]
     },
     {
@@ -1366,6 +1410,11 @@
           "total_duration_formatted": "4h 33m",
           "relative_path": "Asimov/Cursos/Airflow na prática ETL profissional com containers não Docker Compose"
         }
+      ],
+      "categories": [
+        "backend-infra",
+        "programacao-python",
+        "dados-ml"
       ]
     },
     {
@@ -1458,6 +1507,10 @@
           "total_duration_formatted": "4h 24m",
           "relative_path": "Asimov/Projetos/[Projeto] Claude Code na prática evoluindo um projeto com IA"
         }
+      ],
+      "categories": [
+        "programacao-python",
+        "ia-llms"
       ]
     },
     {
@@ -1550,6 +1603,11 @@
           "total_duration_formatted": "6 min",
           "relative_path": "Asimov/Projetos/[Projeto] Gerando Relatórios PDF via Excel"
         }
+      ],
+      "categories": [
+        "programacao-python",
+        "agentes-automacao",
+        "dados-ml"
       ]
     },
     {
@@ -1629,6 +1687,10 @@
           "total_duration_formatted": "3 min",
           "relative_path": "Asimov/Projetos/[Projeto] Criando Base de Dados com SQLAlchemy – Um CRUD completo"
         }
+      ],
+      "categories": [
+        "backend-infra",
+        "programacao-python"
       ]
     },
     {
@@ -2168,6 +2230,11 @@
           "total_duration_formatted": "3 min",
           "relative_path": "Asimov/Projetos/[Projeto] SalesApp – WebApp para controle e análise de vendas"
         }
+      ],
+      "categories": [
+        "web-apps",
+        "programacao-python",
+        "dados-ml"
       ]
     },
     {
@@ -2234,6 +2301,11 @@
           "total_duration_formatted": "3 min",
           "relative_path": "Asimov/Projetos/[Projeto] Site 3D do Redbull com Three.js e GSAP"
         }
+      ],
+      "categories": [
+        "web-apps",
+        "ia-llms",
+        "design-artes"
       ]
     },
     {
@@ -3136,6 +3208,11 @@
           "total_duration_formatted": "35h 16m",
           "relative_path": "Hashtag/especialização no CODE/06. Trilha - Agentes de IA"
         }
+      ],
+      "categories": [
+        "web-apps",
+        "ia-llms",
+        "agentes-automacao"
       ]
     },
     {
@@ -3610,6 +3687,9 @@
           "total_duration_formatted": "6h 28m",
           "relative_path": "SCTEC/Ciclo 1 - Carreira Tech Despertar/Módulo 01 - Trilhas De Despertar"
         }
+      ],
+      "categories": [
+        "carreira-pessoal"
       ]
     },
     {
@@ -3637,6 +3717,9 @@
           "total_duration_formatted": "15h 43m",
           "relative_path": "SCTEC/Ciclo 2 - Trilha Rápida de IA/Módulo 01 - Aulas Práticas de IA"
         }
+      ],
+      "categories": [
+        "ia-llms"
       ]
     },
     {
@@ -3836,6 +3919,10 @@
           "total_duration_formatted": "1h 57m",
           "relative_path": "SCTEC/Programação Front-End e Back-End/Seja Bem-vindo(a) ao “Carreira Tech”"
         }
+      ],
+      "categories": [
+        "web-apps",
+        "backend-infra"
       ]
     }
   ]
