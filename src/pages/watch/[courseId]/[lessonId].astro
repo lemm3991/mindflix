@@ -231,7 +231,7 @@ const isLastLessonInModule = Boolean(
             }) : [];
 
           // Combine and deduplicate materials
-          const seen = new Set<string>();
+          const seen = new Set();
           const allMaterials = [...lessonMaterials, ...moduleFiles, ...otherCourseFiles].filter(item => {
             const key = item.url || item.id || item.title;
             if (seen.has(key)) return false;
