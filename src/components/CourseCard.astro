@@ -32,7 +32,7 @@ const coverGradient = hues[Math.abs(hash) % hues.length];
 const sourceId = getCourseSourceId(course);
 ---
 
-<div class="course-card-wrapper" data-course-id={course.id} data-source={sourceId}>
+<div class="course-card-wrapper" data-course-id={course.id} data-source={sourceId} data-categories={(course.categories || []).join(',')}>
   <div 
     class="course-card clean-card" 
     id={`card-${course.id}`} 

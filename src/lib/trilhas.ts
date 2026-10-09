@@ -53,8 +53,28 @@ export interface TrilhaFlatLesson {
   globalIndex: number;
 }
 
+let cachedTrilhas: Trilha[] | null = null;
+
 export function getAllTrilhas(): Trilha[] {
-  return (trilhasData as { trilhas: Trilha[] }).trilhas || [];
+  if (cachedTrilhas) return cachedTrilhas;
+  const rawList = (trilhasData as { trilhas: Trilha[] }).trilhas || [];
+  cachedTrilhas = rawList.map(t => {
+    if (t.categories && t.categories.length > 0) return t;
+    const cats = new Set<string>();
+    for (const item of t.courses || []) {
+      if (item.course_id) {
+        const course = getCourseById(item.course_id);
+        if (course?.categories) {
+          course.categories.forEach(c => cats.add(c));
+        }
+      }
+    }
+    return {
+      ...t,
+      categories: Array.from(cats)
+    };
+  });
+  return cachedTrilhas;
 }
 
 export function getTrilhaById(id: string): Trilha | undefined {

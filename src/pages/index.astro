@@ -179,6 +179,7 @@ const nextInPathCourses = allCourses.filter(c =>
       title="Próximo da sua Trilha — Especialização em IA & NoCode"
       courses={nextInPathCourses}
       viewAllHref="/courses?category=ia-llms"
+      categoryId="ia-llms,agentes-automacao,web-apps"
       eagerCount={4}
     />
 
@@ -188,6 +189,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="IA Generativa e LLMs"
         courses={iaCourses}
         viewAllHref="/courses?category=ia-llms"
+        categoryId="ia-llms"
         eagerCount={2}
       />
     )}
@@ -197,6 +199,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Agentes e Automação"
         courses={automacaoCourses}
         viewAllHref="/courses?category=agentes-automacao"
+        categoryId="agentes-automacao"
       />
     )}
 
@@ -205,6 +208,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Desenvolvimento Web e Apps"
         courses={webCourses}
         viewAllHref="/courses?category=web-apps"
+        categoryId="web-apps"
       />
     )}
 
@@ -213,6 +217,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Programação e Python"
         courses={pythonCourses}
         viewAllHref="/courses?category=programacao-python"
+        categoryId="programacao-python"
       />
     )}
 
@@ -221,6 +226,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Dados, BI e Machine Learning"
         courses={dadosCourses}
         viewAllHref="/courses?category=dados-ml"
+        categoryId="dados-ml"
       />
     )}
 
@@ -229,6 +235,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Backend, Bancos de Dados e Infraestrutura"
         courses={backendCourses}
         viewAllHref="/courses?category=backend-infra"
+        categoryId="backend-infra"
       />
     )}
 
@@ -237,6 +244,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Design, Audiovisual e Artes"
         courses={designCourses}
         viewAllHref="/courses?category=design-artes"
+        categoryId="design-artes"
       />
     )}
 
@@ -245,6 +253,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Carreira, Comunicação e Desenvolvimento Pessoal"
         courses={carreiraCourses}
         viewAllHref="/courses?category=carreira-pessoal"
+        categoryId="carreira-pessoal"
       />
     )}
 
@@ -253,6 +262,7 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Saúde, Alimentação e Bem-Estar"
         courses={saudeCourses}
         viewAllHref="/courses?category=saude-bem-estar"
+        categoryId="saude-bem-estar"
       />
     )}
 
@@ -261,13 +271,14 @@ const nextInPathCourses = allCourses.filter(c =>
         title="Negócios e Mercado Financeiro"
         courses={negociosCourses}
         viewAllHref="/courses?category=negocios-financas"
+        categoryId="negocios-financas"
       />
     )}
   </div>
 </Layout>
 
 <script>
-  import { getRecentCourseIds, getFavoriteCourseIds } from '../lib/progress';
+  import { getRecentCourseIds, getFavoriteCourseIds, getUserPreferences } from '../lib/progress';
   import { getActiveSource } from '../lib/sources';
   import { showToast } from '../lib/toast';
 
@@ -278,10 +289,62 @@ const nextInPathCourses = allCourses.filter(c =>
     window.history.replaceState({}, '', newUrl);
   }
 
-  function renderDynamicHomeGrids() {
+  function updateHomeVisibility() {
+    const prefs = getUserPreferences();
+    const selectedCategories = (prefs.selected_categories || []).map((s: string) => s.trim()).filter(Boolean);
+    const activeSource = getActiveSource();
+
+    // 1. Filtrar as fileiras de cursos por categoria e verificar se têm conteúdo visível
+    const courseRows = document.querySelectorAll<HTMLElement>('.course-row-section');
+    courseRows.forEach(row => {
+      const rowCats = (row.getAttribute('data-category-id') || '').split(',').map(s => s.trim()).filter(Boolean);
+      const matchesCategory = selectedCategories.length === 0 || rowCats.some(c => selectedCategories.includes(c));
+
+      if (!matchesCategory) {
+        row.style.display = 'none';
+        return;
+      }
+
+      // Se passou na categoria, verificar se há cards visíveis pela fonte ativa
+      const cardWrappers = row.querySelectorAll<HTMLElement>('.card-item-wrapper');
+      let visibleCards = 0;
+      cardWrappers.forEach(card => {
+        const src = card.getAttribute('data-source') || '';
+        const matchesSource = activeSource === 'all' || !src || src === activeSource;
+        if (matchesSource) {
+          card.style.display = 'block';
+          visibleCards++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      row.style.display = visibleCards > 0 ? 'block' : 'none';
+    });
+
+    // 2. Renderizar grades dinâmicas respeitando fonte e categorias selecionadas
+    renderDynamicHomeGrids(selectedCategories, activeSource);
+  }
+
+  function renderDynamicHomeGrids(selectedCategories?: string[], activeSource?: string) {
+    if (!selectedCategories) {
+      const prefs = getUserPreferences();
+      selectedCategories = (prefs.selected_categories || []).map((s: string) => s.trim()).filter(Boolean);
+    }
+    if (!activeSource) {
+      activeSource = getActiveSource();
+    }
+
     const recentIds = getRecentCourseIds();
     const favIds = getFavoriteCourseIds();
-    const activeSource = getActiveSource();
+
+    // Helper de correspondência de categoria
+    const isCategoryMatch = (target: Element | null) => {
+      if (!selectedCategories || selectedCategories.length === 0) return true;
+      if (!target) return false;
+      const cats = (target.getAttribute('data-categories') || '').split(',').map(s => s.trim()).filter(Boolean);
+      return cats.some(c => selectedCategories!.includes(c));
+    };
 
     // Populate "Continue Estudando" (Direct 1-click watch link)
     const continueSection = document.getElementById('continue-studying-section');
@@ -293,8 +356,11 @@ const nextInPathCourses = allCourses.filter(c =>
       recentIds.forEach(id => {
         const card = document.querySelector(`.course-card-wrapper[data-course-id="${id}"]`);
         if (card) {
-          const cardSource = card.closest('.card-item-wrapper')?.getAttribute('data-source') || '';
-          if (activeSource === 'all' || !cardSource || cardSource === activeSource) {
+          const cardSource = card.closest('.card-item-wrapper')?.getAttribute('data-source') || card.getAttribute('data-source') || '';
+          const matchesSource = activeSource === 'all' || !cardSource || cardSource === activeSource;
+          const matchesCategory = isCategoryMatch(card);
+
+          if (matchesSource && matchesCategory) {
             const cloned = card.cloneNode(true) as HTMLElement;
             cardsToClone.push(cloned);
           }
@@ -322,7 +388,10 @@ const nextInPathCourses = allCourses.filter(c =>
         const target = courseCard || trilhaCard;
         if (target) {
           const cardSource = target.getAttribute('data-source') || target.closest('[data-source]')?.getAttribute('data-source') || '';
-          if (activeSource === 'all' || !cardSource || cardSource === activeSource) {
+          const matchesSource = activeSource === 'all' || !cardSource || cardSource === activeSource;
+          const matchesCategory = isCategoryMatch(target);
+
+          if (matchesSource && matchesCategory) {
             const cloned = target.cloneNode(true) as HTMLElement;
             cardsToClone.push(cloned);
           }
@@ -350,7 +419,7 @@ const nextInPathCourses = allCourses.filter(c =>
               const { showToast } = await import('../lib/toast');
               const isFav = await toggleFavorite(id);
               showToast(isFav ? 'Adicionado à Minha Lista' : 'Removido da Minha Lista', isFav ? 'success' : 'info');
-              renderDynamicHomeGrids();
+              updateHomeVisibility();
             }
             return;
           }
@@ -381,14 +450,17 @@ const nextInPathCourses = allCourses.filter(c =>
   }
 
   window.addEventListener('mindflix:source-changed', () => {
-    renderDynamicHomeGrids();
+    updateHomeVisibility();
+  });
+  window.addEventListener('mindflix:preferences-updated', () => {
+    updateHomeVisibility();
   });
   window.addEventListener('mindflix:favorites-changed', () => {
-    renderDynamicHomeGrids();
+    updateHomeVisibility();
   });
 
-  document.addEventListener('astro:page-load', renderDynamicHomeGrids);
-  renderDynamicHomeGrids();
+  document.addEventListener('astro:page-load', updateHomeVisibility);
+  updateHomeVisibility();
 </script>
 
 <style>

@@ -62,7 +62,7 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
 
 <script>
   import { getActiveSource } from '../lib/sources';
-  import { getUserProgress } from '../lib/progress';
+  import { getUserProgress, getUserPreferences } from '../lib/progress';
 
   const section = document.getElementById('trilhas-asimov-section');
   const carousel = document.getElementById('trilhas-carousel');
@@ -145,19 +145,25 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
     });
   }
 
-  // Reactivity to active source in header
+
+  // Reactivity to active source and selected categories
   function updateSourceVisibility() {
     const active = getActiveSource();
     if (!section) return;
 
-    if (section.dataset.fixedSource) return;
+    const prefs = getUserPreferences();
+    const selectedCats = prefs.selected_categories || [];
 
     const wrappers = section.querySelectorAll<HTMLElement>('.trilha-card-wrapper');
     let visibleCount = 0;
     wrappers.forEach(wrapper => {
       const src = wrapper.getAttribute('data-source') || 'asimov';
-      const isMatch = active === 'all' || src === active || (active === 'hashtag' && src.startsWith('hashtag')) || (active === 'ailab' && (src === 'ailab' || src === 'ai-lab')) || (active === 'sctec' && src === 'sctec');
-      if (isMatch) {
+      const isSourceMatch = section.dataset.fixedSource ? true : (active === 'all' || src === active || (active === 'hashtag' && src.startsWith('hashtag')) || (active === 'ailab' && (src === 'ailab' || src === 'ai-lab')) || (active === 'sctec' && src === 'sctec'));
+
+      const cats = (wrapper.getAttribute('data-categories') || '').split(',').map(s => s.trim()).filter(Boolean);
+      const isCategoryMatch = selectedCats.length === 0 || cats.some(c => selectedCats.includes(c));
+
+      if (isSourceMatch && isCategoryMatch) {
         wrapper.style.display = 'block';
         visibleCount++;
       } else {
@@ -212,6 +218,13 @@ const trilhas = source && source !== 'all' ? getTrilhasBySource(source) : getAll
 
   window.addEventListener('mindflix:source-changed', () => {
     updateSourceVisibility();
+  });
+  window.addEventListener('mindflix:preferences-updated', () => {
+    updateSourceVisibility();
+  });
+  document.addEventListener('astro:page-load', () => {
+    updateSourceVisibility();
+    updateTrilhasProgress();
   });
   window.addEventListener('mindflix:progress-updated', updateTrilhasProgress);
 </script>

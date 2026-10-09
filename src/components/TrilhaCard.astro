@@ -27,7 +27,7 @@ const hues = [
 const coverGradient = hues[Math.abs(hash) % hues.length];
 ---
 
-<div class="trilha-card-wrapper" data-trilha-id={trilha.id} data-source={trilha.source}>
+<div class="trilha-card-wrapper" data-trilha-id={trilha.id} data-source={trilha.source} data-categories={(trilha.categories || []).join(',')}>
   <div 
     class="trilha-card clean-trilha-card" 
     id={`trilha-${trilha.id}`} 
