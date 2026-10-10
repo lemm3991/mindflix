@@ -89,6 +89,7 @@ const state = {
     ['::1', { ip: '::1', addedAt: Date.now(), note: 'Localhost IPv6' }],
     ['::ffff:127.0.0.1', { ip: '::ffff:127.0.0.1', addedAt: Date.now(), note: 'Localhost Mapped IPv4' }],
     ['189.28.188.145', { ip: '189.28.188.145', addedAt: Date.now(), note: 'Admin User IP' }],
+    ['177.66.129.134', { ip: '177.66.129.134', addedAt: Date.now(), note: 'Admin User IP' }],
     ['localhost', { ip: 'localhost', addedAt: Date.now(), note: 'Localhost host' }],
     ['0.0.0.0', { ip: '0.0.0.0', addedAt: Date.now(), note: 'Local loopback' }]
   ]),
@@ -250,6 +251,8 @@ export function isWhitelisted(ip: string): boolean {
     cleanIp === '::1' ||
     cleanIp === '::ffff:127.0.0.1' ||
     cleanIp === '189.28.188.145' ||
+    cleanIp === '177.66.129.134' ||
+    cleanIp.startsWith('177.66.') ||
     cleanIp === 'localhost' ||
     cleanIp === '0.0.0.0' ||
     cleanIp.startsWith('192.168.') ||
