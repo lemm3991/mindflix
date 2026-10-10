@@ -57,6 +57,13 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   import { loginWithCredentials } from '../lib/auth';
+  import { setLocalUser } from '../lib/supabase';
+
+  // Invalidate any residual local session state on login screen
+  try {
+    setLocalUser(null);
+    localStorage.removeItem('mindflix_user');
+  } catch {}
 
   const form = document.getElementById('login-form');
   const userInput = document.getElementById('username') as HTMLInputElement | null;

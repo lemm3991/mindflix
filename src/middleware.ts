@@ -170,6 +170,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     pathname.startsWith('/api/media-server-url') ||
     Boolean(request.headers.get('x-api-key'))
   ) {
+    // If logging out or explicit logout query param, ensure cookie is cleared
+    if (pathname === '/login' && url.searchParams.has('logout')) {
+      cookies.delete(COOKIE_NAME, { path: '/' });
+      return next();
+    }
     // If already authenticated and trying to access /login, redirect to home
     if (pathname === '/login' && session) {
       return redirect('/');

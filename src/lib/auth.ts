@@ -69,7 +69,11 @@ export async function logoutUser(): Promise<void> {
     await fetch('/api/auth/logout', { method: 'POST' });
   } catch {}
   setLocalUser(null);
-  window.location.href = '/login';
+  // Invalidate any leftover cached session keys
+  try {
+    localStorage.removeItem('mindflix_user');
+  } catch {}
+  window.location.href = '/login?logout=1';
 }
 
 export async function changeUserPassword(newPassword: string): Promise<{ success: boolean; error?: string }> {

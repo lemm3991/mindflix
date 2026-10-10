@@ -186,12 +186,51 @@ const navItems = [
       </button>
 
       <!-- Profile Avatar Button -->
-      <div class="user-menu-container">
-        <a href="/profile" class="user-avatar-btn" aria-label="Perfil do Usuário">
+      <div class="user-menu-container" id="user-menu-container">
+        <button
+          type="button"
+          class="user-avatar-btn"
+          id="user-avatar-btn"
+          aria-label="Menu do Usuário"
+          aria-haspopup="true"
+          aria-expanded="false"
+        >
           <div class="avatar-circle">
             <span id="user-initials">TA</span>
           </div>
-        </a>
+        </button>
+
+        <!-- User Dropdown Menu -->
+        <div class="user-dropdown-menu" id="user-dropdown-menu" role="menu">
+          <div class="user-dropdown-header">
+            <span class="dropdown-user-name" id="dropdown-user-name">Minha Conta</span>
+            <span class="dropdown-user-email" id="dropdown-user-email">usuario@mindflix</span>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="/profile" class="user-dropdown-item" role="menuitem">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Meu Perfil</span>
+          </a>
+          <a href="/settings" class="user-dropdown-item" role="menuitem">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Preferências</span>
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="/api/auth/logout" class="user-dropdown-item dropdown-logout-btn" id="header-logout-btn" role="menuitem">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Sair da Conta</span>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -298,7 +337,19 @@ const navItems = [
               </svg>
             </a>
           ))}
-        </nav>
+                </nav>
+      </div>
+
+      <!-- Mobile Drawer Logout -->
+      <div class="drawer-section drawer-logout-section">
+        <a href="/api/auth/logout" class="drawer-logout-btn" id="mobile-logout-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sair da Conta</span>
+        </a>
       </div>
     </div>
   </aside>
@@ -306,6 +357,7 @@ const navItems = [
 
 <script>
   import { getActiveSource, setActiveSource } from '../lib/sources';
+  import { logoutUser } from '../lib/auth';
 
   const SOURCES_META: Record<string, { label: string; color: string; isAll?: boolean }> = {
     'all': { label: 'Todas', color: 'var(--grad-primary)', isAll: true },
@@ -433,6 +485,36 @@ const navItems = [
     const target = e.target as HTMLElement;
     const group = document.getElementById('header-source-dropdown-group');
     const singleBtn = target.closest<HTMLButtonElement>('#single-source-btn');
+
+    // User Avatar button toggle
+    const userMenuContainer = document.getElementById('user-menu-container');
+    const userAvatarBtn = target.closest<HTMLButtonElement>('#user-avatar-btn');
+    if (userAvatarBtn && userMenuContainer) {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = userMenuContainer.classList.contains('open');
+      if (isOpen) {
+        userMenuContainer.classList.remove('open');
+        userAvatarBtn.setAttribute('aria-expanded', 'false');
+      } else {
+        userMenuContainer.classList.add('open');
+        userAvatarBtn.setAttribute('aria-expanded', 'true');
+      }
+      return;
+    }
+
+    // Logout button click (Header dropdown or Mobile Drawer)
+    if (target.closest('#header-logout-btn') || target.closest('#mobile-logout-btn')) {
+      e.preventDefault();
+      logoutUser();
+      return;
+    }
+
+    // Close user dropdown if clicking outside
+    if (userMenuContainer && !userMenuContainer.contains(target)) {
+      userMenuContainer.classList.remove('open');
+      document.getElementById('user-avatar-btn')?.setAttribute('aria-expanded', 'false');
+    }
 
     // Mobile menu toggle button
     if (target.closest('#mobile-menu-toggle-btn')) {
@@ -1313,5 +1395,140 @@ const navItems = [
     .nav-content {
       flex-wrap: nowrap !important;
     }
+  }
+
+  /* User Menu Dropdown */
+  .user-menu-container {
+    position: relative;
+  }
+
+  .user-avatar-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .user-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: rgba(15, 20, 32, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 242, 254, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    min-width: 220px;
+    padding: 0.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    z-index: 150;
+    animation: userDropdownFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes userDropdownFade {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .user-menu-container.open .user-dropdown-menu {
+    display: flex;
+  }
+
+  .user-dropdown-header {
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .dropdown-user-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .dropdown-user-email {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0.25rem 0;
+  }
+
+  .user-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.825rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--motion-fast) ease;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+  }
+
+  .user-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #ffffff;
+  }
+
+  .user-dropdown-item.dropdown-logout-btn {
+    color: #f87171;
+  }
+
+  .user-dropdown-item.dropdown-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+  }
+
+  /* Mobile Drawer Logout */
+  .drawer-logout-section {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .drawer-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    color: #f87171;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    transition: all 0.2s ease;
+  }
+
+  .drawer-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
   }
 </style>
