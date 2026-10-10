@@ -1,8 +1,8 @@
-import { defineConfig } from 'astro/config';
+﻿import { defineConfig } from 'astro/config';
 import netlify from '@astrojs/netlify';
 import vercel from '@astrojs/vercel';
 import node from '@astrojs/node';
-import { astroGrab } from 'astro-grab';
+import astroGrabAntigravity from './astro-grab-bridge.js';
 
 const getAdapter = () => {
   if (process.env.VERCEL) {
@@ -19,7 +19,7 @@ export default defineConfig({
   output: 'server',
   adapter: getAdapter(),
   integrations: [
-    astroGrab({ toolbar: false, holdDuration: 0 })
+    astroGrabAntigravity()
   ],
   vite: {
     server: {

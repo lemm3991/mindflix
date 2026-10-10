@@ -24,7 +24,7 @@
     "esbuild": true
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "astro-grab": "^0.3.0"
+    "@omniaura/astro-grab": "^1.2.0",
+    "@types/bcryptjs": "^2.4.6"
   }
 }

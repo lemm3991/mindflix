@@ -1,4 +1,4 @@
----
+﻿---
 // Layout.astro - Main Layout with Background, Navbar, CommandPalette and Toasts
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
@@ -161,8 +161,6 @@ const isWatchPage = disableBgInteraction || currentPath.startsWith('/watch');
         </div>
       </footer>
     )}
-
-    {import.meta.env.DEV && <script src="../scripts/astro-grab-bridge.ts"></script>}
   </body>
 </html>
 

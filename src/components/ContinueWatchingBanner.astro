@@ -1,0 +1,454 @@
+﻿---
+// ContinueWatchingBanner.astro - Faixa Premium para Continuar Assistindo a Última Aula
+---
+
+<section id="continue-watching-banner-wrap" class="continue-watching-banner-section" style="display: none;">
+  <div class="container">
+    <div class="continue-watching-card">
+      <div class="banner-glow-ambient" aria-hidden="true"></div>
+
+      <!-- Top info bar: Badge & Dismiss -->
+      <div class="cw-top-bar">
+        <div class="cw-badge-group">
+          <span class="cw-live-dot" aria-hidden="true"></span>
+          <span class="cw-badge-text">Continuar Assistindo</span>
+          <span id="cw-time-indicator" class="cw-time-pill" style="display: none;">00:00</span>
+        </div>
+
+        <button type="button" id="cw-dismiss-btn" class="cw-dismiss-btn" title="Ocultar temporariamente" aria-label="Ocultar faixa">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Main row: Thumbnail/Play icon, Title & Details, Action Button -->
+      <div class="cw-main-content">
+        <a id="cw-play-bubble-link" href="#" class="cw-play-bubble" aria-label="Reproduzir aula">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </a>
+
+        <div class="cw-info-col">
+          <a id="cw-title-link" href="#" class="cw-lesson-title-link">
+            <h2 id="cw-lesson-title" class="cw-lesson-title">Carregando aula...</h2>
+          </a>
+          
+          <div class="cw-meta-row">
+            <span id="cw-context-chip" class="cw-context-chip">Curso</span>
+            <span id="cw-module-label" class="cw-module-label" style="display: none;"></span>
+          </div>
+        </div>
+
+        <div class="cw-action-col">
+          <a id="cw-action-btn" href="#" class="cw-resume-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Continuar Assistindo</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Bottom Progress Bar -->
+      <div class="cw-progress-track" aria-hidden="true">
+        <div id="cw-progress-fill" class="cw-progress-fill" style="width: 0%;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { getLastWatchedLesson } from '../lib/progress';
+
+  function formatTime(seconds: number): string {
+    if (!seconds || isNaN(seconds) || seconds <= 0) return '00:00';
+    const totalSecs = Math.round(seconds);
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    if (hrs > 0) {
+      return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
+  function renderContinueWatchingBanner() {
+    const wrap = document.getElementById('continue-watching-banner-wrap');
+    if (!wrap) return;
+
+    // Check if dismissed in this session
+    if (sessionStorage.getItem('mindflix_cw_dismissed') === 'true') {
+      wrap.style.display = 'none';
+      return;
+    }
+
+    const last = getLastWatchedLesson();
+    if (!last || !last.watchUrl || !last.lessonTitle) {
+      wrap.style.display = 'none';
+      return;
+    }
+
+    const titleEl = document.getElementById('cw-lesson-title');
+    const titleLink = document.getElementById('cw-title-link') as HTMLAnchorElement | null;
+    const bubbleLink = document.getElementById('cw-play-bubble-link') as HTMLAnchorElement | null;
+    const actionBtn = document.getElementById('cw-action-btn') as HTMLAnchorElement | null;
+    const contextChip = document.getElementById('cw-context-chip');
+    const moduleLabel = document.getElementById('cw-module-label');
+    const timeIndicator = document.getElementById('cw-time-indicator');
+    const progressFill = document.getElementById('cw-progress-fill');
+
+    if (titleEl) titleEl.textContent = last.lessonTitle;
+    if (titleLink) titleLink.href = last.watchUrl;
+    if (bubbleLink) bubbleLink.href = last.watchUrl;
+    if (actionBtn) actionBtn.href = last.watchUrl;
+
+    if (contextChip) {
+      if (last.trilhaTitle) {
+        contextChip.textContent = `Trilha: ${last.trilhaTitle}`;
+        contextChip.className = 'cw-context-chip chip-trilha';
+      } else {
+        contextChip.textContent = last.courseTitle ? `Curso: ${last.courseTitle}` : 'Curso em andamento';
+        contextChip.className = 'cw-context-chip chip-course';
+      }
+    }
+
+    if (moduleLabel) {
+      if (last.moduleTitle) {
+        moduleLabel.textContent = `• ${last.moduleTitle}`;
+        moduleLabel.style.display = 'inline';
+      } else {
+        moduleLabel.style.display = 'none';
+      }
+    }
+
+    const pos = last.position_seconds || 0;
+    const dur = last.duration_seconds || 0;
+    const pct = last.percentage || (dur > 0 ? Math.min(100, Math.round((pos / dur) * 100)) : 0);
+
+    if (progressFill) {
+      progressFill.style.width = `${Math.max(2, Math.min(100, pct))}%`;
+    }
+
+    if (timeIndicator) {
+      if (pos > 0 && dur > 0) {
+        timeIndicator.textContent = `${formatTime(pos)} / ${formatTime(dur)} (${pct}%)`;
+        timeIndicator.style.display = 'inline-block';
+      } else if (pos > 0) {
+        timeIndicator.textContent = `${formatTime(pos)} assistidos`;
+        timeIndicator.style.display = 'inline-block';
+      } else {
+        timeIndicator.style.display = 'none';
+      }
+    }
+
+    wrap.style.display = 'block';
+  }
+
+  function setupDismissButton() {
+    const dismissBtn = document.getElementById('cw-dismiss-btn');
+    const wrap = document.getElementById('continue-watching-banner-wrap');
+    if (dismissBtn && wrap) {
+      dismissBtn.onclick = () => {
+        sessionStorage.setItem('mindflix_cw_dismissed', 'true');
+        wrap.style.display = 'none';
+      };
+    }
+  }
+
+  window.addEventListener('mindflix:last-watched-updated', () => {
+    sessionStorage.removeItem('mindflix_cw_dismissed');
+    renderContinueWatchingBanner();
+  });
+
+  window.addEventListener('mindflix:progress-updated', () => {
+    renderContinueWatchingBanner();
+  });
+
+  document.addEventListener('astro:page-load', () => {
+    renderContinueWatchingBanner();
+    setupDismissButton();
+  });
+
+  renderContinueWatchingBanner();
+  setupDismissButton();
+</script>
+
+<style is:inline>
+  .continue-watching-banner-section {
+    padding: 1.25rem 0 0.5rem;
+    position: relative;
+    z-index: 5;
+    animation: bannerSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes bannerSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .continue-watching-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(17, 24, 39, 0.88) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 242, 254, 0.22);
+    border-radius: var(--radius-lg, 14px);
+    padding: 1rem 1.35rem 0.9rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 242, 254, 0.08);
+    transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+  }
+
+  .continue-watching-card:hover {
+    border-color: rgba(0, 242, 254, 0.4);
+    box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 242, 254, 0.15);
+  }
+
+  .banner-glow-ambient {
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 220px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 242, 254, 0.18) 0%, rgba(79, 172, 254, 0.06) 50%, transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Top bar */
+  .cw-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .cw-badge-group {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .cw-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00f2fe;
+    box-shadow: 0 0 8px #00f2fe;
+    animation: livePulse 2s infinite ease-in-out;
+  }
+
+  @keyframes livePulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(0.85);
+    }
+  }
+
+  .cw-badge-text {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #00f2fe;
+  }
+
+  .cw-time-pill {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary, #94a3b8);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-pill, 9999px);
+  }
+
+  .cw-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #64748b);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm, 6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--motion-fast) ease, background var(--motion-fast) ease;
+  }
+
+  .cw-dismiss-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Main row */
+  .cw-main-content {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 0.85rem;
+  }
+
+  .cw-play-bubble {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.2) 0%, rgba(79, 172, 254, 0.15) 100%);
+    border: 1px solid rgba(0, 242, 254, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #00f2fe;
+    flex-shrink: 0;
+    text-decoration: none;
+    transition: transform var(--motion-fast) ease, background var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+  }
+
+  .cw-play-bubble:hover {
+    transform: scale(1.08);
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    color: #090d16;
+    box-shadow: 0 0 18px rgba(0, 242, 254, 0.5);
+  }
+
+  .cw-info-col {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cw-lesson-title-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .cw-lesson-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.25rem 0;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color var(--motion-fast) ease;
+  }
+
+  .cw-lesson-title-link:hover .cw-lesson-title {
+    color: #00f2fe;
+  }
+
+  .cw-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .cw-context-chip {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-sm, 6px);
+  }
+
+  .chip-trilha {
+    background: rgba(188, 82, 238, 0.12);
+    border: 1px solid rgba(188, 82, 238, 0.35);
+    color: #d8b4fe;
+  }
+
+  .chip-course {
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    color: #38bdf8;
+  }
+
+  .cw-module-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+
+  .cw-action-col {
+    flex-shrink: 0;
+  }
+
+  .cw-resume-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    color: #090d16;
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--radius-pill, 9999px);
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+    transition: transform var(--motion-fast) ease, box-shadow var(--motion-fast) ease, filter var(--motion-fast) ease;
+  }
+
+  .cw-resume-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 242, 254, 0.5);
+    filter: brightness(1.08);
+  }
+
+  /* Bottom Progress Track */
+  .cw-progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-pill, 9999px);
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+  }
+
+  .cw-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00f2fe 0%, #4facfe 50%, #818cf8 100%);
+    border-radius: var(--radius-pill, 9999px);
+    transition: width 0.3s ease;
+  }
+
+  @media (max-width: 768px) {
+    .cw-main-content {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .cw-play-bubble {
+      display: none;
+    }
+
+    .cw-action-col {
+      width: 100%;
+    }
+
+    .cw-resume-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>

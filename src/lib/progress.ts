@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured, getLocalUser } from './supabase';
+﻿import { supabase, isSupabaseConfigured, getLocalUser } from './supabase';
 import type { UserProgress, UserPreferences, Course, Lesson, Module } from '../types/catalog';
 
 const STORAGE_KEYS = {
@@ -7,7 +7,8 @@ const STORAGE_KEYS = {
   PREFERENCES: 'mindflix_preferences',
   RECENT_COURSES: 'mindflix_recent_courses',
   COURSE_SPEEDS: 'mindflix_course_speeds',
-  PENDING_SYNC: 'mindflix_pending_sync'
+  PENDING_SYNC: 'mindflix_pending_sync',
+  LAST_WATCHED: 'mindflix_last_watched'
 };
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
@@ -634,3 +635,84 @@ export function getRealDurationForLesson(lessonId: string): { duration_seconds: 
   }
 }
 
+
+
+// LAST WATCHED LESSON TRACKING
+export interface LastWatchedLesson {
+  courseId: string;
+  courseTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+  moduleTitle?: string;
+  thumbnail?: string;
+  watchUrl: string;
+  trilhaId?: string;
+  trilhaTitle?: string;
+  position_seconds?: number;
+  duration_seconds?: number;
+  percentage?: number;
+  completed?: boolean;
+  source?: string;
+  updated_at: string;
+}
+
+export function getLastWatchedLesson(): LastWatchedLesson | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const key = getUserScopedKey(STORAGE_KEYS.LAST_WATCHED);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEYS.LAST_WATCHED);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastWatchedLesson(item: Partial<LastWatchedLesson> & { courseId: string; lessonId: string }): LastWatchedLesson | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const existing = getLastWatchedLesson();
+    const updated: LastWatchedLesson = {
+      courseId: item.courseId,
+      courseTitle: item.courseTitle || (existing?.courseId === item.courseId ? existing.courseTitle : 'Curso'),
+      lessonId: item.lessonId,
+      lessonTitle: item.lessonTitle || (existing?.lessonId === item.lessonId ? existing.lessonTitle : 'Aula'),
+      moduleTitle: item.moduleTitle !== undefined ? item.moduleTitle : (existing?.lessonId === item.lessonId ? existing.moduleTitle : undefined),
+      thumbnail: item.thumbnail || existing?.thumbnail || '',
+      watchUrl: item.watchUrl || existing?.watchUrl || (item.trilhaId ? `/watch/trilha/${item.trilhaId}/${item.lessonId}` : `/watch/${item.courseId}/${item.lessonId}`),
+      trilhaId: item.trilhaId !== undefined ? item.trilhaId : existing?.trilhaId,
+      trilhaTitle: item.trilhaTitle !== undefined ? item.trilhaTitle : existing?.trilhaTitle,
+      position_seconds: typeof item.position_seconds === 'number' ? item.position_seconds : (existing?.lessonId === item.lessonId ? (existing.position_seconds || 0) : 0),
+      duration_seconds: typeof item.duration_seconds === 'number' ? item.duration_seconds : (existing?.lessonId === item.lessonId ? (existing.duration_seconds || 0) : 0),
+      percentage: typeof item.percentage === 'number' ? item.percentage : (existing?.lessonId === item.lessonId ? (existing.percentage || 0) : 0),
+      completed: typeof item.completed === 'boolean' ? item.completed : (existing?.lessonId === item.lessonId ? (existing.completed || false) : false),
+      source: item.source || existing?.source || '',
+      updated_at: new Date().toISOString()
+    };
+
+    const key = getUserScopedKey(STORAGE_KEYS.LAST_WATCHED);
+    localStorage.setItem(key, JSON.stringify(updated));
+    localStorage.setItem(STORAGE_KEYS.LAST_WATCHED, JSON.stringify(updated));
+
+    trackRecentCourse(item.courseId);
+
+    window.dispatchEvent(new CustomEvent('mindflix:last-watched-updated', {
+      detail: updated
+    }));
+
+    return updated;
+  } catch (err) {
+    console.warn('Erro ao salvar última aula assistida:', err);
+    return null;
+  }
+}
+
+export function clearLastWatchedLesson(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = getUserScopedKey(STORAGE_KEYS.LAST_WATCHED);
+    localStorage.removeItem(key);
+    localStorage.removeItem(STORAGE_KEYS.LAST_WATCHED);
+    window.dispatchEvent(new CustomEvent('mindflix:last-watched-updated', { detail: null }));
+  } catch {}
+}

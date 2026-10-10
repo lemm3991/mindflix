@@ -1,4 +1,4 @@
----
+﻿---
 // VideoPlayer.astro - Advanced Video Player with Theater/Focus modes, Keyboard Shortcuts, Speed Popover, and Next Lesson Countdown
 import type { Lesson } from '../types/catalog';
 import { buildServerStreamUrl } from '../lib/mediaProvider';
@@ -9,9 +9,25 @@ interface Props {
   nextLessonHref?: string;
   nextLessonTitle?: string;
   prevLessonHref?: string;
+  courseTitle?: string;
+  moduleTitle?: string;
+  trilhaId?: string;
+  trilhaTitle?: string;
+  watchUrl?: string;
 }
 
-const { courseId, lesson, nextLessonHref, nextLessonTitle = 'Próxima Aula', prevLessonHref } = Astro.props;
+const {
+  courseId,
+  lesson,
+  nextLessonHref,
+  nextLessonTitle = 'Próxima Aula',
+  prevLessonHref,
+  courseTitle = '',
+  moduleTitle = '',
+  trilhaId = '',
+  trilhaTitle = '',
+  watchUrl = ''
+} = Astro.props;
 
 const videoStreamUrl = buildServerStreamUrl(lesson.relative_path || '');
 
@@ -223,6 +239,7 @@ const isVideo = !isPdf && !isDoc;
     getLessonProgress,
     saveLessonProgress,
     getUserPreferences,
+    saveLastWatchedLesson,
     saveUserPreferences
   } from '../lib/progress';
   import {
@@ -258,6 +275,26 @@ const isVideo = !isPdf && !isDoc;
   const lessonId = wrapper?.getAttribute('data-lesson-id') || '';
   const nextHref = wrapper?.getAttribute('data-next-href') || '';
   const relPath = wrapper?.getAttribute('data-relative-path') || '';
+  const courseTitle = wrapper?.getAttribute('data-course-title') || '';
+  const lessonTitle = wrapper?.getAttribute('data-lesson-title') || '';
+  const moduleTitle = wrapper?.getAttribute('data-module-title') || '';
+  const trilhaId = wrapper?.getAttribute('data-trilha-id') || '';
+  const trilhaTitle = wrapper?.getAttribute('data-trilha-title') || '';
+  const explicitWatchUrl = wrapper?.getAttribute('data-watch-url') || '';
+  const currentWatchUrl = explicitWatchUrl || (trilhaId ? `/watch/trilha/${trilhaId}/${lessonId}` : `/watch/${courseId}/${lessonId}`);
+
+  if (courseId && lessonId) {
+    saveLastWatchedLesson({
+      courseId,
+      courseTitle: courseTitle || 'Curso',
+      lessonId,
+      lessonTitle: lessonTitle || 'Aula',
+      moduleTitle: moduleTitle || undefined,
+      trilhaId: trilhaId || undefined,
+      trilhaTitle: trilhaTitle || undefined,
+      watchUrl: currentWatchUrl
+    });
+  }
 
   if (courseId && lessonId) {
     const prefs = getUserPreferences();
@@ -370,6 +407,20 @@ const isVideo = !isPdf && !isDoc;
       const saveCurrentProgress = (completed = false) => {
         if (!vid.duration || isNaN(vid.duration)) return;
         saveLessonProgress(courseId, lessonId, vid.currentTime, vid.duration, completed);
+        saveLastWatchedLesson({
+          courseId,
+          courseTitle: courseTitle || 'Curso',
+          lessonId,
+          lessonTitle: lessonTitle || 'Aula',
+          moduleTitle: moduleTitle || undefined,
+          trilhaId: trilhaId || undefined,
+          trilhaTitle: trilhaTitle || undefined,
+          watchUrl: currentWatchUrl,
+          position_seconds: vid.currentTime,
+          duration_seconds: vid.duration,
+          percentage: Math.min(100, Math.round((vid.currentTime / vid.duration) * 100)),
+          completed
+        });
         lastSave = Date.now();
         window.dispatchEvent(new CustomEvent('mindflix:progress-updated', {
           detail: { courseId, lessonId, completed }

@@ -1,10 +1,11 @@
----
+﻿---
 // index.astro - Mindflix Streaming Home com 4 Cards de Destaque por Fonte, Trilhas e Fileiras por Categoria
 import Layout from '../layouts/Layout.astro';
 import HeroCourse from '../components/HeroCourse.astro';
 import CourseRow from '../components/CourseRow.astro';
 import CourseCard from '../components/CourseCard.astro';
 import TrilhasRow from '../components/TrilhasRow.astro';
+import ContinueWatchingBanner from '../components/ContinueWatchingBanner.astro';
 import { getAllCourses, getCoursesByCategory, isComecePorAqui, isProjectCourse } from '../lib/catalog';
 import { getCourseSourceId } from '../lib/sources';
 
@@ -149,7 +150,10 @@ const nextInPathCourses = allCourses.filter(c =>
     </div>
   </section>
 
-  <!-- Formações Oficiais & Trilhas de Aprendizado Asimov -->
+    <!-- Faixa de Retomada: Continuar Assistindo a Última Aula -->
+  <ContinueWatchingBanner />
+
+<!-- Formações Oficiais & Trilhas de Aprendizado Asimov -->
   <TrilhasRow />
 
   <div class="container home-rows-container">
