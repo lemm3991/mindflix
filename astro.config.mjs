@@ -1,5 +1,5 @@
-﻿import { defineConfig } from 'astro/config';
-import netlify from '@astrojs/netlify';
+// @ts-check
+import { defineConfig } from 'astro/config';
 import vercel from '@astrojs/vercel';
 import node from '@astrojs/node';
 import astroGrabAntigravity from './astro-grab-bridge.js';
@@ -8,10 +8,8 @@ const getAdapter = () => {
   if (process.env.VERCEL) {
     return vercel();
   }
-  if (process.env.NETLIFY) {
-    return netlify();
-  }
-  return node({ mode: 'standalone' });
+  // Local development / build default
+  return process.env.NODE_ENV === 'production' ? vercel() : node({ mode: 'standalone' });
 };
 
 // https://astro.build/config

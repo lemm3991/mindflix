@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    const isCloudEnv = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+    const isCloudEnv = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
     if (isCloudEnv) {
       return new Response(JSON.stringify({
         success: true,
@@ -41,13 +41,13 @@ export const POST: APIRoute = async ({ request }) => {
         is_cloud: true,
         output: [
           '======================================================',
-          'ℹ️  VARREDURA DE BIBLIOTECA — AMBIENTE EM NUVEM (NETLIFY)',
+          'ℹ️  VARREDURA DE BIBLIOTECA — AMBIENTE EM NUVEM (VERCEL)',
           '======================================================',
           '',
           'A varredura física do acervo precisa ler a pasta de cursos na sua máquina',
           '(ex: "G:\\Meu Drive\\Cursos\\Cursos Mindflix" ou caminho configurado).',
           '',
-          'Como o Netlify opera em servidores em nuvem isolados, o scanner direto',
+          'Como a Vercel opera em servidores em nuvem isolados, o scanner direto',
           'deve ser executado no terminal do seu computador:',
           '',
           '1. Abra o PowerShell ou terminal na pasta do Mindflix:',
@@ -58,12 +58,12 @@ export const POST: APIRoute = async ({ request }) => {
             ? '   python scan_library.py --dry-run' 
             : '   python scan_library.py --apply',
           '',
-          '3. Para sincronizar as alterações com o Netlify:',
+          '3. Para sincronizar as alterações com a Vercel:',
           '   git add src/data/catalog.json src/data/trilhas.json',
           '   git commit -m "atualizar catalogo"',
           '   git push origin main',
           '',
-          'Seu site no Netlify será atualizado automaticamente!',
+          'Seu site na Vercel será atualizado automaticamente!',
           '======================================================'
         ].join('\n'),
         summary: {

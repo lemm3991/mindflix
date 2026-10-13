@@ -2,7 +2,6 @@ import type { APIRoute } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { getStore } from '@netlify/blobs';
 import { verifySessionToken, verifyCredentials, COOKIE_NAME } from '../../lib/server/auth';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
@@ -18,14 +17,6 @@ const SUPABASE_API_KEY = 'sb_publishable_ZdHnC_q8whq1xEBHRlhImg_Pu0xLRmw';
 
 let inMemoryUrl: { url: string; updatedAt: string; cachedAt?: number } | null = null;
 const CACHE_TTL_MS = 10000; // 10 segundos de cache em memória por instância
-
-function getBlobStore() {
-  try {
-    return getStore({ name: 'catalog_overrides', consistency: 'strong' });
-  } catch {
-    return null;
-  }
-}
 
 async function fetchUrlFromSupabase(): Promise<{ url: string; updatedAt: string } | null> {
   try {
@@ -169,29 +160,7 @@ export const GET: APIRoute = async () => {
       });
     }
 
-    // 2. Netlify Blobs fallback
-    const store = getBlobStore();
-    if (store) {
-      try {
-        const blobData = await store.get('media_server_url', { type: 'json' }) as { url?: string; updatedAt?: string } | null;
-        if (blobData?.url) {
-          const resPayload = { url: blobData.url, updatedAt: blobData.updatedAt || new Date().toISOString() };
-          inMemoryUrl = { ...resPayload, cachedAt: now };
-          return new Response(JSON.stringify(resPayload), {
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json; charset=utf-8',
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Access-Control-Allow-Origin': '*'
-            }
-          });
-        }
-      } catch (err) {
-        console.warn('Erro ao ler media_server_url do Netlify Blobs:', err);
-      }
-    }
-
-    // 3. Disco local ou valor padrão
+    // 2. Disco local ou valor padrão
     const diskFallback = readStoredUrl();
     inMemoryUrl = { ...diskFallback, cachedAt: now };
 
@@ -255,16 +224,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Persistência primária na nuvem via Supabase
     await saveUrlToSupabase(cleanUrl, nowIso);
-
-    // Persistência secundária via Netlify Blobs
-    const store = getBlobStore();
-    if (store) {
-      try {
-        await store.setJSON('media_server_url', payload);
-      } catch (err) {
-        console.warn('Erro ao salvar no Netlify Blobs:', err);
-      }
-    }
 
     // Persistência em cache de memória e arquivos locais
     persistUrl(payload);
