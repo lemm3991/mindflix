@@ -28,6 +28,12 @@ export function setMediaMode(_mode?: string): void {
   }
 }
 
+import { supabase, isSupabaseConfigured } from './supabase';
+
+const SUPABASE_REST_URL = 'https://lpzrpbmikwbqknfbilvl.supabase.co/rest/v1/user_preferences?user_id=eq.global_media_server&select=gemini_api_key,updated_at';
+const SUPABASE_API_KEY = 'sb_publishable_ZdHnC_q8whq1xEBHRlhImg_Pu0xLRmw';
+const API_SECRET = 'mindflix-secure-production-secret-salt-2026-v1';
+
 export function getMediaServerUrl(): string {
   if (typeof window === 'undefined') return DEFAULT_MEDIA_SERVER_URL;
   try {
@@ -42,7 +48,27 @@ export function getMediaServerUrl(): string {
   }
 }
 
-export function setMediaServerUrl(url: string): void {
+// Para SSR e carregamento no servidor Astro
+export async function getPersistedMediaServerUrl(): Promise<string> {
+  try {
+    const res = await fetch(SUPABASE_REST_URL, {
+      headers: {
+        'apikey': SUPABASE_API_KEY,
+        'Authorization': `Bearer ${SUPABASE_API_KEY}`
+      },
+      cache: 'no-store'
+    });
+    if (res.ok) {
+      const rows = await res.json();
+      if (Array.isArray(rows) && rows[0]?.gemini_api_key) {
+        return rows[0].gemini_api_key.trim().replace(/\/+$/, '');
+      }
+    }
+  } catch {}
+  return DEFAULT_MEDIA_SERVER_URL;
+}
+
+export async function setMediaServerUrl(url: string, syncCloud = true): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
     const clean = url.trim().replace(/\/+$/, '');
@@ -50,9 +76,147 @@ export function setMediaServerUrl(url: string): void {
     // Invalidate cached health status
     healthCache = null;
     window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean || DEFAULT_MEDIA_SERVER_URL } }));
+
+    if (syncCloud && clean) {
+      const now = new Date().toISOString();
+
+      // 1. Persistência direta no Supabase (disponível instantaneamente para todos os dispositivos)
+      const saveSupabase = async () => {
+        try {
+          if (isSupabaseConfigured && supabase) {
+            await supabase.from('user_preferences').upsert({
+              user_id: 'global_media_server',
+              gemini_api_key: clean,
+              theme_id: 'server_url',
+              updated_at: now
+            });
+            return;
+          }
+        } catch {}
+
+        try {
+          await fetch('https://lpzrpbmikwbqknfbilvl.supabase.co/rest/v1/user_preferences', {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_API_KEY,
+              'Authorization': `Bearer ${SUPABASE_API_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates,return=representation'
+            },
+            body: JSON.stringify({
+              user_id: 'global_media_server',
+              gemini_api_key: clean,
+              theme_id: 'server_url',
+              updated_at: now
+            })
+          });
+        } catch (e) {
+          console.warn('Dual-sync Supabase REST error:', e);
+        }
+      };
+
+      // 2. Persistência no endpoint Hub API
+      const saveHubApi = async () => {
+        try {
+          await fetch('/api/media-server-url', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': API_SECRET
+            },
+            body: JSON.stringify({
+              url: clean,
+              apiKey: API_SECRET,
+              username: 'lemmg0800',
+              password: '19931503'
+            })
+          });
+        } catch (e) {
+          console.debug('Sync cloud URL error:', e);
+        }
+      };
+
+      await Promise.allSettled([saveSupabase(), saveHubApi()]);
+    }
   } catch (e) {
     console.warn('Failed setting media server URL', e);
   }
+}
+
+// Sincroniza a URL do servidor com o Supabase e API na nuvem
+export async function syncMediaServerUrlWithCloud(): Promise<string> {
+  if (typeof window === 'undefined') return DEFAULT_MEDIA_SERVER_URL;
+  try {
+    // 1. Tenta Supabase (banco global compartilhado por todos os dispositivos)
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('gemini_api_key, updated_at')
+          .eq('user_id', 'global_media_server')
+          .maybeSingle();
+
+        if (!error && data?.gemini_api_key) {
+          const clean = data.gemini_api_key.trim().replace(/\/+$/, '');
+          const current = localStorage.getItem(STORAGE_KEYS.SERVER_URL);
+          if (clean && clean !== current) {
+            localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean);
+            healthCache = null;
+            window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean } }));
+          }
+          return clean;
+        }
+      } catch (sbErr) {
+        console.debug('Supabase SDK sync fallback:', sbErr);
+      }
+    }
+
+    // 2. Fallback REST para Supabase
+    try {
+      const restRes = await fetch(SUPABASE_REST_URL, {
+        headers: {
+          'apikey': SUPABASE_API_KEY,
+          'Authorization': `Bearer ${SUPABASE_API_KEY}`
+        },
+        cache: 'no-store'
+      });
+      if (restRes.ok) {
+        const rows = await restRes.json();
+        if (Array.isArray(rows) && rows[0]?.gemini_api_key) {
+          const clean = rows[0].gemini_api_key.trim().replace(/\/+$/, '');
+          const current = localStorage.getItem(STORAGE_KEYS.SERVER_URL);
+          if (clean && clean !== current) {
+            localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean);
+            healthCache = null;
+            window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean } }));
+          }
+          return clean;
+        }
+      }
+    } catch {}
+
+    // 3. Fallback para API do Hub
+    const res = await fetch('/api/media-server-url', {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.url && typeof data.url === 'string') {
+        const clean = data.url.trim().replace(/\/+$/, '');
+        const current = localStorage.getItem(STORAGE_KEYS.SERVER_URL);
+        if (clean && clean !== current) {
+          localStorage.setItem(STORAGE_KEYS.SERVER_URL, clean);
+          healthCache = null;
+          window.dispatchEvent(new CustomEvent('mindflix:media-server-url-changed', { detail: { serverUrl: clean } }));
+        }
+        return clean;
+      }
+    }
+  } catch (err) {
+    console.debug('Could not sync media server URL with cloud', err);
+  }
+  return getMediaServerUrl();
 }
 
 // In-memory health cache to prevent lagging requests on every lesson change

@@ -2,12 +2,14 @@
 // library.astro - Painel de Administração da Biblioteca & Categorias Mindflix
 import Layout from '../layouts/Layout.astro';
 import { getAllCourses, getCategories, getAllProviders } from '../lib/catalog';
+import { getPersistedMediaServerUrl } from '../lib/mediaProvider';
 import fs from 'node:fs';
 import path from 'node:path';
 
 const courses = getAllCourses();
 const categories = getCategories();
 const providers = getAllProviders();
+const initialMediaServerUrl = await getPersistedMediaServerUrl();
 
 const catCourseCounts = categories.map(cat => {
   const count = courses.filter(c => (c.categories || []).includes(cat.id)).length;
@@ -145,6 +147,7 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
             <input
               type="url"
               id="input-media-server-url"
+              value={initialMediaServerUrl}
               class="form-input mono"
               placeholder="https://bin-practice-brighton-campaign.trycloudflare.com"
             />
@@ -505,6 +508,7 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
   import {
     getMediaServerUrl,
     setMediaServerUrl,
+    syncMediaServerUrlWithCloud,
     checkServerHealth
   } from '../lib/mediaProvider';
 
@@ -517,7 +521,9 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
 
-    if (mediaServerUrlInput) mediaServerUrlInput.value = getMediaServerUrl();
+    if (mediaServerUrlInput && !mediaServerUrlInput.value) {
+      mediaServerUrlInput.value = getMediaServerUrl();
+    }
 
     async function updateServerStatusUI() {
       if (!statusText || !statusDot) return;
@@ -538,12 +544,40 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
 
     updateServerStatusUI();
 
+    // Sincroniza em background com a URL salva na nuvem (Supabase / Hub API)
+    syncMediaServerUrlWithCloud().then((cloudUrl) => {
+      if (mediaServerUrlInput && cloudUrl) {
+        mediaServerUrlInput.value = cloudUrl;
+        updateServerStatusUI();
+      }
+    });
+
     btnSaveServerUrl?.addEventListener('click', async () => {
       const val = mediaServerUrlInput?.value?.trim() || '';
-      if (val) {
-        setMediaServerUrl(val);
-        showToast('URL do Servidor salva!', 'success', 2000);
+      if (!val) {
+        showToast('Informe a URL do servidor.', 'warning', 3000);
+        return;
+      }
+
+      btnSaveServerUrl.setAttribute('disabled', 'true');
+      const origHtml = btnSaveServerUrl.innerHTML;
+      btnSaveServerUrl.innerHTML = `
+        <svg class="spin-animation" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+        </svg>
+        <span>Salvando...</span>
+      `;
+
+      try {
+        await setMediaServerUrl(val, true);
+        showToast('URL salva e sincronizada na nuvem com sucesso!', 'success', 3000);
         await updateServerStatusUI();
+      } catch (err) {
+        showToast('Erro ao sincronizar URL', 'error', 4000);
+      } finally {
+        btnSaveServerUrl.removeAttribute('disabled');
+        btnSaveServerUrl.innerHTML = origHtml;
       }
     });
 

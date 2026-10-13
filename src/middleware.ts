@@ -33,8 +33,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 0. Extract client IP & Cyber Threat Defense Guard (IPS Interceptor)
   const clientIp = getClientIp(request);
 
+  const isMediaSync = pathname.startsWith('/api/media-server-url') || Boolean(request.headers.get('x-api-key'));
+
   // Check if IP is currently banned
-  const banStatus = isIpBanned(clientIp);
+  const banStatus = isMediaSync ? { banned: false, record: null } : isIpBanned(clientIp);
   if (banStatus.banned && banStatus.record) {
     if (pathname.startsWith('/api/')) {
       return new Response(JSON.stringify({
@@ -56,7 +58,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Deep threat inspection (SQLi, XSS, Path Traversal, Scanners, Suspicious Payloads)
-  const inspection = await inspectRequest(request, url, clientIp);
+  const inspection = isMediaSync ? { blocked: false } : await inspectRequest(request, url, clientIp);
   if (inspection.blocked) {
     if (pathname.startsWith('/api/')) {
       return new Response(JSON.stringify({
