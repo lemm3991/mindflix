@@ -1,4 +1,4 @@
-// src/lib/mediaProvider.ts - Media Source Provider Manager (Streaming Server)
+import mediaServerData from '../data/media_server_url.json';
 
 export type MediaSourceMode = 'server';
 
@@ -12,7 +12,8 @@ const STORAGE_KEYS = {
   SERVER_URL: 'mindflix_media_server_url'
 };
 
-export const DEFAULT_MEDIA_SERVER_URL = 'https://bin-practice-brighton-campaign.trycloudflare.com';
+const savedJsonUrl = (mediaServerData && (mediaServerData as any).url) ? String((mediaServerData as any).url).trim() : '';
+export const DEFAULT_MEDIA_SERVER_URL = savedJsonUrl || 'https://jennifer-brandon-legislature-analytical.trycloudflare.com';
 
 export function getMediaMode(): MediaSourceMode {
   return 'server';
@@ -38,7 +39,7 @@ export function getMediaServerUrl(): string {
   if (typeof window === 'undefined') return DEFAULT_MEDIA_SERVER_URL;
   try {
     const val = localStorage.getItem(STORAGE_KEYS.SERVER_URL);
-    if (!val || !val.trim() || val.includes('par-movie') || val.includes('everyone-prototype')) {
+    if (!val || !val.trim() || val.includes('par-movie') || val.includes('everyone-prototype') || val.includes('bin-practice-brighton') || val.includes('semester-lover-legs')) {
       localStorage.setItem(STORAGE_KEYS.SERVER_URL, DEFAULT_MEDIA_SERVER_URL);
       return DEFAULT_MEDIA_SERVER_URL;
     }

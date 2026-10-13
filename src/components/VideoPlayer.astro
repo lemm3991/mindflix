@@ -1,4 +1,4 @@
-﻿---
+---
 // VideoPlayer.astro - Advanced Video Player with Theater/Focus modes, Keyboard Shortcuts, Speed Popover, and Next Lesson Countdown
 import type { Lesson } from '../types/catalog';
 import { buildServerStreamUrl } from '../lib/mediaProvider';
@@ -139,7 +139,6 @@ const isVideo = !isPdf && !isDoc;
         <p class="video-error-desc" id="video-error-desc">Não foi possível carregar o vídeo do servidor de streaming. Verifique se o servidor está ativo.</p>
         <div class="video-error-actions">
           <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-video">Tentar Novamente</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btn-error-config-server">Configurar Servidor</button>
         </div>
       </div>
     </div>
@@ -179,20 +178,6 @@ const isVideo = !isPdf && !isDoc;
           </svg>
         </button>
       )}
-    </div>
-
-    <!-- Media Server Status & Config (Row 2 on mobile, inline on desktop) -->
-    <div class="nav-middle">
-      <div class="media-source-select-wrap" title="Servidor de Streaming dos Vídeos">
-        <button type="button" class="btn btn-ghost btn-sm btn-server-status-pill" id="btn-config-server" title="Servidor de Streaming (Clique para ver ou alterar a URL)">
-          <span class="pulse-dot-indicator pulse-testing" id="player-server-dot"></span>
-          <span class="server-label" id="player-server-label">Servidor</span>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="server-cfg-icon">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </button>
-      </div>
     </div>
 
     <div class="nav-right">
@@ -245,8 +230,7 @@ const isVideo = !isPdf && !isDoc;
   import {
     buildServerStreamUrl,
     getMediaServerUrl,
-    setMediaServerUrl,
-    checkServerHealth
+    syncMediaServerUrlWithCloud
   } from '../lib/mediaProvider';
   import { showToast } from '../lib/toast';
 
@@ -263,9 +247,6 @@ const isVideo = !isPdf && !isDoc;
   const btnPip = document.getElementById('btn-pip-mode');
   const errorOverlay = document.getElementById('video-error-overlay');
   const retryBtn = document.getElementById('btn-retry-video');
-  const btnErrorConfigServer = document.getElementById('btn-error-config-server');
-  const serverDot = document.getElementById('player-server-dot');
-  const serverLabel = document.getElementById('player-server-label');
   const speedContainer = document.getElementById('player-speed-container');
   const btnSpeed = document.getElementById('btn-player-speed');
   const speedLabel = document.getElementById('player-speed-label');
@@ -299,37 +280,6 @@ const isVideo = !isPdf && !isDoc;
   if (courseId && lessonId) {
     const prefs = getUserPreferences();
     let currentSpeed = prefs.playback_speed || 1.0;
-
-    async function promptConfigServer() {
-      const currentUrl = getMediaServerUrl();
-      const newUrl = prompt('URL do Servidor de Streaming (Cloudflare Tunnel ou IP Local):', currentUrl);
-      if (newUrl !== null && newUrl.trim() !== '') {
-        setMediaServerUrl(newUrl.trim());
-        showToast('Testando conexão com o servidor...', 'info', 2000);
-        await updateServerStatusUI();
-        initPlayerSource(true);
-      }
-    }
-
-    const btnConfigServer = document.getElementById('btn-config-server');
-    btnConfigServer?.addEventListener('click', promptConfigServer);
-    btnErrorConfigServer?.addEventListener('click', promptConfigServer);
-
-    async function updateServerStatusUI() {
-      const url = getMediaServerUrl();
-      if (serverDot) serverDot.className = 'pulse-dot-indicator pulse-testing';
-      if (serverLabel) serverLabel.textContent = 'Verificando...';
-
-      const isOnline = await checkServerHealth(url);
-      if (isOnline) {
-        if (serverDot) serverDot.className = 'pulse-dot-indicator pulse-online';
-        if (serverLabel) serverLabel.textContent = 'Servidor Online 🟢';
-      } else {
-        if (serverDot) serverDot.className = 'pulse-dot-indicator pulse-offline';
-        if (serverLabel) serverLabel.textContent = 'Servidor Offline 🔴';
-      }
-      return isOnline;
-    }
 
     let countdownInterval: any = null;
 
@@ -511,6 +461,14 @@ const isVideo = !isPdf && !isDoc;
       if (!relPath) return;
       const serverStreamUrl = buildServerStreamUrl(relPath);
       let vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      const pdfFrame = document.getElementById('pdf-viewer-frame') as HTMLIFrameElement | null;
+
+      if (pdfFrame) {
+        if (forceReload || pdfFrame.getAttribute('data-src') !== serverStreamUrl) {
+          pdfFrame.setAttribute('data-src', serverStreamUrl);
+          pdfFrame.src = serverStreamUrl;
+        }
+      }
 
       if (!vid) {
         const viewport = document.getElementById('video-viewport');
@@ -551,8 +509,6 @@ const isVideo = !isPdf && !isDoc;
           if (errorOverlay) errorOverlay.style.display = 'none';
         });
       }
-
-      updateServerStatusUI();
     }
 
     retryBtn?.addEventListener('click', () => {
@@ -560,7 +516,21 @@ const isVideo = !isPdf && !isDoc;
       initPlayerSource(true);
     });
 
+    // 1. Inicia o player com o endereço atual configurado
     initPlayerSource();
+
+    // 2. Sincroniza em background com o link salvo na biblioteca (Supabase / media_server_url.json)
+    syncMediaServerUrlWithCloud().then((cloudUrl) => {
+      if (cloudUrl) {
+        const currentStream = buildServerStreamUrl(relPath);
+        const vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+        if (vid && vid.getAttribute('data-src') !== currentStream) {
+          initPlayerSource(true);
+        }
+      }
+    }).catch(() => {});
+
+    // 3. Atualiza automaticamente se o link for alterado em outra aba/painel
     window.addEventListener('mindflix:media-server-url-changed', () => initPlayerSource(true));
 
     // Mark completed toggle (Shared across Video and Drive)
@@ -1225,65 +1195,6 @@ const isVideo = !isPdf && !isDoc;
     color: var(--accent-cyan, #00f2fe);
   }
 
-  /* Media Server Status Pill */
-  .media-source-select-wrap {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .btn-server-status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
-    border-radius: var(--radius-sm, 6px);
-    color: var(--text-primary, #f1f5f9);
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 0.2rem 0.55rem;
-    height: 26px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .btn-server-status-pill:hover {
-    border-color: var(--accent-cyan, #00f2fe);
-    background: rgba(0, 242, 254, 0.08);
-  }
-
-  .btn-server-status-pill .server-cfg-icon {
-    opacity: 0.6;
-    transition: transform 0.2s ease;
-  }
-
-  .btn-server-status-pill:hover .server-cfg-icon {
-    opacity: 1;
-    transform: rotate(30deg);
-  }
-
-  .pulse-dot-indicator {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-
-  .pulse-online {
-    background: #10b981;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
-  }
-
-  .pulse-offline {
-    background: #ef4444;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
-  }
-
-  .pulse-testing {
-    background: #f59e0b;
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
-  }
-
   /* Speed Popover */
   .speed-popover-container {
     position: relative;
@@ -1461,27 +1372,6 @@ const isVideo = !isPdf && !isDoc;
       white-space: nowrap;
     }
 
-    /* Bottom row: Full width media source selector */
-    .classroom-nav-bar .nav-middle {
-      order: 3;
-      width: 100%;
-      padding-top: 0.35rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .media-source-select-wrap {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-server-status-pill {
-      width: 100%;
-      justify-content: center;
-      height: 28px;
-      font-size: 0.75rem;
-    }
 
     /* Video frame mobile fixes - keep controls fully visible at bottom */
     .drive-player-frame {

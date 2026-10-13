@@ -9,7 +9,7 @@ const PRIMARY_PATH = path.resolve(process.cwd(), 'src', 'data', 'media_server_ur
 const LOCAL_TMP_PATH = path.resolve(process.cwd(), '.tmp', 'media_server_url.json');
 const OS_TMP_PATH = path.join(os.tmpdir(), 'mindflix_media_server_url.json');
 
-const DEFAULT_URL = process.env.PUBLIC_MEDIA_SERVER_URL || 'https://semester-lover-legs-metal.trycloudflare.com';
+const DEFAULT_URL = process.env.PUBLIC_MEDIA_SERVER_URL || 'https://jennifer-brandon-legislature-analytical.trycloudflare.com';
 const API_SECRET = process.env.AUTH_SECRET || 'mindflix-secure-production-secret-salt-2026-v1';
 
 const SUPABASE_REST_URL = 'https://lpzrpbmikwbqknfbilvl.supabase.co/rest/v1/user_preferences';
