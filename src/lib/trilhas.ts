@@ -78,8 +78,28 @@ export function getAllTrilhas(): Trilha[] {
 }
 
 export function getTrilhaById(id: string): Trilha | undefined {
+  if (!id) return undefined;
   const trilhas = getAllTrilhas();
-  return trilhas.find(t => t.id === id);
+  const clean = decodeURIComponent(id).trim().toLowerCase();
+
+  // 1. Direct match
+  const direct = trilhas.find(t => t.id.toLowerCase() === clean);
+  if (direct) return direct;
+
+  // 2. Slug or prefix match
+  const slugMatch = trilhas.find(t => 
+    t.id.replace(/^trilha-/, '').toLowerCase() === clean.replace(/^trilha-/, '') ||
+    (t as any).slug === clean
+  );
+  if (slugMatch) return slugMatch;
+
+  // 3. Contained course_id match
+  const courseMatch = trilhas.find(t => 
+    t.courses && t.courses.some(c => c.course_id && c.course_id.toLowerCase() === clean)
+  );
+  if (courseMatch) return courseMatch;
+
+  return undefined;
 }
 
 export function getTrilhasBySource(source: string): Trilha[] {

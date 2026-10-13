@@ -1,4 +1,4 @@
-﻿---
+---
 // watch/[courseId]/[lessonId].astro - Player e Tela de Estudo
 import Layout from '../../../layouts/Layout.astro';
 import VideoPlayer from '../../../components/VideoPlayer.astro';
@@ -8,12 +8,19 @@ import FocusMode from '../../../components/FocusMode.astro';
 import LessonNotes from '../../../components/LessonNotes.astro';
 import { getCourseById, getFirstPlayableLesson, isPlayableVideoLesson } from '../../../lib/catalog';
 import { getCourseSourceId } from '../../../lib/sources';
+import { getTrilhaById } from '../../../lib/trilhas';
 
 const { courseId, lessonId } = Astro.params;
 const course = courseId ? getCourseById(courseId) : undefined;
 const currentCourseSource = course ? getCourseSourceId(course) : 'all';
 
 if (!course) {
+  if (courseId) {
+    const trilha = getTrilhaById(courseId);
+    if (trilha) {
+      return Astro.redirect(`/watch/trilha/${trilha.id}/${lessonId || 'first'}`);
+    }
+  }
   return Astro.redirect('/404');
 }
 

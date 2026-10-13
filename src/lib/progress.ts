@@ -1,4 +1,4 @@
-﻿import { supabase, isSupabaseConfigured, getLocalUser } from './supabase';
+import { supabase, isSupabaseConfigured, getLocalUser } from './supabase';
 import type { UserProgress, UserPreferences, Course, Lesson, Module } from '../types/catalog';
 
 const STORAGE_KEYS = {
@@ -88,14 +88,16 @@ export function getNextLessonToWatch(course: Course): { lesson?: Lesson; module?
 // HELPER: GET NEXT LESSON OR RESUME LESSON FOR TRILHA
 export function getNextLessonToWatchForTrilha(
   trilhaId: string, 
-  allLessons: { lesson: Lesson; courseId: string; courseTitle: string }[]
-): { lesson?: Lesson; courseId?: string; isResume: boolean; watchUrl: string; label: string } {
+  allLessons: any[]
+): { lesson?: any; courseId?: string; isResume: boolean; watchUrl: string; label: string } {
+  const getItemId = (item: any) => item?.lesson?.id || item?.id;
   const defaultLessonItem = allLessons?.[0];
+  const defaultLessonId = getItemId(defaultLessonItem);
   const defaultRes = {
-    lesson: defaultLessonItem?.lesson,
-    courseId: defaultLessonItem?.courseId,
+    lesson: defaultLessonItem?.lesson || defaultLessonItem,
+    courseId: defaultLessonItem?.courseId || defaultLessonItem?.course_id,
     isResume: false,
-    watchUrl: defaultLessonItem ? `/watch/trilha/${trilhaId}/${defaultLessonItem.lesson.id}` : '/courses',
+    watchUrl: defaultLessonId ? `/watch/trilha/${trilhaId}/${defaultLessonId}` : `/watch/trilha/${trilhaId}`,
     label: 'Iniciar Trilha'
   };
 
@@ -105,33 +107,37 @@ export function getNextLessonToWatchForTrilha(
 
   // Check if trilha has any progress
   const hasStarted = allLessons.some(item => {
-    const prog = allProgress[item.lesson.id];
+    const lid = getItemId(item);
+    const prog = lid ? allProgress[lid] : null;
     return prog && (prog.completed || prog.percentage > 0 || prog.position_seconds > 0);
   });
 
   // Find the FIRST lesson in chronological order that is NOT marked as completed
   const firstUncompletedItem = allLessons.find(item => {
-    const prog = allProgress[item.lesson.id];
+    const lid = getItemId(item);
+    const prog = lid ? allProgress[lid] : null;
     return !prog || !prog.completed;
   });
 
   if (firstUncompletedItem) {
+    const uncompletedId = getItemId(firstUncompletedItem);
     return {
-      lesson: firstUncompletedItem.lesson,
-      courseId: firstUncompletedItem.courseId,
+      lesson: firstUncompletedItem.lesson || firstUncompletedItem,
+      courseId: firstUncompletedItem.courseId || firstUncompletedItem.course_id,
       isResume: hasStarted,
-      watchUrl: `/watch/trilha/${trilhaId}/${firstUncompletedItem.lesson.id}`,
+      watchUrl: uncompletedId ? `/watch/trilha/${trilhaId}/${uncompletedId}` : `/watch/trilha/${trilhaId}`,
       label: hasStarted ? 'Continuar assistindo' : 'Iniciar Trilha'
     };
   }
 
   // If ALL lessons in the trilha are completed:
   const first = allLessons[0];
+  const firstId = getItemId(first);
   return {
-    lesson: first.lesson,
-    courseId: first.courseId,
+    lesson: first.lesson || first,
+    courseId: first.courseId || first.course_id,
     isResume: true,
-    watchUrl: `/watch/trilha/${trilhaId}/${first.lesson.id}`,
+    watchUrl: firstId ? `/watch/trilha/${trilhaId}/${firstId}` : `/watch/trilha/${trilhaId}`,
     label: 'Reassistir Trilha'
   };
 }

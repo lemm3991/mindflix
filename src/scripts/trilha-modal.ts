@@ -142,10 +142,14 @@ export function openTrilhaModal(trilhaId: string) {
         item.className = 'trilha-stage-item';
 
         // Find first uncompleted lesson of this specific course in the trilha
-        const courseLessons = allLessons.filter((l: any) => l.courseId === c.course_id || (l.courseOrder === c.ordem));
-        const uncompletedCourseLesson = courseLessons.find((l: any) => !allProgress[l.lesson?.id]?.completed);
+        const courseLessons = allLessons.filter((l: any) => (l.courseId === c.course_id || l.course_id === c.course_id) || (l.courseOrder === c.ordem || l.ordem === c.ordem));
+        const uncompletedCourseLesson = courseLessons.find((l: any) => {
+          const lid = l.id || l.lesson?.id;
+          return lid && !allProgress[lid]?.completed;
+        });
         const targetLesson = uncompletedCourseLesson || courseLessons[0];
-        const stageUrl = targetLesson ? `/watch/trilha/${trilha.id}/${targetLesson.lesson.id}` : `/watch/trilha/${trilha.id}/first`;
+        const targetLessonId = targetLesson?.id || targetLesson?.lesson?.id;
+        const stageUrl = targetLessonId ? `/watch/trilha/${trilha.id}/${targetLessonId}` : (c.course_id ? `/course/${c.course_id}` : `/watch/trilha/${trilha.id}/first`);
         
         item.href = stageUrl;
 

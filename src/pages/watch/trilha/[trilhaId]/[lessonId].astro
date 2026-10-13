@@ -1,4 +1,4 @@
-﻿---
+---
 // src/pages/watch/trilha/[trilhaId]/[lessonId].astro - Sala de Aula da Trilha de Formação
 import Layout from '../../../../layouts/Layout.astro';
 import VideoPlayer from '../../../../components/VideoPlayer.astro';
@@ -15,9 +15,15 @@ if (!trilhaId) {
   return Astro.redirect('/courses');
 }
 
+import { getCourseById } from '../../../../lib/catalog';
+
 const struct = getTrilhaFullStructure(trilhaId);
 if (!struct || struct.allLessons.length === 0) {
-  return Astro.redirect('/404');
+  const course = getCourseById(trilhaId);
+  if (course) {
+    return Astro.redirect(`/watch/${course.id}/${lessonId || ''}`);
+  }
+  return Astro.redirect('/courses');
 }
 
 const { trilha, coursesWithModules, allLessons } = struct;

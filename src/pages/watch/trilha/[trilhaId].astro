@@ -1,0 +1,31 @@
+---
+// src/pages/watch/trilha/[trilhaId].astro - Redirecionamento inteligente para a sala de aula da trilha
+import { getTrilhaFullStructure, getFirstPlayableLessonInTrilha, getTrilhaById } from '../../../lib/trilhas';
+import { getCourseById, getFirstPlayableLesson } from '../../../lib/catalog';
+
+const { trilhaId } = Astro.params;
+
+if (!trilhaId) {
+  return Astro.redirect('/courses');
+}
+
+const struct = getTrilhaFullStructure(trilhaId);
+if (struct && struct.allLessons.length > 0) {
+  const firstPlayable = getFirstPlayableLessonInTrilha(struct.trilha.id);
+  const target = firstPlayable || struct.allLessons[0];
+  const targetId = target.lesson ? target.lesson.id : (target as any).id;
+  return Astro.redirect(`/watch/trilha/${struct.trilha.id}/${targetId}`);
+}
+
+// Fallback: check if trilhaId is actually a courseId
+const course = getCourseById(trilhaId);
+if (course) {
+  const firstPlayable = getFirstPlayableLesson(course);
+  const target = firstPlayable || course.modules[0]?.lessons[0];
+  if (target) {
+    return Astro.redirect(`/watch/${course.id}/${target.id}`);
+  }
+}
+
+return Astro.redirect('/courses');
+---

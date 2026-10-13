@@ -1,13 +1,46 @@
 ---
 // TrilhaDetailModal.astro - Glassmorphism Modal de Detalhes da Trilha com Sequência Completa de Cursos
-import { getAllTrilhas, getTrilhaFullStructure } from '../lib/trilhas';
+import { getAllTrilhas, getTrilhaFullStructure, getFirstPlayableLessonInTrilha } from '../lib/trilhas';
 
 const trilhas = getAllTrilhas();
 const trilhasWithStructure = trilhas.map(t => {
   const struct = getTrilhaFullStructure(t.id);
+  const lessons = struct?.allLessons || [];
+  const firstPlayable = getFirstPlayableLessonInTrilha(t.id);
+  const defaultLesson = firstPlayable || lessons[0];
+  const firstLessonId = defaultLesson?.lesson?.id || (defaultLesson as any)?.id || '';
+
+  const coursesWithFirstLesson = (t.courses || []).map(c => {
+    const stageLessons = lessons.filter(l => l.courseId === c.course_id || l.courseOrder === c.ordem);
+    const stageFirstLessonId = stageLessons[0]?.lesson?.id || (stageLessons[0] as any)?.id || '';
+    return {
+      ...c,
+      first_lesson_id: stageFirstLessonId
+    };
+  });
+
+  const normalizedLessons = lessons.map(item => ({
+    id: item.lesson?.id || (item as any).id || '',
+    courseId: item.courseId,
+    course_id: item.courseId,
+    courseOrder: item.courseOrder,
+    ordem: item.courseOrder,
+    title: item.lesson?.display_title || item.lesson?.title || '',
+    duration_formatted: item.lesson?.duration_formatted || ''
+  }));
+
   return {
-    ...t,
-    allLessons: struct?.allLessons || []
+    id: t.id,
+    title: t.title,
+    description: t.description,
+    provider: t.provider,
+    total_cursos: t.total_cursos,
+    total_lessons_count: t.total_lessons_count,
+    total_duration_formatted: t.total_duration_formatted,
+    cover_image: t.cover_image,
+    courses: coursesWithFirstLesson,
+    first_lesson_id: firstLessonId,
+    allLessons: normalizedLessons
   };
 });
 const trilhasJsonSafe = JSON.stringify(trilhasWithStructure).replace(/</g, '\\u003c');
@@ -660,9 +693,13 @@ const trilhasJsonSafe = JSON.stringify(trilhasWithStructure).replace(/</g, '\\u0
       // 3. Progress & Smart Resume
       var allProg = getAllProgress();
       var allLessons = trilha.allLessons || [];
-      var completedCount = allLessons.filter(function(l) { return allProg[l.id] && allProg[l.id].completed; }).length;
+      var completedCount = allLessons.filter(function(l) {
+        var lid = l.id || (l.lesson ? l.lesson.id : null);
+        return lid && allProg[lid] && allProg[lid].completed;
+      }).length;
       var hasStarted = allLessons.some(function(l) {
-        var p = allProg[l.id];
+        var lid = l.id || (l.lesson ? l.lesson.id : null);
+        var p = lid ? allProg[lid] : null;
         return p && (p.completed || p.percentage > 0 || p.position_seconds > 0);
       });
 
@@ -678,15 +715,25 @@ const trilhasJsonSafe = JSON.stringify(trilhasWithStructure).replace(/</g, '\\u0
       }
 
       // Next uncompleted lesson
-      var nextLesson = allLessons.find(function(l) { return !allProg[l.id] || !allProg[l.id].completed; }) || allLessons[0];
-      if (playBtn && nextLesson) {
-        playBtn.href = '/watch/' + nextLesson.course_id + '/' + nextLesson.id + '?trilha=' + trilha.id;
+      var nextLesson = allLessons.find(function(l) {
+        var lid = l.id || (l.lesson ? l.lesson.id : null);
+        return lid && (!allProg[lid] || !allProg[lid].completed);
+      }) || allLessons[0];
+
+      var nextLessonId = (nextLesson ? (nextLesson.id || (nextLesson.lesson ? nextLesson.lesson.id : '')) : '') || trilha.first_lesson_id || '';
+      if (playBtn) {
+        if (nextLessonId) {
+          playBtn.href = '/watch/trilha/' + encodeURIComponent(trilha.id) + '/' + encodeURIComponent(nextLessonId);
+        } else {
+          playBtn.href = '/watch/trilha/' + encodeURIComponent(trilha.id);
+        }
       }
       if (playBtnText) {
         playBtnText.textContent = hasStarted ? 'Continuar assistindo' : 'Iniciar Trilha';
       }
       if (nextHint) {
-        nextHint.textContent = (hasStarted && nextLesson) ? ('Próximo: ' + (nextLesson.title || '')) : '';
+        var nTitle = nextLesson ? (nextLesson.display_title || nextLesson.title || (nextLesson.lesson ? (nextLesson.lesson.display_title || nextLesson.lesson.title) : '')) : '';
+        nextHint.textContent = (hasStarted && nextLesson) ? ('Próximo: ' + nTitle) : '';
       }
 
       // 4. Favorite State
@@ -720,20 +767,46 @@ const trilhasJsonSafe = JSON.stringify(trilhasWithStructure).replace(/</g, '\\u0
         stages.forEach(function(stg, sIdx) {
           var stageCourseId = stg.course_id || stg.id || '';
           var stageTitle = stg.course_title || stg.title || stageCourseId;
-          var stageLessons = allLessons.filter(function(l) { return l.course_id === stageCourseId; });
-          var stageComp = stageLessons.filter(function(l) { return allProg[l.id] && allProg[l.id].completed; }).length;
-          var nextStageLesson = stageLessons.find(function(l) { return !allProg[l.id] || !allProg[l.id].completed; }) || stageLessons[0];
-          var stageUrl = nextStageLesson ? ('/watch/' + stageCourseId + '/' + nextStageLesson.id + '?trilha=' + trilha.id) : ('/courses#' + stageCourseId);
+          var stageOrder = stg.ordem || stg.step || (sIdx + 1);
+
+          var stageLessons = allLessons.filter(function(l) {
+            var cId = l.courseId || l.course_id;
+            var cOrd = l.courseOrder || l.ordem;
+            if (stageCourseId && cId) {
+              return cId === stageCourseId;
+            }
+            return cOrd === stageOrder;
+          });
+
+          var stageComp = stageLessons.filter(function(l) {
+            var lid = l.id || (l.lesson ? l.lesson.id : null);
+            return lid && allProg[lid] && allProg[lid].completed;
+          }).length;
+
+          var nextStageLesson = stageLessons.find(function(l) {
+            var lid = l.id || (l.lesson ? l.lesson.id : null);
+            return lid && (!allProg[lid] || !allProg[lid].completed);
+          }) || stageLessons[0];
+
+          var targetStageLessonId = (nextStageLesson ? (nextStageLesson.id || (nextStageLesson.lesson ? nextStageLesson.lesson.id : '')) : '') || stg.first_lesson_id || '';
+
+          var stageUrl = '#';
+          if (targetStageLessonId) {
+            stageUrl = '/watch/trilha/' + encodeURIComponent(trilha.id) + '/' + encodeURIComponent(targetStageLessonId);
+          } else if (stageCourseId) {
+            stageUrl = '/watch/' + encodeURIComponent(stageCourseId);
+          }
+
           var stageCover = stg.cover_image ? ('<img src="' + stg.cover_image + '" class="trilha-stage-thumb" alt="" />') : '';
 
           var item = document.createElement('a');
           item.href = stageUrl;
           item.className = 'trilha-stage-item';
-          item.innerHTML = '<div class="trilha-stage-num">' + (stg.ordem || stg.step || (sIdx + 1)) + '</div>' +
+          item.innerHTML = '<div class="trilha-stage-num">' + stageOrder + '</div>' +
             stageCover +
             '<div class="trilha-stage-info">' +
               '<div class="trilha-stage-top">' +
-                '<span class="trilha-stage-badge">Etapa ' + (stg.ordem || stg.step || (sIdx + 1)) + '</span>' +
+                '<span class="trilha-stage-badge">Etapa ' + stageOrder + '</span>' +
                 (stg.tipo ? ('<span class="trilha-stage-badge">' + stg.tipo + '</span>') : '') +
                 (stageComp > 0 ? ('<span class="trilha-stage-badge" style="color:var(--accent-emerald,#10b981);">' + stageComp + '/' + (stg.lessons_count || stageLessons.length) + ' concluídas</span>') : '') +
               '</div>' +
@@ -741,7 +814,7 @@ const trilhasJsonSafe = JSON.stringify(trilhasWithStructure).replace(/</g, '\\u0
               '<div class="trilha-stage-meta">' + (stg.lessons_count || stageLessons.length) + ' aulas' + (stg.total_duration_formatted ? (' • ' + stg.total_duration_formatted) : '') + '</div>' +
             '</div>' +
             '<div class="trilha-stage-action">' +
-              '<span>Acessar</span>' +
+              '<span>' + (stageLessons.length > 0 && stageComp === stageLessons.length ? 'Rever' : stageComp > 0 ? 'Continuar' : 'Acessar') + '</span>' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
             '</div>';
 
@@ -787,6 +860,12 @@ const trilhasJsonSafe = JSON.stringify(trilhasWithStructure).replace(/</g, '\\u0
         backdrop.onclick = function(e) {
           if (e.target === backdrop) closeModal();
         };
+        backdrop.addEventListener('click', function(e) {
+          var link = e.target.closest('a');
+          if (link && link.href && !link.href.startsWith('javascript:')) {
+            closeModal();
+          }
+        });
       }
       if (favBtn) {
         favBtn.onclick = function(e) {
@@ -850,6 +929,7 @@ const trilhasJsonSafe = JSON.stringify(trilhasWithStructure).replace(/</g, '\\u0
       }
     });
 
+    document.addEventListener('astro:before-preparation', closeModal);
     document.addEventListener('astro:page-load', bindEvents);
     bindEvents();
   })();
