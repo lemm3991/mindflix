@@ -232,7 +232,6 @@ export function getFeaturedCourse(): Course {
 
 export function isPlayableVideoLesson(lesson: Lesson | undefined): boolean {
   if (!lesson) return false;
-  if (lesson.drive_file_id || lesson.drive_url) return true;
   if (!lesson.relative_path) return false;
   const ext = lesson.relative_path.split('.').pop()?.toLowerCase() || '';
   return ['mp4', 'webm', 'mkv', 'm4v', 'ts'].includes(ext) || lesson.type === 'video';

@@ -20,9 +20,6 @@ export interface Lesson {
   duration_seconds: number;
   duration_formatted: string;
   materials?: LessonMaterial[];
-  drive_file_id?: string;
-  drive_url?: string;
-  video_url?: string;
 }
 
 export interface Module {
@@ -32,7 +29,6 @@ export interface Module {
   display_title: string;
   relative_path: string;
   lessons: Lesson[];
-  drive_folder_id?: string;
 }
 
 export interface Course {
@@ -53,8 +49,6 @@ export interface Course {
   is_comece_por_aqui?: boolean;
   is_hidden?: boolean;
   source?: string;
-  drive_folder_id?: string;
-  drive_folder_url?: string;
 }
 
 export interface Category {

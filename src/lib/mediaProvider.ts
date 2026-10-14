@@ -256,7 +256,7 @@ export async function getActiveMediaProvider(): Promise<'server'> {
 }
 
 export function buildServerStreamUrl(relativePath: string, serverUrl?: string): string {
-  if (!relativePath || relativePath.startsWith('drive:')) return '';
+  if (!relativePath) return '';
   const base = serverUrl || getMediaServerUrl();
   const cleanPath = (relativePath || '').replace(/\\/g, '/');
   return `${base}/api/stream?path=${encodeURIComponent(cleanPath)}`;

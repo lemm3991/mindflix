@@ -20,11 +20,7 @@ export const POST: APIRoute = async ({ request }) => {
     const flag = dryRun ? '--dry-run' : '--apply';
 
     const args: string[] = [SCRIPT_PATH, flag];
-    if (body.drive !== false) {
-      args.push('--drive');
-    } else {
-      args.push('--no-drive');
-    }
+    args.push('--no-drive');
 
     if (body.root && typeof body.root === 'string') {
       const sanitizedRoot = path.resolve(body.root.trim());
@@ -44,8 +40,8 @@ export const POST: APIRoute = async ({ request }) => {
           'ℹ️  VARREDURA DE BIBLIOTECA — AMBIENTE EM NUVEM (VERCEL)',
           '======================================================',
           '',
-          'A varredura física do acervo precisa ler a pasta de cursos na sua máquina',
-          '(ex: "G:\\Meu Drive\\Cursos\\Cursos Mindflix" ou caminho configurado).',
+          'A varredura física do acervo precisa ler a pasta de cursos no servidor de mídia',
+          '(ex: "D:\\Projetos Antigravity\\Cursos Mindflix" ou caminho configurado).',
           '',
           'Como a Vercel opera em servidores em nuvem isolados, o scanner direto',
           'deve ser executado no terminal do seu computador:',

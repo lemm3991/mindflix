@@ -685,7 +685,7 @@ const formattedLastScan = new Date(summary.last_scan_at).toLocaleString('pt-BR',
         if (btnConfirmApply) {
           btnConfirmApply.style.display = dryRun ? 'inline-flex' : 'none';
         }
-        dryRunOutput.textContent = '⏳ Executando varredura na biblioteca...\n\nProcessando diretórios, verificando arquivos locais e Google Drive...\nPor favor, aguarde.';
+        dryRunOutput.textContent = '⏳ Executando varredura na biblioteca...\n\nProcessando diretórios e indexando arquivos de mídia do servidor...\nPor favor, aguarde.';
       }
 
       try {
