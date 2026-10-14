@@ -13,7 +13,7 @@ const STORAGE_KEYS = {
 };
 
 const savedJsonUrl = (mediaServerData && (mediaServerData as any).url) ? String((mediaServerData as any).url).trim() : '';
-export const DEFAULT_MEDIA_SERVER_URL = savedJsonUrl || 'https://jennifer-brandon-legislature-analytical.trycloudflare.com';
+export const DEFAULT_MEDIA_SERVER_URL = savedJsonUrl || 'https://cir-frederick-van-sword.trycloudflare.com';
 
 export function getMediaMode(): MediaSourceMode {
   return 'server';
@@ -256,6 +256,7 @@ export async function getActiveMediaProvider(): Promise<'server'> {
 }
 
 export function buildServerStreamUrl(relativePath: string, serverUrl?: string): string {
+  if (!relativePath || relativePath.startsWith('drive:')) return '';
   const base = serverUrl || getMediaServerUrl();
   const cleanPath = (relativePath || '').replace(/\\/g, '/');
   return `${base}/api/stream?path=${encodeURIComponent(cleanPath)}`;

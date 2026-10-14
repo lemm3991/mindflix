@@ -29,12 +29,17 @@ const {
   watchUrl = ''
 } = Astro.props;
 
-const videoStreamUrl = buildServerStreamUrl(lesson.relative_path || '');
+const relPath = lesson.relative_path || '';
+const isDriveLesson = lesson.type === 'drive' || relPath.startsWith('drive:') || (!relPath && !!lesson.drive_url);
+const driveId = relPath.startsWith('drive:') ? relPath.replace('drive:', '') : '';
+const effectiveDriveUrl = lesson.drive_url || (driveId ? `https://drive.google.com/file/d/${driveId}/preview` : '');
 
-const ext = (lesson.relative_path || '').split('.').pop()?.toLowerCase() || '';
+const ext = (relPath || '').split('.').pop()?.toLowerCase() || '';
 const isPdf = lesson.type === 'pdf' || ext === 'pdf';
 const isDoc = ['docx', 'pptx', 'xlsx', 'txt', 'md', 'html'].includes(ext);
-const isVideo = !isPdf && !isDoc;
+const isVideo = !isPdf && !isDoc && !isDriveLesson;
+
+const videoStreamUrl = isVideo ? buildServerStreamUrl(relPath) : '';
 ---
 
 <div
@@ -45,7 +50,7 @@ const isVideo = !isPdf && !isDoc;
   data-next-href={nextLessonHref || ''}
   data-next-title={nextLessonTitle}
   data-relative-path={lesson.relative_path || ''}
-  data-drive-url={lesson.drive_url || ''}
+  data-drive-url={effectiveDriveUrl}
 >
   <!-- Next Lesson Countdown Overlay (Shown on Video End) -->
   <div class="next-lesson-overlay" id="next-lesson-overlay" style="display: none;">
@@ -76,9 +81,20 @@ const isVideo = !isPdf && !isDoc;
     <span>Progresso salvo</span>
   </div>
 
-  <!-- Main Video Viewport (Streaming Server & PDFs/Docs) -->
+  <!-- Main Video Viewport (Streaming Server, Google Drive & PDFs/Docs) -->
   <div class="video-viewport" id="video-viewport">
-    {isVideo ? (
+    {isDriveLesson ? (
+      <div class="drive-video-wrapper">
+        <iframe
+          id="main-drive-player"
+          class="drive-player-frame"
+          src={effectiveDriveUrl}
+          title={lesson.display_title}
+          allow="autoplay; fullscreen"
+          allowfullscreen
+        ></iframe>
+      </div>
+    ) : isVideo ? (
       <div class="drive-video-wrapper">
         <video
           id="main-video-player"
@@ -140,7 +156,7 @@ const isVideo = !isPdf && !isDoc;
         <p class="video-error-desc" id="video-error-desc">Não foi possível carregar o vídeo do servidor de streaming. Verifique se o servidor está ativo.</p>
         <div class="video-error-actions">
           <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-video">Tentar Novamente</button>
-          {lesson.drive_url && (
+          {effectiveDriveUrl && (
             <button type="button" class="btn btn-primary btn-sm" id="btn-fallback-drive">Assistir via Google Drive</button>
           )}
         </div>
@@ -461,8 +477,10 @@ const isVideo = !isPdf && !isDoc;
       });
     }
 
+    let retriedWithSync = false;
+
     async function initPlayerSource(forceReload = false) {
-      if (!relPath) return;
+      if (!relPath || relPath.startsWith('drive:')) return;
       const serverStreamUrl = buildServerStreamUrl(relPath);
       let vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
       const pdfFrame = document.getElementById('pdf-viewer-frame') as HTMLIFrameElement | null;
@@ -477,7 +495,7 @@ const isVideo = !isPdf && !isDoc;
       if (!vid) {
         const viewport = document.getElementById('video-viewport');
         const wrapperDiv = viewport?.querySelector('.drive-video-wrapper') as HTMLElement | null;
-        if (wrapperDiv) {
+        if (wrapperDiv && !wrapperDiv.querySelector('#main-drive-player')) {
           wrapperDiv.innerHTML = `
             <video
               id="main-video-player"
@@ -506,9 +524,25 @@ const isVideo = !isPdf && !isDoc;
 
         setupHtml5Video(vid);
 
-        vid.addEventListener('error', () => {
+        vid.addEventListener('error', async () => {
           if (vid && vid.error) {
             console.warn('[MindFlix Player] Media error code:', vid.error.code, vid.error.message);
+            // Attempt auto-recovery via cloud sync if tunnel updated
+            if (!retriedWithSync) {
+              retriedWithSync = true;
+              try {
+                const cloudUrl = await syncMediaServerUrlWithCloud();
+                const newStream = buildServerStreamUrl(relPath, cloudUrl);
+                if (newStream && newStream !== vid.getAttribute('data-src')) {
+                  console.log('[MindFlix Player] Recovering player with active cloud tunnel:', cloudUrl);
+                  vid.setAttribute('data-src', newStream);
+                  vid.src = newStream;
+                  if (errorOverlay) errorOverlay.style.display = 'none';
+                  vid.load();
+                  return;
+                }
+              } catch {}
+            }
             if (errorOverlay) errorOverlay.style.display = 'flex';
           }
         });
@@ -519,8 +553,11 @@ const isVideo = !isPdf && !isDoc;
       }
     }
 
-    retryBtn?.addEventListener('click', () => {
+    retryBtn?.addEventListener('click', async () => {
       if (errorOverlay) errorOverlay.style.display = 'none';
+      showToast('Reconectando com o servidor de streaming...', 'info', 2000);
+      retriedWithSync = false;
+      await syncMediaServerUrlWithCloud();
       initPlayerSource(true);
     });
 
@@ -547,21 +584,40 @@ const isVideo = !isPdf && !isDoc;
     });
 
     // 1. Inicia o player com o endereço atual configurado
-    initPlayerSource();
-
-    // 2. Sincroniza em background com o link salvo na biblioteca (Supabase / media_server_url.json)
-    syncMediaServerUrlWithCloud().then((cloudUrl) => {
-      if (cloudUrl) {
-        const currentStream = buildServerStreamUrl(relPath);
-        const vid = document.getElementById('main-video-player') as HTMLVideoElement | null;
-        if (vid && vid.getAttribute('data-src') !== currentStream) {
-          initPlayerSource(true);
-        }
+    if (!relPath || !relPath.startsWith('drive:')) {
+      const clientServerUrl = getMediaServerUrl();
+      const currentStream = buildServerStreamUrl(relPath, clientServerUrl);
+      const initialVid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+      if (initialVid && currentStream && initialVid.getAttribute('data-src') !== currentStream) {
+        initialVid.setAttribute('data-src', currentStream);
+        initialVid.src = currentStream;
+        initialVid.load();
       }
-    }).catch(() => {});
+      initPlayerSource();
+
+      // 2. Sincroniza em background com o link salvo na biblioteca (Supabase / media_server_url.json)
+      syncMediaServerUrlWithCloud().then((cloudUrl) => {
+        if (cloudUrl) {
+          const syncedStream = buildServerStreamUrl(relPath, cloudUrl);
+          const curVid = document.getElementById('main-video-player') as HTMLVideoElement | null;
+          if (curVid && syncedStream && curVid.getAttribute('data-src') !== syncedStream) {
+            console.log('[MindFlix Player] Upgrading video src with active cloud tunnel:', cloudUrl);
+            curVid.setAttribute('data-src', syncedStream);
+            curVid.src = syncedStream;
+            if (errorOverlay) errorOverlay.style.display = 'none';
+            curVid.load();
+          }
+        }
+      }).catch(() => {});
+    }
 
     // 3. Atualiza automaticamente se o link for alterado em outra aba/painel
-    window.addEventListener('mindflix:media-server-url-changed', () => initPlayerSource(true));
+    window.addEventListener('mindflix:media-server-url-changed', () => {
+      if (!relPath || !relPath.startsWith('drive:')) {
+        retriedWithSync = false;
+        initPlayerSource(true);
+      }
+    });
 
     // Mark completed toggle (Shared across Video and Drive)
     const saved = getLessonProgress(lessonId);
