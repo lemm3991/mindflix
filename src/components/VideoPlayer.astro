@@ -216,8 +216,6 @@ const videoStreamUrl = isVideo ? buildServerStreamUrl(relPath) : '';
 
             <!-- Right Controls: Speed, PiP, Focus, Fullscreen -->
             <div class="controls-right">
-              <span class="ctrl-badge-hd">HD 1080p</span>
-
               <!-- Playback Speed Popover -->
               <div class="speed-popover-container" id="player-speed-container">
                 <button type="button" class="ctrl-btn ctrl-btn-speed" id="btn-player-speed" title="Velocidade do vídeo">
@@ -1502,19 +1500,6 @@ const videoStreamUrl = isVideo ? buildServerStreamUrl(relPath) : '';
     color: #64748b;
   }
 
-  .ctrl-badge-hd {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.2rem 0.45rem;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #e2e8f0;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-  }
-
   /* Speed Menu */
   .ctrl-btn-speed {
     width: auto;
@@ -1806,8 +1791,9 @@ const videoStreamUrl = isVideo ? buildServerStreamUrl(relPath) : '';
   }
 
   @media (max-width: 768px) {
-    .ctrl-volume-group { display: none; }
-    .top-course-title, .top-sep { display: none; }
+    .ctrl-volume-group { display: none !important; }
+    #btn-focus-mode { display: none !important; }
+    .top-course-title, .top-sep { display: none !important; }
     .top-lesson-title { font-size: 0.8rem; }
     .ctrl-time-display { font-size: 0.72rem; }
     .skip-sub { font-size: 0.5rem; top: 12px; }
