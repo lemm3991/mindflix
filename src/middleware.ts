@@ -23,6 +23,9 @@ const PUBLIC_ROUTES = [
   '/api/search/index.json',
   '/api/library-overrides.json',
   '/api/media-server-url',
+  '/api/stremio',
+  '/api/stremio/manifest.json',
+  '/api/stremio/install',
   '/favicon.svg'
 ];
 
@@ -33,7 +36,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 0. Extract client IP & Cyber Threat Defense Guard (IPS Interceptor)
   const clientIp = getClientIp(request);
 
-  const isMediaSync = pathname.startsWith('/api/media-server-url') || Boolean(request.headers.get('x-api-key'));
+  const isStremio = pathname.startsWith('/api/stremio');
+  const isMediaSync = pathname.startsWith('/api/media-server-url') || Boolean(request.headers.get('x-api-key')) || isStremio;
 
   // Check if IP is currently banned
   const banStatus = isMediaSync ? { banned: false, record: null } : isIpBanned(clientIp);
@@ -151,7 +155,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
     }
     // H. General API Endpoints
-    else if (!pathname.startsWith('/api/auth/login')) {
+    else if (!pathname.startsWith('/api/auth/login') && !pathname.startsWith('/api/stremio')) {
       const key = buildRateLimitKey('global_api', request, userId);
       const limitRes = await checkRateLimitAsync(key, RATE_LIMIT_PROFILES.GLOBAL_API);
       if (!limitRes.allowed) {
@@ -170,6 +174,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     PUBLIC_ROUTES.includes(pathname) ||
     PUBLIC_ROUTES.includes(pathname.replace(/\/+$/, '')) ||
     pathname.startsWith('/api/media-server-url') ||
+    pathname.startsWith('/api/stremio') ||
     Boolean(request.headers.get('x-api-key'))
   ) {
     // If logging out or explicit logout query param, ensure cookie is cleared
