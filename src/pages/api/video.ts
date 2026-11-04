@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
-import { DEFAULT_MEDIA_SERVER_URL } from '../../lib/mediaProvider';
+import { DEFAULT_MEDIA_SERVER_URL, getPersistedMediaServerUrl } from '../../lib/mediaProvider';
 
 // Centralized courses root directory resolution from env, .env file, or system candidate
 function getCoursesRoot(): string {
@@ -150,9 +150,13 @@ export const GET: APIRoute = async ({ request }) => {
   // If not found locally on disk, redirect to the Streaming Server
   if (!resolved) {
     const isDownload = url.searchParams.get('download') === '1' || url.searchParams.get('download') === 'true';
-    const serverUrl = process.env.MEDIA_SERVER_URL || DEFAULT_MEDIA_SERVER_URL;
+    let serverUrl = process.env.MEDIA_SERVER_URL;
+    if (!serverUrl) {
+      serverUrl = await getPersistedMediaServerUrl();
+    }
     const cleanPath = relPath.replace(/\\/g, '/');
-    const redirectTarget = `${serverUrl}/api/stream?path=${encodeURIComponent(cleanPath)}${isDownload ? '&download=1' : ''}`;
+    const endpoint = isDownload ? '/api/file' : '/api/stream';
+    const redirectTarget = `${serverUrl}${endpoint}?path=${encodeURIComponent(cleanPath)}${isDownload ? '&download=1' : ''}`;
     return Response.redirect(redirectTarget, 302);
   }
 

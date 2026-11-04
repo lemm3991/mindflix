@@ -13,6 +13,11 @@ function getCoursesRoot() {
     if (fs.existsSync(candidate)) return candidate;
   }
 
+  const localCoursesCandidate = 'D:\\Projetos Antigravity\\Cursos Mindflix';
+  if (fs.existsSync(localCoursesCandidate)) {
+    return localCoursesCandidate;
+  }
+
   const gDriveCandidate = 'G:\\Meu Drive\\Cursos\\Cursos Mindflix';
   if (fs.existsSync(gDriveCandidate)) {
     return gDriveCandidate;
@@ -113,7 +118,7 @@ function handleRequest(req, res) {
   }
 
   // Stream endpoint: /api/stream?path=...
-  if (pathname === '/api/stream' || pathname === '/stream') {
+  if (pathname === '/api/stream' || pathname === '/stream' || pathname === '/api/file') {
     const relPath = reqUrl.searchParams.get('path');
     if (!relPath) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -136,6 +141,9 @@ function handleRequest(req, res) {
     const fileSize = stat.size;
     const range = req.headers.range;
     const contentType = getMimeType(resolved.rawPath);
+    const isDownload = pathname === '/api/file' || reqUrl.searchParams.get('download') === '1';
+    const filename = path.basename(resolved.rawPath);
+    const disposition = isDownload ? { 'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"` } : {};
 
     if (range) {
       const parts = range.replace(/bytes=/, '').split('-');
@@ -166,7 +174,8 @@ function handleRequest(req, res) {
         'Accept-Ranges': 'bytes',
         'Content-Length': chunkSize,
         'Content-Type': contentType,
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        ...disposition
       });
 
       const stream = fs.createReadStream(filePath, { start, end });
@@ -181,7 +190,8 @@ function handleRequest(req, res) {
         'Content-Length': fileSize,
         'Content-Type': contentType,
         'Accept-Ranges': 'bytes',
-        'Cache-Control': 'public, max-age=3600'
+        'Cache-Control': isDownload ? 'no-cache' : 'public, max-age=3600',
+        ...disposition
       });
       const stream = fs.createReadStream(filePath);
       stream.pipe(res);

@@ -13,7 +13,7 @@ const STORAGE_KEYS = {
 };
 
 const savedJsonUrl = (mediaServerData && (mediaServerData as any).url) ? String((mediaServerData as any).url).trim() : '';
-export const DEFAULT_MEDIA_SERVER_URL = savedJsonUrl || 'https://cir-frederick-van-sword.trycloudflare.com';
+export const DEFAULT_MEDIA_SERVER_URL = savedJsonUrl || 'https://correspondence-lovers-academics-speak.trycloudflare.com';
 
 export function getMediaMode(): MediaSourceMode {
   return 'server';
@@ -260,5 +260,12 @@ export function buildServerStreamUrl(relativePath: string, serverUrl?: string): 
   const base = serverUrl || getMediaServerUrl();
   const cleanPath = (relativePath || '').replace(/\\/g, '/');
   return `${base}/api/stream?path=${encodeURIComponent(cleanPath)}`;
+}
+
+export function buildServerFileUrl(relativePath: string, serverUrl?: string): string {
+  if (!relativePath) return '';
+  const base = serverUrl || getMediaServerUrl();
+  const cleanPath = (relativePath || '').replace(/\\/g, '/');
+  return `${base}/api/file?path=${encodeURIComponent(cleanPath)}`;
 }
 

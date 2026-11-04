@@ -9,6 +9,7 @@ import LessonNotes from '../../../components/LessonNotes.astro';
 import { getCourseById, getFirstPlayableLesson, isPlayableVideoLesson } from '../../../lib/catalog';
 import { getCourseSourceId } from '../../../lib/sources';
 import { getTrilhaById } from '../../../lib/trilhas';
+import { getPersistedMediaServerUrl, buildServerFileUrl } from '../../../lib/mediaProvider';
 
 const { courseId, lessonId } = Astro.params;
 const course = courseId ? getCourseById(courseId) : undefined;
@@ -61,6 +62,7 @@ const prevLessonHref = prevLesson ? `/watch/${course.id}/${prevLesson.id}` : und
 const nextLessonHref = nextLesson ? `/watch/${course.id}/${nextLesson.id}` : undefined;
 
 // Check if current lesson is the last lesson of its module
+const liveServerUrl = await getPersistedMediaServerUrl();
 const isLastLessonInModule = Boolean(
   currentModule?.lessons &&
   currentModule.lessons.length > 0 &&
@@ -195,7 +197,7 @@ const isLastLessonInModule = Boolean(
                 type: isLink ? 'LINK' : (mat.type || 'ARQUIVO').toUpperCase(),
                 relative_path: mat.relative_path || '',
                 filename: getMatFilename(mat.relative_path || '', mat.title || 'material'),
-                url: targetUrl || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`,
+                url: targetUrl || (mat.relative_path ? buildServerFileUrl(mat.relative_path, liveServerUrl) : '') || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`,
                 is_link: isLink
               };
             });
@@ -213,7 +215,7 @@ const isLastLessonInModule = Boolean(
                 type: ext,
                 relative_path: les.relative_path || '',
                 filename: getMatFilename(les.relative_path || '', les.display_title || les.raw_title || 'material'),
-                url: targetUrl || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`,
+                url: targetUrl || (les.relative_path ? buildServerFileUrl(les.relative_path, liveServerUrl) : '') || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`,
                 is_link: isLink
               };
             });
@@ -232,7 +234,7 @@ const isLastLessonInModule = Boolean(
                 type: ext,
                 relative_path: les.relative_path || '',
                 filename: getMatFilename(les.relative_path || '', les.display_title || les.raw_title || 'material'),
-                url: targetUrl || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`,
+                url: targetUrl || (les.relative_path ? buildServerFileUrl(les.relative_path, liveServerUrl) : '') || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`,
                 is_link: isLink
               };
             }) : [];
@@ -300,6 +302,8 @@ const isLastLessonInModule = Boolean(
                           rel="noopener noreferrer"
                           class="btn btn-secondary btn-sm material-download-btn"
                           download={mat.filename}
+                          data-relative-path={mat.relative_path}
+                          data-filename={mat.filename}
                           title={`Baixar ${mat.title}`}
                           aria-label={`Baixar ${mat.title}`}
                         >
@@ -346,6 +350,38 @@ const isLastLessonInModule = Boolean(
 </Layout>
 
 <script>
+  import { getMediaServerUrl, syncMediaServerUrlWithCloud, buildServerFileUrl } from '../../../lib/mediaProvider';
+  import { showToast } from '../../../lib/toast';
+
+  function updateMaterialLinks(serverUrl?: string) {
+    const activeUrl = serverUrl || getMediaServerUrl();
+    document.querySelectorAll<HTMLAnchorElement>('.material-download-btn:not(.material-link-btn)').forEach(btn => {
+      const rel = btn.getAttribute('data-relative-path');
+      if (rel) {
+        btn.href = buildServerFileUrl(rel, activeUrl);
+      }
+    });
+  }
+
+  // Update immediately with cached/local URL and sync with cloud
+  updateMaterialLinks();
+  syncMediaServerUrlWithCloud().then(url => {
+    if (url) updateMaterialLinks(url);
+  });
+  window.addEventListener('mindflix:media-server-url-changed', ((e: CustomEvent) => {
+    if (e.detail?.serverUrl) {
+      updateMaterialLinks(e.detail.serverUrl);
+    }
+  }) as EventListener);
+
+  // Click feedback
+  document.querySelectorAll<HTMLAnchorElement>('.material-download-btn:not(.material-link-btn)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const fn = btn.getAttribute('data-filename') || 'material';
+      showToast(`Iniciando download de "${fn}"...`, 'info', 3000);
+    });
+  });
+
   const gradeBtn = document.getElementById('btn-watch-grade-modal');
   if (gradeBtn) {
     gradeBtn.addEventListener('click', () => {

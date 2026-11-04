@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
   '/api/search/index.json',
   '/api/library-overrides.json',
   '/api/media-server-url',
+  '/api/video',
   '/api/stremio',
   '/api/stremio/manifest.json',
   '/api/stremio/install',
@@ -174,6 +175,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     PUBLIC_ROUTES.includes(pathname) ||
     PUBLIC_ROUTES.includes(pathname.replace(/\/+$/, '')) ||
     pathname.startsWith('/api/media-server-url') ||
+    pathname.startsWith('/api/video') ||
     pathname.startsWith('/api/stremio') ||
     Boolean(request.headers.get('x-api-key'))
   ) {

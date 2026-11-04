@@ -8,6 +8,7 @@ import FocusMode from '../../../../components/FocusMode.astro';
 import LessonNotes from '../../../../components/LessonNotes.astro';
 import { getTrilhaFullStructure, getFirstPlayableLessonInTrilha } from '../../../../lib/trilhas';
 import { isPlayableVideoLesson } from '../../../../lib/catalog';
+import { getPersistedMediaServerUrl, buildServerFileUrl } from '../../../../lib/mediaProvider';
 
 const { trilhaId, lessonId } = Astro.params;
 
@@ -44,6 +45,7 @@ const nextLessonItem = currentIdx < allLessons.length - 1 ? allLessons[currentId
 
 const prevLessonHref = prevLessonItem ? `/watch/trilha/${trilha.id}/${prevLessonItem.lesson.id}` : undefined;
 const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLessonItem.lesson.id}` : undefined;
+const liveServerUrl = await getPersistedMediaServerUrl();
 ---
 
 <Layout title={`${currentLesson.display_title} — Trilha: ${trilha.title}`} hideNavbar={false}>
@@ -142,7 +144,7 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
                 type: isLink ? 'LINK' : (mat.type || 'ARQUIVO').toUpperCase(),
                 relative_path: mat.relative_path || '',
                 filename: getMatFilename(mat.relative_path || '', mat.title || 'material'),
-                url: targetUrl || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`,
+                url: targetUrl || (mat.relative_path ? buildServerFileUrl(mat.relative_path, liveServerUrl) : '') || `/api/video?path=${encodeURIComponent(mat.relative_path)}&download=1`,
                 is_link: isLink
               };
             });
@@ -161,7 +163,7 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
                 type: ext,
                 relative_path: les.relative_path || '',
                 filename: getMatFilename(les.relative_path || '', les.display_title || les.raw_title || 'material'),
-                url: targetUrl || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`,
+                url: targetUrl || (les.relative_path ? buildServerFileUrl(les.relative_path, liveServerUrl) : '') || `/api/video?path=${encodeURIComponent(les.relative_path)}&download=1`,
                 is_link: isLink
               };
             });
@@ -229,6 +231,8 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
                           rel="noopener noreferrer"
                           class="btn btn-secondary btn-sm material-download-btn"
                           download={mat.filename}
+                          data-relative-path={mat.relative_path}
+                          data-filename={mat.filename}
                           title={`Baixar ${mat.title}`}
                           aria-label={`Baixar ${mat.title}`}
                         >
@@ -697,6 +701,37 @@ const nextLessonHref = nextLessonItem ? `/watch/trilha/${trilha.id}/${nextLesson
 
 <script>
   import { getNextLessonToWatchForTrilha } from '../../../../lib/progress';
+  import { getMediaServerUrl, syncMediaServerUrlWithCloud, buildServerFileUrl } from '../../../../lib/mediaProvider';
+  import { showToast } from '../../../../lib/toast';
+
+  function updateMaterialLinks(serverUrl?: string) {
+    const activeUrl = serverUrl || getMediaServerUrl();
+    document.querySelectorAll<HTMLAnchorElement>('.material-download-btn:not(.material-link-btn)').forEach(btn => {
+      const rel = btn.getAttribute('data-relative-path');
+      if (rel) {
+        btn.href = buildServerFileUrl(rel, activeUrl);
+      }
+    });
+  }
+
+  // Update immediately with cached/local URL and sync with cloud
+  updateMaterialLinks();
+  syncMediaServerUrlWithCloud().then(url => {
+    if (url) updateMaterialLinks(url);
+  });
+  window.addEventListener('mindflix:media-server-url-changed', ((e: CustomEvent) => {
+    if (e.detail?.serverUrl) {
+      updateMaterialLinks(e.detail.serverUrl);
+    }
+  }) as EventListener);
+
+  // Click feedback
+  document.querySelectorAll<HTMLAnchorElement>('.material-download-btn:not(.material-link-btn)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const fn = btn.getAttribute('data-filename') || 'material';
+      showToast(`Iniciando download de "${fn}"...`, 'info', 3000);
+    });
+  });
 
   // If the user navigates directly to /watch/trilha/:id/first, automatically redirect on client to first uncompleted lesson
   const currentPath = window.location.pathname;
