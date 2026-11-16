@@ -1989,9 +1989,9 @@
       "provider": "Asimov Academy",
       "description": "Trilha de formação estruturada contendo 6 cursos e projetos em sequência cronológica recomendada.",
       "total_cursos": 6,
-      "total_lessons_count": 107,
-      "total_duration_seconds": 47782,
-      "total_duration_formatted": "13h 16m",
+      "total_lessons_count": 178,
+      "total_duration_seconds": 89596,
+      "total_duration_formatted": "24h 53m",
       "cover_image": "/covers/course-python-starter.jpg",
       "courses": [
         {
@@ -2027,10 +2027,10 @@
           "course_id": "course-fundamentos-de-trading-quantitativo",
           "course_title": "Fundamentos de Trading Quantitativo",
           "cover_image": "/covers/course-fundamentos-de-trading-quantitativo.jpg",
-          "modules_count": 0,
-          "lessons_count": 0,
-          "total_duration_seconds": 0,
-          "total_duration_formatted": "0 min",
+          "modules_count": 1,
+          "lessons_count": 22,
+          "total_duration_seconds": 10157,
+          "total_duration_formatted": "2h 49m",
           "relative_path": "Asimov/Cursos/Fundamentos de Trading Quantitativo"
         },
         {
@@ -2040,10 +2040,10 @@
           "course_id": "course-construindo-base-de-dados-para-trading",
           "course_title": "Construindo Base de Dados para Trading",
           "cover_image": "/covers/course-construindo-base-de-dados-para-trading.jpg",
-          "modules_count": 0,
-          "lessons_count": 0,
-          "total_duration_seconds": 0,
-          "total_duration_formatted": "0 min",
+          "modules_count": 1,
+          "lessons_count": 18,
+          "total_duration_seconds": 10074,
+          "total_duration_formatted": "2h 47m",
           "relative_path": "Asimov/Cursos/Construindo Base de Dados para Trading"
         },
         {
@@ -2053,10 +2053,10 @@
           "course_id": "course-backtesting-avaliando-estrategias-de-trading-com-dados-historicos",
           "course_title": "Backtesting - Avaliando Estratégias de Trading com Dados Históricos",
           "cover_image": "/covers/course-backtesting-avaliando-estrategias-de-trading-com-dados-historicos.jpg",
-          "modules_count": 0,
-          "lessons_count": 0,
-          "total_duration_seconds": 0,
-          "total_duration_formatted": "0 min",
+          "modules_count": 1,
+          "lessons_count": 15,
+          "total_duration_seconds": 10638,
+          "total_duration_formatted": "2h 57m",
           "relative_path": "Asimov/Cursos/Backtesting - Avaliando Estratégias de Trading com Dados Históricos"
         },
         {
@@ -2066,10 +2066,10 @@
           "course_id": "course-algotrading-execucao-automatizada",
           "course_title": "Algotrading - Execução Automatizada",
           "cover_image": "/covers/course-algotrading-execucao-automatizada.jpg",
-          "modules_count": 0,
-          "lessons_count": 0,
-          "total_duration_seconds": 0,
-          "total_duration_formatted": "0 min",
+          "modules_count": 1,
+          "lessons_count": 16,
+          "total_duration_seconds": 10945,
+          "total_duration_formatted": "3h 02m",
           "relative_path": "Asimov/Cursos/Algotrading - Execução Automatizada"
         }
       ]
@@ -3923,6 +3923,60 @@
       "categories": [
         "web-apps",
         "backend-infra"
+      ]
+    },
+    {
+      "id": "trilha-clone-ai-pro",
+      "title": "Clone AI PRO",
+      "source": "ailab",
+      "provider": "AI LAB",
+      "description": "Formação completa em clonagem humana com inteligência artificial, criação de influencers digitais, roteiros virais e monetização de conteúdo.",
+      "total_cursos": 1,
+      "total_lessons_count": 69,
+      "total_duration_seconds": 33461,
+      "total_duration_formatted": "9h 17m",
+      "cover_image": "/covers/course-clone-ai-pro.jpg",
+      "courses": [
+        {
+          "ordem": 1,
+          "tipo": "Curso",
+          "nome_trilha": "Clone AI PRO",
+          "course_id": "course-clone-ai-pro",
+          "course_title": "Clone AI PRO",
+          "cover_image": "/covers/course-clone-ai-pro.jpg",
+          "modules_count": 14,
+          "lessons_count": 69,
+          "total_duration_seconds": 33461,
+          "total_duration_formatted": "9h 17m",
+          "relative_path": "AI LAB/Clone AI PRO"
+        }
+      ]
+    },
+    {
+      "id": "trilha-defiverso",
+      "title": "DefiVerso — Cripto & DeFi",
+      "source": "outros",
+      "provider": "DefiVerso",
+      "description": "Formação completa em Finanças Descentralizadas (DeFi), protocolos de liquidez, análise on-chain, macroeconomia, segurança e inteligência artificial no ecossistema cripto.",
+      "total_cursos": 1,
+      "total_lessons_count": 156,
+      "total_duration_seconds": 382092,
+      "total_duration_formatted": "106h 08m",
+      "cover_image": "/covers/course-defiverso.jpg",
+      "courses": [
+        {
+          "ordem": 1,
+          "tipo": "Curso",
+          "nome_trilha": "DefiVerso",
+          "course_id": "course-defiverso",
+          "course_title": "DefiVerso — Academia Completa de DeFi e Criptoeconomia",
+          "cover_image": "/covers/course-defiverso.jpg",
+          "modules_count": 20,
+          "lessons_count": 156,
+          "total_duration_seconds": 382092,
+          "total_duration_formatted": "106h 08m",
+          "relative_path": "outros/DefiVerso"
+        }
       ]
     }
   ]

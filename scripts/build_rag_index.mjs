@@ -12,7 +12,14 @@ if (!fs.existsSync(catalogPath)) {
 }
 
 const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
-const root = catalog.courses_root || path.resolve('..');
+function getCoursesRoot(catalog) {
+  if (process.env.COURSES_ROOT && fs.existsSync(process.env.COURSES_ROOT)) return process.env.COURSES_ROOT;
+  const dCandidate = 'D:\\Projetos Antigravity\\Cursos Mindflix';
+  if (fs.existsSync(dCandidate)) return dCandidate;
+  if (catalog.courses_root && fs.existsSync(catalog.courses_root)) return catalog.courses_root;
+  return path.resolve('..');
+}
+const root = getCoursesRoot(catalog);
 
 const STOP_WORDS = new Set([
   'de', 'a', 'o', 'que', 'e', 'do', 'da', 'em', 'um', 'para', 'é', 'com', 'não', 'uma', 'os', 'no', 'se',

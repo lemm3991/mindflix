@@ -13,7 +13,7 @@ const STORAGE_KEYS = {
 };
 
 const savedJsonUrl = (mediaServerData && (mediaServerData as any).url) ? String((mediaServerData as any).url).trim() : '';
-export const DEFAULT_MEDIA_SERVER_URL = savedJsonUrl || 'https://correspondence-lovers-academics-speak.trycloudflare.com';
+export const DEFAULT_MEDIA_SERVER_URL = savedJsonUrl || 'https://powerpoint-preventing-oct-math.trycloudflare.com';
 
 export function getMediaMode(): MediaSourceMode {
   return 'server';
