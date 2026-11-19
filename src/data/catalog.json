@@ -83196,44 +83196,6 @@
       "missing": true
     },
     {
-      "id": "course-outros",
-      "slug": "outros",
-      "raw_title": "outros",
-      "display_title": "outros",
-      "detected_title": "outros",
-      "description": "Curso sobre outros, ministrado por Especialista Mindflix. Contém 7 módulos e 600 aulas (118h 58m) hospedado no Google Drive.",
-      "provider": "Especialista Mindflix",
-      "categories": [
-        "programacao-dev"
-      ],
-      "detected_categories": [
-        "programacao-dev"
-      ],
-      "tags": [
-        "Treinamento",
-        "Prático"
-      ],
-      "detected_tags": [
-        "Treinamento",
-        "Prático"
-      ],
-      "relative_path": "outros",
-      "source": "server",
-      "modules_count": 0,
-      "lessons_count": 0,
-      "total_duration_seconds": 429177,
-      "total_duration_formatted": "119h 12m",
-      "cover_image": null,
-      "is_featured": false,
-      "is_hidden": true,
-      "classification_source": "drive_scanner",
-      "classification_confidence": 0.88,
-      "discovered_at": "2026-09-14T16:11:20.781106-03:00",
-      "last_scanned_at": "2026-09-14T16:11:20.781106-03:00",
-      "modules": [],
-      "missing": true
-    },
-    {
       "id": "course-marmitas-fit-congeladas-pratica-e-sabor",
       "slug": "marmitas-fit-congeladas-pratica-e-sabor",
       "raw_title": "MARMITAS FIT CONGELADA",
@@ -118072,6 +118034,921 @@
           ],
           "total_duration_seconds": 9846,
           "total_duration_formatted": "2h 44m"
+        }
+      ]
+    },
+    {
+      "id": "course-ciclo-da-cura-evelyn-roos",
+      "slug": "ciclo-da-cura-evelyn-roos",
+      "raw_title": "Ciclo da cura - Evelyn Roos",
+      "display_title": "Ciclo da Cura — Evelyn Roos",
+      "detected_title": "Ciclo da Cura",
+      "description": "Jornada profunda de autoconhecimento e transformação emocional com Evelyn Roos. Compreenda e cure as 5 feridas emocionais fundamentais: rejeição, abandono, injustiça, traição e humilhação.",
+      "provider": "Evelyn Roos",
+      "categories": [
+        "desenvolvimento-pessoal",
+        "saude-bem-estar"
+      ],
+      "detected_categories": [
+        "desenvolvimento-pessoal",
+        "saude-bem-estar"
+      ],
+      "tags": [
+        "Ciclo da Cura",
+        "Evelyn Roos",
+        "Feridas Emocionais",
+        "Autoconhecimento",
+        "Inteligência Emocional",
+        "Psicologia",
+        "Cura Interior"
+      ],
+      "detected_tags": [
+        "Ciclo da Cura",
+        "Evelyn Roos",
+        "Desenvolvimento Pessoal"
+      ],
+      "relative_path": "outros/Ciclo da cura - Evelyn Roos",
+      "modules_count": 1,
+      "lessons_count": 5,
+      "total_duration_seconds": 18570,
+      "total_duration_formatted": "5h 09m",
+      "cover_image": "/covers/cover-ciclo-da-cura-evelyn-roos.jpg",
+      "is_featured": true,
+      "is_project": false,
+      "is_comece_por_aqui": false,
+      "is_hidden": false,
+      "classification_source": "manual",
+      "source": "outros",
+      "modules": [
+        {
+          "id": "course-ciclo-da-cura-evelyn-roos-mod-01",
+          "module_id": "course-ciclo-da-cura-evelyn-roos-mod-01",
+          "title": "Módulo 01 - As 5 Feridas Emocionais",
+          "display_title": "Módulo 01 - As 5 Feridas Emocionais",
+          "order": 1,
+          "lessons_count": 5,
+          "duration_seconds": 18570,
+          "duration_formatted": "5h 09m",
+          "lessons": [
+            {
+              "id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-01",
+              "lesson_id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-01",
+              "title": "01 - O Direito de Existir: Ferida da Rejeição",
+              "display_title": "01 - O Direito de Existir: Ferida da Rejeição",
+              "order": 1,
+              "duration_seconds": 3600,
+              "duration_formatted": "1h 00m",
+              "video_path": "outros/Ciclo da cura - Evelyn Roos/01 o direito de existir - Ferida da Rejeição.mp4",
+              "relative_path": "outros/Ciclo da cura - Evelyn Roos/01 o direito de existir - Ferida da Rejeição.mp4",
+              "materials": []
+            },
+            {
+              "id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-02",
+              "lesson_id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-02",
+              "title": "02 - O Vazio que Pede Colo: Ferida do Abandono",
+              "display_title": "02 - O Vazio que Pede Colo: Ferida do Abandono",
+              "order": 2,
+              "duration_seconds": 3405,
+              "duration_formatted": "0h 56m",
+              "video_path": "outros/Ciclo da cura - Evelyn Roos/02 o vazio que pede colo - Ferida do Abandono.mp4",
+              "relative_path": "outros/Ciclo da cura - Evelyn Roos/02 o vazio que pede colo - Ferida do Abandono.mp4",
+              "materials": []
+            },
+            {
+              "id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-03",
+              "lesson_id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-03",
+              "title": "03 - A Rigidez que Protegeu: Ferida da Injustiça",
+              "display_title": "03 - A Rigidez que Protegeu: Ferida da Injustiça",
+              "order": 3,
+              "duration_seconds": 3740,
+              "duration_formatted": "1h 02m",
+              "video_path": "outros/Ciclo da cura - Evelyn Roos/03 a rigidez que protegeu - Ferida da Injustiça.mp4",
+              "relative_path": "outros/Ciclo da cura - Evelyn Roos/03 a rigidez que protegeu - Ferida da Injustiça.mp4",
+              "materials": []
+            },
+            {
+              "id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-04",
+              "lesson_id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-04",
+              "title": "04 - Sair do Trono do Controle: Ferida da Traição",
+              "display_title": "04 - Sair do Trono do Controle: Ferida da Traição",
+              "order": 4,
+              "duration_seconds": 3720,
+              "duration_formatted": "1h 02m",
+              "video_path": "outros/Ciclo da cura - Evelyn Roos/04 sair do trono do controle - Ferida da Traição.mp4",
+              "relative_path": "outros/Ciclo da cura - Evelyn Roos/04 sair do trono do controle - Ferida da Traição.mp4",
+              "materials": []
+            },
+            {
+              "id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-05",
+              "lesson_id": "course-ciclo-da-cura-evelyn-roos-mod-01-les-05",
+              "title": "05 - Seu Ritmo de Volta: Ferida da Humilhação",
+              "display_title": "05 - Seu Ritmo de Volta: Ferida da Humilhação",
+              "order": 5,
+              "duration_seconds": 4105,
+              "duration_formatted": "1h 08m",
+              "video_path": "outros/Ciclo da cura - Evelyn Roos/05 seu ritmo de volta - Ferida da humilhação.mp4",
+              "relative_path": "outros/Ciclo da cura - Evelyn Roos/05 seu ritmo de volta - Ferida da humilhação.mp4",
+              "materials": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "course-viver-de-renda-bruno-perini",
+      "slug": "viver-de-renda-bruno-perini",
+      "raw_title": "Viver de Renda - Bruno Perini",
+      "display_title": "Viver de Renda (Edição Clássica) — Bruno Perini",
+      "detected_title": "Viver de Renda (Edição Clássica)",
+      "description": "Curso clássico de educação financeira e investimentos ministrado por Bruno Perini. Aborda mentalidade para o sucesso, criação de metas, orçamento pessoal, eliminação de dívidas e primeiros passos na jornada da independência financeira.",
+      "provider": "Bruno Perini",
+      "categories": [
+        "financas-investimentos",
+        "desenvolvimento-pessoal"
+      ],
+      "detected_categories": [
+        "financas-investimentos"
+      ],
+      "tags": [
+        "Viver de Renda",
+        "Bruno Perini",
+        "Finanças",
+        "Investimentos",
+        "Mentalidade",
+        "Poupança",
+        "Orçamento",
+        "Metas"
+      ],
+      "detected_tags": [
+        "Investimentos",
+        "Finanças Pessoais",
+        "Bruno Perini"
+      ],
+      "relative_path": "outros/Viver de Renda - Bruno Perini",
+      "modules_count": 3,
+      "lessons_count": 31,
+      "total_duration_seconds": 5511,
+      "total_duration_formatted": "1h 31m",
+      "cover_image": "/covers/cover-viver-de-renda-bruno-perini.jpg",
+      "is_featured": false,
+      "is_project": false,
+      "is_comece_por_aqui": false,
+      "is_hidden": false,
+      "classification_source": "manual",
+      "source": "outros",
+      "modules": [
+        {
+          "id": "course-viver-de-renda-bruno-perini-mod-01",
+          "module_id": "course-viver-de-renda-bruno-perini-mod-01",
+          "title": "Módulo 00 - Boas-Vindas & Introdução",
+          "display_title": "Módulo 00 - Boas-Vindas & Introdução",
+          "order": 1,
+          "lessons_count": 2,
+          "duration_seconds": 338,
+          "duration_formatted": "0h 05m",
+          "lessons": [
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-01-les-01",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-01-les-01",
+              "title": "1 Antes de mais nada",
+              "display_title": "1 Antes de mais nada",
+              "order": 1,
+              "duration_seconds": 84,
+              "duration_formatted": "0h 01m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/0 - BEM VINDO/1 Antes de mais nada.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/0 - BEM VINDO/1 Antes de mais nada.mp4",
+              "materials": []
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-01-les-02",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-01-les-02",
+              "title": "2 Conhecendo a área de membros",
+              "display_title": "2 Conhecendo a área de membros",
+              "order": 2,
+              "duration_seconds": 254,
+              "duration_formatted": "0h 04m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/0 - BEM VINDO/2 Conhecendo a área de membros.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/0 - BEM VINDO/2 Conhecendo a área de membros.mp4",
+              "materials": []
+            }
+          ]
+        },
+        {
+          "id": "course-viver-de-renda-bruno-perini-mod-02",
+          "module_id": "course-viver-de-renda-bruno-perini-mod-02",
+          "title": "Módulo 01 - Mentalidade Financeira & Hábitos",
+          "display_title": "Módulo 01 - Mentalidade Financeira & Hábitos",
+          "order": 2,
+          "lessons_count": 18,
+          "duration_seconds": 3368,
+          "duration_formatted": "0h 56m",
+          "lessons": [
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-01",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-01",
+              "title": "1.0 Abertura do módulo Mentalidade",
+              "display_title": "1.0 Abertura do módulo Mentalidade",
+              "order": 1,
+              "duration_seconds": 91,
+              "duration_formatted": "0h 01m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.0 Abertura do módulo Mentalidade.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.0 Abertura do módulo Mentalidade.mp4",
+              "materials": []
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-02",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-02",
+              "title": "1.1 Crenças Limitantes",
+              "display_title": "1.1 Crenças Limitantes",
+              "order": 2,
+              "duration_seconds": 451,
+              "duration_formatted": "0h 07m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.1 Crenças Limitantes.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.1 Crenças Limitantes.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-1-crencas-limitantes-ppt",
+                  "title": "1.1 Crenças Limitantes",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.1 Crenças Limitantes.ppt"
+                },
+                {
+                  "id": "mat-1-1-1-reescrevendo-crencas-limitantes-docx",
+                  "title": "1.1.1 Reescrevendo Crenças Limitantes",
+                  "type": "docx",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.1.1 Reescrevendo Crenças Limitantes.docx"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-03",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-03",
+              "title": "1.2 Mito da Caverna",
+              "display_title": "1.2 Mito da Caverna",
+              "order": 3,
+              "duration_seconds": 202,
+              "duration_formatted": "0h 03m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.2 Mito da Caverna.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.2 Mito da Caverna.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-2-mito-da-caverna-ppt",
+                  "title": "1.2 Mito da Caverna",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.2 Mito da Caverna.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-04",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-04",
+              "title": "1.3 Lei da Atração",
+              "display_title": "1.3 Lei da Atração",
+              "order": 4,
+              "duration_seconds": 272,
+              "duration_formatted": "0h 04m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.3 Lei da Atração.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.3 Lei da Atração.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-3-lei-da-atracao-ppt",
+                  "title": "1.3 Lei da Atração",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.3 Lei da Atração.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-05",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-05",
+              "title": "1.4 Hábitos para o sucesso",
+              "display_title": "1.4 Hábitos para o sucesso",
+              "order": 5,
+              "duration_seconds": 301,
+              "duration_formatted": "0h 05m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4 Hábitos para o sucesso.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4 Hábitos para o sucesso.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-habitos-para-o-sucesso-ppt",
+                  "title": "1.4 Hábitos para o sucesso",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4 Hábitos para o sucesso.ppt"
+                },
+                {
+                  "id": "mat-1-4-1-aprendizado-constante-ppt",
+                  "title": "1.4.1 Aprendizado constante",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.1 Aprendizado constante.ppt"
+                },
+                {
+                  "id": "mat-1-4-2-objetivos-e-metas-ppt",
+                  "title": "1.4.2 Objetivos e metas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2 Objetivos e metas.ppt"
+                },
+                {
+                  "id": "mat-1-4-2-1-smart-ppt",
+                  "title": "1.4.2.1 SMART",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.1 SMART.ppt"
+                },
+                {
+                  "id": "mat-1-4-2-2-grow-ppt",
+                  "title": "1.4.2.2 GROW",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.2 GROW.ppt"
+                },
+                {
+                  "id": "mat-1-4-2-3-conto-minha-meta-ou-nao-ppt",
+                  "title": "1.4.2.3 Conto minha meta ou não",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.3 Conto minha meta ou não.ppt"
+                },
+                {
+                  "id": "mat-1-4-3-alimentacao-de-verdade-ppt",
+                  "title": "1.4.3 Alimentação de verdade",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.3 Alimentação de verdade.ppt"
+                },
+                {
+                  "id": "mat-1-4-4-exercicios-e-richard-branson-ppt",
+                  "title": "1.4.4 Exercícios e Richard Branson",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.4 Exercícios e Richard Branson.ppt"
+                },
+                {
+                  "id": "mat-1-4-5-produtividade-e-lei-de-pareto-ppt",
+                  "title": "1.4.5 Produtividade e Lei de Pareto",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5 Produtividade e Lei de Pareto.ppt"
+                },
+                {
+                  "id": "mat-1-4-5-1-sobre-perfeicao-ao-fazer-as-coisas-ppt",
+                  "title": "1.4.5.1 Sobre perfeição ao fazer as coisas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5.1 Sobre perfeição ao fazer as coisas.ppt"
+                },
+                {
+                  "id": "mat-1-4-6-descanso-e-qualidade-do-sono-ppt",
+                  "title": "1.4.6 Descanso e Qualidade do Sono",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6 Descanso e Qualidade do Sono.ppt"
+                },
+                {
+                  "id": "mat-1-4-6-1-clube-das-0500-ppt",
+                  "title": "1.4.6.1 Clube das 0500",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6.1 Clube das 0500.ppt"
+                },
+                {
+                  "id": "mat-1-4-7-gratidao-ppt",
+                  "title": "1.4.7 Gratidão",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.7 Gratidão.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-06",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-06",
+              "title": "1.4.1 Aprendizado constante",
+              "display_title": "1.4.1 Aprendizado constante",
+              "order": 6,
+              "duration_seconds": 165,
+              "duration_formatted": "0h 02m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.1 Aprendizado constante.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.1 Aprendizado constante.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-1-aprendizado-constante-ppt",
+                  "title": "1.4.1 Aprendizado constante",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.1 Aprendizado constante.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-07",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-07",
+              "title": "1.4.2 Objetivos e metas",
+              "display_title": "1.4.2 Objetivos e metas",
+              "order": 7,
+              "duration_seconds": 118,
+              "duration_formatted": "0h 01m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2 Objetivos e metas.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2 Objetivos e metas.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-2-objetivos-e-metas-ppt",
+                  "title": "1.4.2 Objetivos e metas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2 Objetivos e metas.ppt"
+                },
+                {
+                  "id": "mat-1-4-2-1-smart-ppt",
+                  "title": "1.4.2.1 SMART",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.1 SMART.ppt"
+                },
+                {
+                  "id": "mat-1-4-2-2-grow-ppt",
+                  "title": "1.4.2.2 GROW",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.2 GROW.ppt"
+                },
+                {
+                  "id": "mat-1-4-2-3-conto-minha-meta-ou-nao-ppt",
+                  "title": "1.4.2.3 Conto minha meta ou não",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.3 Conto minha meta ou não.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-08",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-08",
+              "title": "1.4.2.1 SMART",
+              "display_title": "1.4.2.1 SMART",
+              "order": 8,
+              "duration_seconds": 106,
+              "duration_formatted": "0h 01m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.1 SMART.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.1 SMART.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-2-1-smart-ppt",
+                  "title": "1.4.2.1 SMART",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.1 SMART.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-09",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-09",
+              "title": "1.4.2.2 GROW",
+              "display_title": "1.4.2.2 GROW",
+              "order": 9,
+              "duration_seconds": 181,
+              "duration_formatted": "0h 03m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.2 GROW.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.2 GROW.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-2-2-grow-ppt",
+                  "title": "1.4.2.2 GROW",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.2 GROW.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-10",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-10",
+              "title": "1.4.2.3 Conto minha meta ou não",
+              "display_title": "1.4.2.3 Conto minha meta ou não",
+              "order": 10,
+              "duration_seconds": 243,
+              "duration_formatted": "0h 04m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.3 Conto minha meta ou não.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.3 Conto minha meta ou não.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-2-3-conto-minha-meta-ou-nao-ppt",
+                  "title": "1.4.2.3 Conto minha meta ou não",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.2.3 Conto minha meta ou não.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-11",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-11",
+              "title": "1.4.3 Alimentação de verdade",
+              "display_title": "1.4.3 Alimentação de verdade",
+              "order": 11,
+              "duration_seconds": 185,
+              "duration_formatted": "0h 03m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.3 Alimentação de verdade.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.3 Alimentação de verdade.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-3-alimentacao-de-verdade-ppt",
+                  "title": "1.4.3 Alimentação de verdade",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.3 Alimentação de verdade.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-12",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-12",
+              "title": "1.4.4 Exercícios e Richard Branson",
+              "display_title": "1.4.4 Exercícios e Richard Branson",
+              "order": 12,
+              "duration_seconds": 77,
+              "duration_formatted": "0h 01m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.4 Exercícios e Richard Branson.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.4 Exercícios e Richard Branson.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-4-exercicios-e-richard-branson-ppt",
+                  "title": "1.4.4 Exercícios e Richard Branson",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.4 Exercícios e Richard Branson.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-13",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-13",
+              "title": "1.4.5 Produtividade e Lei de Pareto",
+              "display_title": "1.4.5 Produtividade e Lei de Pareto",
+              "order": 13,
+              "duration_seconds": 241,
+              "duration_formatted": "0h 04m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5 Produtividade e Lei de Pareto.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5 Produtividade e Lei de Pareto.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-5-produtividade-e-lei-de-pareto-ppt",
+                  "title": "1.4.5 Produtividade e Lei de Pareto",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5 Produtividade e Lei de Pareto.ppt"
+                },
+                {
+                  "id": "mat-1-4-5-1-sobre-perfeicao-ao-fazer-as-coisas-ppt",
+                  "title": "1.4.5.1 Sobre perfeição ao fazer as coisas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5.1 Sobre perfeição ao fazer as coisas.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-14",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-14",
+              "title": "1.4.5.1 Sobre perfeição ao fazer as coisas",
+              "display_title": "1.4.5.1 Sobre perfeição ao fazer as coisas",
+              "order": 14,
+              "duration_seconds": 100,
+              "duration_formatted": "0h 01m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5.1 Sobre perfeição ao fazer as coisas.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5.1 Sobre perfeição ao fazer as coisas.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-5-1-sobre-perfeicao-ao-fazer-as-coisas-ppt",
+                  "title": "1.4.5.1 Sobre perfeição ao fazer as coisas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.5.1 Sobre perfeição ao fazer as coisas.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-15",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-15",
+              "title": "1.4.6 Descanso e qualidade do sono",
+              "display_title": "1.4.6 Descanso e qualidade do sono",
+              "order": 15,
+              "duration_seconds": 241,
+              "duration_formatted": "0h 04m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6 Descanso e qualidade do sono.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6 Descanso e qualidade do sono.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-6-descanso-e-qualidade-do-sono-ppt",
+                  "title": "1.4.6 Descanso e Qualidade do Sono",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6 Descanso e Qualidade do Sono.ppt"
+                },
+                {
+                  "id": "mat-1-4-6-1-clube-das-0500-ppt",
+                  "title": "1.4.6.1 Clube das 0500",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6.1 Clube das 0500.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-16",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-16",
+              "title": "1.4.6.1 Clube das 0500",
+              "display_title": "1.4.6.1 Clube das 0500",
+              "order": 16,
+              "duration_seconds": 133,
+              "duration_formatted": "0h 02m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6.1 Clube das 0500.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6.1 Clube das 0500.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-6-1-clube-das-0500-ppt",
+                  "title": "1.4.6.1 Clube das 0500",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.6.1 Clube das 0500.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-17",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-17",
+              "title": "1.4.7 Gratidão",
+              "display_title": "1.4.7 Gratidão",
+              "order": 17,
+              "duration_seconds": 134,
+              "duration_formatted": "0h 02m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.7 Gratidão.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.7 Gratidão.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-4-7-gratidao-ppt",
+                  "title": "1.4.7 Gratidão",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.4.7 Gratidão.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-02-les-18",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-02-les-18",
+              "title": "1.5 Mentalidade certa",
+              "display_title": "1.5 Mentalidade certa",
+              "order": 18,
+              "duration_seconds": 127,
+              "duration_formatted": "0h 02m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.5 Mentalidade certa.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.5 Mentalidade certa.mp4",
+              "materials": [
+                {
+                  "id": "mat-1-5-mentalidade-certa-ppt",
+                  "title": "1.5 Mentalidade certa",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/1 - MENTALIDADE/1.5 Mentalidade certa.ppt"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "course-viver-de-renda-bruno-perini-mod-03",
+          "module_id": "course-viver-de-renda-bruno-perini-mod-03",
+          "title": "Módulo 02 - Poupança, Orçamento e Controle de Gastos",
+          "display_title": "Módulo 02 - Poupança, Orçamento e Controle de Gastos",
+          "order": 3,
+          "lessons_count": 11,
+          "duration_seconds": 1805,
+          "duration_formatted": "0h 30m",
+          "lessons": [
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-01",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-01",
+              "title": "2.0 Abertura do módulo Poupança, Orçamento e Gastos",
+              "display_title": "2.0 Abertura do módulo Poupança, Orçamento e Gastos",
+              "order": 1,
+              "duration_seconds": 25,
+              "duration_formatted": "0h 00m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.0 Abertura do módulo Poupança, Orçamento e Gastos.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.0 Abertura do módulo Poupança, Orçamento e Gastos.mp4",
+              "materials": []
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-02",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-02",
+              "title": "2.1 Regra de Ouro",
+              "display_title": "2.1 Regra de Ouro",
+              "order": 2,
+              "duration_seconds": 166,
+              "duration_formatted": "0h 02m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.1 Regra de Ouro.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.1 Regra de Ouro.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-1-regra-de-ouro-ppt",
+                  "title": "2.1 Regra de Ouro",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.1 Regra de Ouro.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-03",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-03",
+              "title": "2.2 Dividindo o orçamento",
+              "display_title": "2.2 Dividindo o orçamento",
+              "order": 3,
+              "duration_seconds": 523,
+              "duration_formatted": "0h 08m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.2 Dividindo o orçamento.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.2 Dividindo o orçamento.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-2-dividindo-o-orcamento-ppt",
+                  "title": "2.2 Dividindo o orçamento",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.2 Dividindo o orçamento.ppt"
+                },
+                {
+                  "id": "mat-2-2-1-controle-do-orcamento-ppt",
+                  "title": "2.2.1 Controle do Orçamento",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.2.1 Controle do Orçamento.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-04",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-04",
+              "title": "2.2.1 Controle do Orçamento",
+              "display_title": "2.2.1 Controle do Orçamento",
+              "order": 4,
+              "duration_seconds": 106,
+              "duration_formatted": "0h 01m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.2.1 Controle do Orçamento.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.2.1 Controle do Orçamento.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-2-1-controle-do-orcamento-ppt",
+                  "title": "2.2.1 Controle do Orçamento",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.2.1 Controle do Orçamento.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-05",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-05",
+              "title": "2.3 Dívidas",
+              "display_title": "2.3 Dívidas",
+              "order": 5,
+              "duration_seconds": 172,
+              "duration_formatted": "0h 02m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.3 Dívidas.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.3 Dívidas.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-3-dividas-ppt",
+                  "title": "2.3 Dívidas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.3 Dívidas.ppt"
+                },
+                {
+                  "id": "mat-2-3-1-poupo-e-invisto-ou-pago-minhas-dividas-primeiro-ppt",
+                  "title": "2.3.1 Poupo e invisto ou pago minhas dívidas primeiro",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.3.1 Poupo e invisto ou pago minhas dívidas primeiro.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-06",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-06",
+              "title": "2.3.1 Poupo e invisto ou pago minhas dívidas primeiro",
+              "display_title": "2.3.1 Poupo e invisto ou pago minhas dívidas primeiro",
+              "order": 6,
+              "duration_seconds": 82,
+              "duration_formatted": "0h 01m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.3.1 Poupo e invisto ou pago minhas dívidas primeiro.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.3.1 Poupo e invisto ou pago minhas dívidas primeiro.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-3-1-poupo-e-invisto-ou-pago-minhas-dividas-primeiro-ppt",
+                  "title": "2.3.1 Poupo e invisto ou pago minhas dívidas primeiro",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.3.1 Poupo e invisto ou pago minhas dívidas primeiro.ppt"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-07",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-07",
+              "title": "2.4 Cartão de crédito",
+              "display_title": "2.4 Cartão de crédito",
+              "order": 7,
+              "duration_seconds": 135,
+              "duration_formatted": "0h 02m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4 Cartão de crédito.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4 Cartão de crédito.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-4-cartao-de-credito-ppt",
+                  "title": "2.4 Cartão de crédito",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4 Cartão de crédito.ppt"
+                },
+                {
+                  "id": "mat-2-4-1-milhas-aereas-ppt",
+                  "title": "2.4.1 Milhas aéreas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4.1 Milhas aéreas.ppt"
+                },
+                {
+                  "id": "mat-2-4-1-1-milhas-aereas-pdf",
+                  "title": "2.4.1.1 Milhas Aéreas",
+                  "type": "pdf",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4.1.1 Milhas Aéreas.pdf"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-08",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-08",
+              "title": "2.4.1 Milhas aéreas",
+              "display_title": "2.4.1 Milhas aéreas",
+              "order": 8,
+              "duration_seconds": 188,
+              "duration_formatted": "0h 03m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4.1 Milhas aéreas.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4.1 Milhas aéreas.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-4-1-milhas-aereas-ppt",
+                  "title": "2.4.1 Milhas aéreas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4.1 Milhas aéreas.ppt"
+                },
+                {
+                  "id": "mat-2-4-1-1-milhas-aereas-pdf",
+                  "title": "2.4.1.1 Milhas Aéreas",
+                  "type": "pdf",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.4.1.1 Milhas Aéreas.pdf"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-09",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-09",
+              "title": "2.5 Dicas práticas",
+              "display_title": "2.5 Dicas práticas",
+              "order": 9,
+              "duration_seconds": 222,
+              "duration_formatted": "0h 03m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5 Dicas práticas.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5 Dicas práticas.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-5-dicas-praticas-ppt",
+                  "title": "2.5 Dicas práticas",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5 Dicas práticas.ppt"
+                },
+                {
+                  "id": "mat-2-5-1-como-pedir-descontos-ppt",
+                  "title": "2.5.1 Como pedir descontos",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5.1 Como pedir descontos.ppt"
+                },
+                {
+                  "id": "mat-2-5-1-dicas-praticas-pdf",
+                  "title": "2.5.1 Dicas Práticas",
+                  "type": "pdf",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5.1 Dicas Práticas.pdf"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-10",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-10",
+              "title": "2.5.1 Como pedir descontos",
+              "display_title": "2.5.1 Como pedir descontos",
+              "order": 10,
+              "duration_seconds": 144,
+              "duration_formatted": "0h 02m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5.1 Como pedir descontos.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5.1 Como pedir descontos.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-5-1-como-pedir-descontos-ppt",
+                  "title": "2.5.1 Como pedir descontos",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5.1 Como pedir descontos.ppt"
+                },
+                {
+                  "id": "mat-2-5-1-dicas-praticas-pdf",
+                  "title": "2.5.1 Dicas Práticas",
+                  "type": "pdf",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.5.1 Dicas Práticas.pdf"
+                }
+              ]
+            },
+            {
+              "id": "course-viver-de-renda-bruno-perini-mod-03-les-11",
+              "lesson_id": "course-viver-de-renda-bruno-perini-mod-03-les-11",
+              "title": "2.6 O dinheiro é seu servo",
+              "display_title": "2.6 O dinheiro é seu servo",
+              "order": 11,
+              "duration_seconds": 42,
+              "duration_formatted": "0h 00m",
+              "video_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.6 O dinheiro é seu servo.mp4",
+              "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.6 O dinheiro é seu servo.mp4",
+              "materials": [
+                {
+                  "id": "mat-2-6-o-dinheiro-e-seu-servo-ppt",
+                  "title": "2.6 O dinheiro é seu servo",
+                  "type": "ppt",
+                  "relative_path": "outros/Viver de Renda - Bruno Perini/2 - POUPANÇA, ORÇAMENTO E GASTOS/2.6 O dinheiro é seu servo.ppt"
+                }
+              ]
+            }
+          ]
         }
       ]
     }
